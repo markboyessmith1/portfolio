@@ -1,0 +1,10 @@
+blender
+feature-video
+notes
+.playwright-mcp
+.claude
+dist
+node_modules
+CUSTOM_STICKER*
+Frame 1 copy*
+yarn.lock
