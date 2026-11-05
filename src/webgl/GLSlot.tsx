@@ -18,15 +18,17 @@ type Props = {
   back?: { title: string; label?: string }
   /** subtle 3D tilt toward the pointer while hovered */
   tilt?: boolean
+  /** no refractive glass rim: for flat artwork (screen recordings) that the bend would distort */
+  flat?: boolean
 }
 
 /**
  * A DOM rectangle that a 3D scene renders into, drawn through the glass-edge
  * shader. drei's <View> scissors the shared canvas to the slot's bounds.
  * CSS opacity can't reach the canvas, so if an ancestor is marked
- * [data-gl-fade], its animated opacity is mirrored into the shader.
+ * [data-gl-fade], its animated opacity (nested ones multiply) is mirrored into the shader.
  */
-export function GLSlot({ variant, scene: Scene, className = '', children, blur, accent, spin, back, tilt }: Props) {
+export function GLSlot({ variant, scene: Scene, className = '', children, blur, accent, spin, back, tilt, flat }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const [opacity] = useState(() => ({ current: 1 }))
   const [tiltPos] = useState(() => ({ x: 0, y: 0 }))
@@ -65,11 +67,12 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
     return () => { node.removeEventListener('pointermove', move); node.removeEventListener('pointerleave', leave) }
   }, [tilt, tiltPos])
   useEffect(() => {
-    const fadeEl = el.current?.closest<HTMLElement>('[data-gl-fade]')
-    if (!fadeEl) return
+    const fadeEls: HTMLElement[] = []
+    for (let f = el.current?.closest<HTMLElement>('[data-gl-fade]'); f; f = f.parentElement?.closest<HTMLElement>('[data-gl-fade]')) fadeEls.push(f)
+    if (!fadeEls.length) return
     let raf = 0
     const tick = () => {
-      opacity.current = parseFloat(getComputedStyle(fadeEl).opacity) || 0
+      opacity.current = fadeEls.reduce((o, f) => o * (parseFloat(getComputedStyle(f).opacity) || 0), 1)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -78,7 +81,7 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
   return (
     <div ref={el} className={`gl-slot gl-slot--${variant}${tilt ? ' has-tilt' : ''} ${className}`}>
       <View className="gl-view" index={2}>
-        <GlassEdge blur={blur} accent={accent} spin={spin} back={back} opacity={opacity} tilt={tilt ? tiltPos : undefined} pose={pose} shadowStrength={/is-dark|is-media/.test(className) ? 1 : 0.45}>
+        <GlassEdge strength={flat ? 0 : undefined} blur={blur} accent={accent} spin={spin} back={back} opacity={opacity} tilt={tilt ? tiltPos : undefined} pose={pose} shadowStrength={/is-dark|is-media/.test(className) ? 1 : 0.45}>
           {/* per-card boundary: a loading video never blanks the other cards */}
           <Suspense fallback={null}>
             <Scene />

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { site } from '../data/site'
 
-const BARS = 14
+const BARS = 7
 
 /**
  * Compact glass podcast bar: cover, title, live visualizer, mute toggle.
@@ -38,7 +38,8 @@ export default function Podcast() {
           const k = playing ? 1 : 0
           v = reduce ? 0.35 : 0.25 + k * 0.35 * (0.5 + 0.5 * Math.sin(t / 260 + i * 0.9)) * (0.6 + 0.4 * Math.sin(t / 530 - i * 0.5))
         }
-        el.style.transform = `scaleY(${(0.18 + v * 0.82).toFixed(3)})`
+        // animate height, not scaleY, so the round caps stay circular
+        el.style.height = `${((0.18 + v * 0.82) * 100).toFixed(1)}%`
       })
       if (!reduce || (an && !muted)) raf = requestAnimationFrame(tick)
     }

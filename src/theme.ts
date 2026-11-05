@@ -27,15 +27,18 @@ const subscribe = (l: () => void) => {
 }
 
 /** Resolve a CSS custom property to a concrete colour string THREE accepts. */
-function resolve(name: string): string {
+function resolve(name: string, card = false): string {
   // Custom properties can be var() chains or color-mix(); let the browser
   // compute them by applying to a probe element.
   const probe = document.createElement('span')
   probe.style.color = `var(${name})`
   probe.style.display = 'none'
-  document.body.appendChild(probe)
+  // card tokens resolve inside a .gl-slot, where the light palette is pinned
+  const host = card ? document.body.appendChild(Object.assign(document.createElement('div'), { className: 'gl-slot' })) : document.body
+  host.appendChild(probe)
   const rgb = getComputedStyle(probe).color // "rgb(r, g, b)" or "color(srgb ...)"
   probe.remove()
+  if (card) host.remove()
   const m = rgb.match(/[\d.]+/g)
   if (!m) return '#000000'
   const [r, g, b] = rgb.startsWith('color(')
@@ -45,14 +48,20 @@ function resolve(name: string): string {
 }
 
 const cache = new Map<string, { v: number; c: string }>()
-function read(name: string) {
-  const hit = cache.get(name)
+function read(name: string, card = false) {
+  const key = card ? `card:${name}` : name
+  const hit = cache.get(key)
   if (hit && hit.v === version) return hit.c
-  const c = resolve(name)
-  cache.set(name, { v: version, c })
+  const c = resolve(name, card)
+  cache.set(key, { v: version, c })
   return c
 }
 
 export function useToken(name: string): string {
   return useSyncExternalStore(subscribe, () => read(name), () => '#000000')
+}
+
+/** A token as seen inside a card (.gl-slot): containers keep their light palette in dark mode. */
+export function useCardToken(name: string): string {
+  return useSyncExternalStore(subscribe, () => read(name, true), () => '#000000')
 }

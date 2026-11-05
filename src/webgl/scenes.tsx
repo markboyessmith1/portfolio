@@ -2,7 +2,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Float, MeshDistortMaterial, OrthographicCamera, PerspectiveCamera, useTexture, useVideoTexture } from '@react-three/drei'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { useToken } from '../theme'
+import { useCardToken, useToken } from '../theme'
+import { board } from '../board'
 
 /* ------------------------------------------------------------------ */
 /* Backdrop: a soft, slowly drifting gradient field behind the page    */
@@ -26,6 +27,9 @@ const backdropFrag = /* glsl */ `
   uniform vec3 uEdge;
   uniform vec3 uInk;
   uniform float uDpr;
+  uniform vec2 uRes;
+  uniform vec4 uPts[4];
+  uniform float uDots;
 
   // cheap value noise
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -53,21 +57,38 @@ const backdropFrag = /* glsl */ `
     vec3 paper = uPaper; // --bg
     float d = distance(vUv, uMouse * 0.5 + 0.5);
     float glow = smoothstep(0.7, 0.0, d) * 0.06;
-    // flat base so the slot corner masks (painted in --bg) blend in exactly
-    // page colour holds in the centre, fading to white toward the edges
-    vec2 c = vUv - 0.5;
-    c.x *= uAspect;
-    float edge = smoothstep(0.22, 0.85, length(c) / max(1.0, uAspect * 0.75));
-    vec3 col = mix(paper, uEdge, edge);
+    // flat page colour (no gradient), so the slot corner masks (painted in --bg) blend in exactly
+    vec3 col = paper;
 
-    // faint dot grid (24 CSS px pitch), strongest in the centre, fading out
-    // toward the white edges
-    vec2 cell = mod(gl_FragCoord.xy / uDpr, 24.0) - 12.0;
-    float dot = 1.0 - smoothstep(1.0, 1.9, length(cell));
-    col = mix(col, uInk, dot * 0.15 * (1.0 - edge * 0.8));
+    // Home board dot grid (24 CSS px pitch), from the c26 prototype: each
+    // cursor in uPts (xy = uv, z = strength) swells the dots around it along
+    // drifting contour lines, nudges them aside and darkens them toward ink.
+    if (uDots > 0.001) {
+      vec2 px = gl_FragCoord.xy / uDpr;
+      vec2 res = uRes;
+      vec2 cell = (floor(px / 24.0) + 0.5) * 24.0;
+      float F = 0.0;
+      vec2 push = vec2(0.0);
+      for (int i = 0; i < 4; i++) {
+        vec4 pt = uPts[i];
+        if (pt.z <= 0.001) continue;
+        vec2 dd = cell - pt.xy * res;
+        float f = exp(-dot(dd, dd) / (190.0 * 190.0)) * pt.z;
+        F += f;
+        push += normalize(dd + 1e-4) * f;
+      }
+      F = clamp(F, 0.0, 1.0);
+      float h = fbm(cell * 0.0055 + vec2(uTime * 0.02, -uTime * 0.015));
+      float lv = fract(h * 9.0);
+      float band = 1.0 - smoothstep(0.0, 0.16, min(lv, 1.0 - lv));
+      vec2 swirl = vec2(fbm(cell * 0.01 + uTime * 0.1), fbm(cell * 0.01 - uTime * 0.1 + 7.0)) - 0.5;
+      vec2 center = cell + push * 5.0 + swirl * 8.0 * F;
+      float r = 1.2 + F * (0.2 + 1.2 * band);
+      float dotMask = 1.0 - smoothstep(r - 0.6, r + 0.6, length(px - center));
+      float ink = 0.15 + F * (0.3 + 0.7 * band) * 0.85;
+      col = mix(col, uInk, dotMask * ink * uDots);
+    }
 
-    // subtle film grain so the gradient never bands
-    col += (hash(vUv * 1000.0 + uTime) - 0.5) * 0.006;
     gl_FragColor = vec4(col, 1.0);
   }
 `
@@ -83,6 +104,9 @@ export function Backdrop() {
       uEdge: { value: new THREE.Color() },
       uInk: { value: new THREE.Color() },
       uDpr: { value: 1 },
+      uRes: { value: new THREE.Vector2(1, 1) },
+      uPts: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
+      uDots: { value: 0 },
     }),
     [],
   )
@@ -98,6 +122,10 @@ export function Backdrop() {
     uniforms.uMouse.value.lerp(state.pointer, 0.04)
     uniforms.uAspect.value = state.size.width / state.size.height
     uniforms.uDpr.value = state.viewport.dpr
+    uniforms.uRes.value.set(state.size.width, state.size.height)
+    // the home board's cursors stir the dots; fade them in/out with the board
+    uniforms.uDots.value = THREE.MathUtils.damp(uniforms.uDots.value, board.active ? 1 : 0, 4, dt)
+    uniforms.uPts.value.forEach((v, i) => v.fromArray(board.points, i * 4))
   })
   return (
     <>
@@ -152,8 +180,8 @@ function useParallax(ref: React.RefObject<THREE.Group | null>, amount = 0.25) {
 /* ------------------------------------------------------------------ */
 
 export function HeroScene() {
-  const surface = useToken('--surface')
-  const ink = useToken('--ink')
+  const surface = useCardToken('--surface')
+  const ink = useCardToken('--ink')
   const group = useRef<THREE.Group>(null)
   const mesh = useRef<THREE.Mesh>(null)
   useParallax(group, 0.35)
@@ -182,8 +210,8 @@ export function HeroScene() {
 /* ------------------------------------------------------------------ */
 
 export function HeroAltScene() {
-  const inverse = useToken('--surface')
-  const onInverse = useToken('--ink')
+  const inverse = useCardToken('--surface')
+  const onInverse = useCardToken('--ink')
   const group = useRef<THREE.Group>(null)
   useParallax(group, 0.35)
   return (
@@ -208,8 +236,8 @@ export function HeroAltScene() {
 /* ------------------------------------------------------------------ */
 
 export function KnotScene() {
-  const inverse = useToken('--surface-inverse')
-  const onInverse = useToken('--on-inverse')
+  const inverse = useCardToken('--surface-inverse')
+  const onInverse = useCardToken('--on-inverse')
   const group = useRef<THREE.Group>(null)
   const mesh = useRef<THREE.Mesh>(null)
   useParallax(group)
@@ -234,8 +262,8 @@ export function KnotScene() {
 }
 
 export function BlobScene() {
-  const surface = useToken('--surface')
-  const ink = useToken('--ink')
+  const surface = useCardToken('--surface')
+  const ink = useCardToken('--ink')
   const group = useRef<THREE.Group>(null)
   useParallax(group)
   return (
@@ -256,9 +284,9 @@ export function BlobScene() {
 }
 
 export function StackScene() {
-  const surface = useToken('--surface')
-  const ink = useToken('--ink')
-  const bg = useToken('--bg')
+  const surface = useCardToken('--surface')
+  const ink = useCardToken('--ink')
+  const bg = useCardToken('--bg')
   const group = useRef<THREE.Group>(null)
   useParallax(group, 0.4)
   const items = useMemo(() => Array.from({ length: 5 }, (_, i) => i), [])
@@ -321,7 +349,7 @@ export function PortraitScene({ src = '/media/portrait.jpg' }: { src?: string })
   texture.anisotropy = gl.capabilities.getMaxAnisotropy()
   const size = useThree((s) => s.size)
   const dpr = useThree((s) => s.viewport.dpr)
-  const surface = useToken('--hero-tint')
+  const surface = useCardToken('--portrait-tint')
   const img = texture.image as HTMLImageElement
   const ia = img?.width && img?.height ? img.width / img.height : 1
   const ca = size.width / size.height
@@ -364,7 +392,7 @@ export function PortraitScene({ src = '/media/portrait.jpg' }: { src?: string })
 
 /** Plain surface-coloured card, for text cards. */
 export function PaperScene() {
-  const surface = useToken('--surface')
+  const surface = useCardToken('--surface')
   return (
     <>
       <color attach="background" args={[surface]} />
@@ -376,19 +404,6 @@ export function PaperScene() {
 /* ------------------------------------------------------------------ */
 /* Video card: looping muted video, cropped to fill the card (cover)    */
 /* ------------------------------------------------------------------ */
-
-const scrimFrag = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    // dark at the bottom, clear by ~45% up: keeps overlay text legible
-    float a = smoothstep(0.45, 0.0, vUv.y) * 0.55;
-    gl_FragColor = vec4(0.0, 0.0, 0.0, a);
-  }
-`
-const scrimVert = /* glsl */ `
-  varying vec2 vUv;
-  void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-`
 
 export function VideoScene({ src = '/media/hx.mp4' }: { src?: string }) {
   const texture = useVideoTexture(src, { loop: true, muted: true, start: true, playsInline: true, crossOrigin: 'anonymous' })
@@ -407,12 +422,11 @@ export function VideoScene({ src = '/media/hx.mp4' }: { src?: string }) {
         <planeGeometry />
         <meshBasicMaterial map={texture} toneMapped={false} />
       </mesh>
-      <mesh scale={[size.width, size.height, 1]} position={[0, 0, 1]}>
-        <planeGeometry />
-        <shaderMaterial vertexShader={scrimVert} fragmentShader={scrimFrag} transparent depthWrite={false} />
-      </mesh>
     </>
   )
 }
 
-export const scenes = { knot: KnotScene, blob: BlobScene, stack: StackScene, video: VideoScene } as const
+// the Miro AI card's cover
+const MiroAiScene = () => <VideoScene src="/media/quick17.mp4" />
+
+export const scenes = { knot: KnotScene, blob: BlobScene, stack: StackScene, video: VideoScene, miroAi: MiroAiScene, blank: PaperScene } as const

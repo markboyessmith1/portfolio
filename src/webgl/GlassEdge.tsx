@@ -50,9 +50,9 @@ const shadowFrag = /* glsl */ `
   uniform float uK;       // strength multiplier (lighter under white cards)
   float shape(vec2 p) {
     vec2 b = uRes * 0.5;
-    float r = min(uRadius * 1.6, min(b.x, b.y));
+    float r = min(uRadius * 1.3, min(b.x, b.y));
     vec2 q = max(abs(p) - b + r, 0.0);
-    float corner = pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);
+    float corner = pow(pow(q.x, 3.0) + pow(q.y, 3.0), 1.0 / 3.0);
     vec2 e = abs(p) - b + r;
     return (corner > 0.0 ? corner : min(max(e.x, e.y), 0.0)) - r;
   }
@@ -94,9 +94,10 @@ const frag = /* glsl */ `
   // The corner region is enlarged so its tightest point matches uRadius.
   float shape(vec2 p) {
     vec2 b = uRes * 0.5 - uInset;
-    float r = min(uRadius * 1.6, min(b.x, b.y));
+    float r = min(uRadius * 1.3, min(b.x, b.y));
     vec2 q = max(abs(p) - b + r, 0.0);
-    float n = 4.0;
+    // a gentle superellipse (CSS superellipse(1.6) is about the same, 2^1.6 ≈ 3)
+    float n = 3.0;
     float corner = pow(pow(q.x, n) + pow(q.y, n), 1.0 / n);
     vec2 e = abs(p) - b + r;
     return (corner > 0.0 ? corner : min(max(e.x, e.y), 0.0)) - r;
@@ -213,7 +214,7 @@ type Props = {
   /** spin state: set from/to and .current = performance.now() to animate */
   spin?: SpinState
   /** back-face artwork shown while the card spins */
-  back?: { title: string; label?: string }
+  back?: { title: string; label?: string; plain?: boolean }
   /** live opacity (0..1) for the WebGL layer */
   opacity?: { current: number }
   /** pointer position over the card (-1..1), for a subtle hover tilt */
@@ -304,15 +305,20 @@ export function GlassEdge({ children, blur, spin, back, opacity, tilt, pose, sha
   uniforms.uTex.value = fbo.texture
 
   // back-face artwork: brand gradient + grain + project name, drawn to a canvas
+  // card aspect, coarsely rounded so a resize doesn't redraw every pixel
+  const backAspect = Math.round((size.width / Math.max(1, size.height)) * 20) / 20 || 0.75
   const backTex = useMemo(() => {
     if (!back) return null
-    const W = 900, H = 1200
+    // drawn at the card's own aspect, so the artwork never stretches
+    const W = 900, H = Math.round(W / backAspect)
     const c = document.createElement('canvas')
     c.width = W; c.height = H
     const tex = new THREE.CanvasTexture(c)
     tex.colorSpace = THREE.SRGBColorSpace
     const draw = () => {
       const g = c.getContext('2d')!
+      // plain: a white back, for cards that lay a DOM board over it
+      if (back.plain) { g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); tex.needsUpdate = true; return }
       const lin = g.createLinearGradient(0, 0, W, H)
       lin.addColorStop(0, '#2F5BFF'); lin.addColorStop(0.5, '#8A4DFF'); lin.addColorStop(1, '#FF3E9D')
       g.fillStyle = lin; g.fillRect(0, 0, W, H)
@@ -334,7 +340,7 @@ export function GlassEdge({ children, blur, spin, back, opacity, tilt, pose, sha
     document.fonts?.ready.then(draw)
     return tex
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [back?.title, back?.label])
+  }, [back?.title, back?.label, back?.plain, backAspect])
   uniforms.uBack.value = backTex
   uniforms.uHasBack.value = backTex ? 1 : 0
 

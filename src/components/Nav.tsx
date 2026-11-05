@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { site } from '../data/site'
 import Podcast from './Podcast'
+import ChapterBar from './ChapterBar'
 
 export default function Nav() {
   const { pathname } = useLocation()
@@ -27,27 +28,41 @@ export default function Nav() {
 
   return (
     <header className="nav">
-      {/* Glass pill menu, top left. Inside a case study it becomes a
-          breadcrumb: the back link carries the active pill. */}
+      {/* Glass pill menu, top left. Inside a case study it shrinks to a
+          single back chevron. */}
+      <div className="nav__start">
       <nav className="menu glass" ref={menu} aria-label="Main">
         <div className="menu__set" key={mode}>
-        {/* in a case study the first item becomes a back link (carrying the
-            active pill); the rest of the menu stays as it is */}
+        {/* in a case study the menu is just a back chevron to the portfolio */}
         {caseItem ? (
-          <Link to="/" className="active menu__back">
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
+          <Link to="/work" className="active menu__back" aria-label="Back to portfolio">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
               <path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Portfolio
           </Link>
         ) : (
-          <NavLink to="/" end>Portfolio</NavLink>
+          <>
+            <NavLink to="/" end>About</NavLink>
+            {/* the request form; the unlisted portfolio (/work) counts as here too */}
+            <NavLink to="/portfolio" className={({ isActive }) => (isActive || pathname === '/work' ? 'active' : undefined)}>Portfolio</NavLink>
+          </>
         )}
-        <NavLink to="/about">About</NavLink>
-        <NavLink to="/thoughts">Thoughts</NavLink>
         </div>
       </nav>
-      <Podcast />
+      {/* in a case study the chapter selector sits right against the back chevron */}
+      {caseItem && <ChapterBar key={caseItem.href} item={caseItem} />}
+      </div>
+      {/* top right: the podcast, outside case studies */}
+      {/* not on the case studies, nor on the CV (home), which has its own podcast list */}
+      {!caseItem && pathname !== '/' && <Podcast />}
+      {/* on the CV, the corner holds the PDF download instead: the stripped-back print version
+          (pages/ResumePrint, printed to public/), styled to pair with the selector */}
+      {pathname === '/' && (
+        <a className="nav__download" href="/mark-boyes-smith-resume.pdf" download>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden><path d="M8 2.5v8m0 0L4.75 7.25M8 10.5l3.25-3.25M3 13.5h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Download PDF
+        </a>
+      )}
     </header>
   )
 }

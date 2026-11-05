@@ -4,6 +4,13 @@ import { site, type CaseSection, type PanelLayout, type SceneKey, type WorkItem 
 import { GLSlot } from '../webgl/GLSlot'
 import type { SpinState } from '../webgl/GlassEdge'
 import { PortraitScene, scenes } from '../webgl/scenes'
+import Vignette from './miro/Vignettes'
+import CardStickers from './miro/CardStickers'
+import CaseBoard from './CaseBoard'
+import StatementReveal from './StatementReveal'
+import VideoEmbed from './VideoEmbed'
+import MiroLogo from './MiroLogo'
+import { PagedShelf } from './shelf/PagedShelf'
 
 /**
  * One persistent component for the homepage AND every case study, so moving
@@ -29,6 +36,8 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
 const DARK_SCENES = new Set<SceneKey>(['knot', 'video'])
 /** Scenes whose overlay text stays light in both themes (photographic content). */
 const MEDIA_SCENES = new Set<SceneKey>(['video'])
+/** flat artwork (board recordings): no glass rim, it bends the canvas at the edges */
+const FLAT_SCENES = new Set<SceneKey>(['miroAi'])
 const toneClass = (k: SceneKey) => (MEDIA_SCENES.has(k) ? 'is-media' : DARK_SCENES.has(k) ? 'is-dark' : '')
 
 type Live = { current: number }
@@ -214,6 +223,11 @@ function useTrackMotion(
       })
       items.forEach((it, i) => {
         let t = Math.min(1, Math.abs(base + it.offsetTop - anchor) / step)
+        // the statement and split panels are page content, not cards: they
+        // move with the scroll and never shrink or blur
+        if (it.querySelector('.panel--statement, .panel--split')) t = 0
+        // a case study's right-hand side stays fixed: its panels crossfade, unscaled
+        if (el.closest('.carousel--case')) t = 0
         // settled (within a few px): exact identity, no filter, so text renders
         // crisp; a residual scale like 0.998 rasterises the text soft
         if (t < 0.06) t = 0
@@ -241,62 +255,109 @@ function useCasePanels(
   enabled: boolean,
   left: React.RefObject<HTMLDivElement | null>,
   track: React.RefObject<HTMLDivElement | null>,
-  onSection: (i: number) => void,
 ) {
   useEffect(() => {
     const el = track.current
     if (!el) return
     if (!enabled) { el.style.transform = ''; return }
-    let current = -1
-    // Free scroll, scrubbed transitions: each section's waypoint dot is where
-    // its panel has fully arrived. The slide runs over the 20% of the viewport
-    // of scroll leading up to it (crossing the middle of the screen).
-    // target position from scroll (each step eased in/out), then the panels
-    // follow it with a soft spring so the motion never feels sharp
-    const ease = (t: number) => t * t * (3 - 2 * t)
-    let shown = -1
+    // Free scroll, a fixed right-hand side: when a section's (invisible) waypoint
+    // crosses the line 20% down the screen, its panel crossfades in over the
+    // last one, in the same spot.
+    // Steps into or out of a [data-smooth] section (statement, split) skip both:
+    // they run linearly, 1:1 with the scroll, so those panels move with the
+    // page like ordinary content.
     let raf = 0
-    let last = performance.now()
+    let current = -1
+    let outgoing = -1
+    let outgoingAt = 0
+    const clear = () => {
+      for (const it of el.children as unknown as HTMLElement[]) { it.style.opacity = ''; it.style.translate = '' }
+    }
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick)
-      const dt = Math.min(0.05, (now - last) / 1000)
-      last = now
       const dots = left.current?.querySelectorAll<HTMLElement>('[data-panel] .waypoint')
-      if (!dots?.length || !isDesktop()) { el.style.transform = ''; return }
+      if (!dots?.length || !isDesktop()) { el.style.transform = ''; clear(); return }
       const vh = window.innerHeight
-      const line = vh * 0.5
-      const span = vh * 0.2
+      const line = vh * 0.2
+      const items = [...el.children] as HTMLElement[]
+      const step = items.length > 1 ? items[1].offsetTop - items[0].offsetTop : 0
+      // panels can differ in height (the statement is short): each one's resting
+      // offset centres it where a full card would sit
+      const cardH = items[0]?.offsetHeight ?? 0
+      const rest = items.map((it) => it.offsetTop - (cardH - it.offsetHeight) / 2)
+      const pinTop = parseFloat(getComputedStyle(el).top) || 0
       let target = 0
+      let linear = false
       dots.forEach((d, i) => {
         if (i === 0) return
         const y = d.getBoundingClientRect().top
-        target += ease(Math.max(0, Math.min(1, (line + span - y) / span)))
+        const sec = d.closest<HTMLElement>('[data-panel]')
+        const prev = dots[i - 1].closest<HTMLElement>('[data-panel]')
+        if (step && (sec?.dataset.smooth != null || prev?.dataset.smooth != null)) {
+          // into or out of a smooth section (statement, split): the panels
+          // travel 1:1 with the copy over the panel's own distance, arriving as
+          // the copy reaches the card's top (the statement settles centred)
+          const dist = Math.max(1, (rest[i] ?? 0) - (rest[i - 1] ?? 0))
+          const arrive = sec?.dataset.smooth === 'statement' ? vh * 0.5 : pinTop
+          const t = Math.max(0, Math.min(1, (arrive + dist - y) / dist))
+          if (t > 0 && t < 1) linear = true
+          target += t
+        } else {
+          target += y < line ? 1 : 0
+        }
       })
-      shown = shown < 0 ? target : shown + (target - shown) * (1 - Math.exp(-dt * 9))
-      if (Math.abs(target - shown) < 1e-4) shown = target
-      const items = [...el.children] as HTMLElement[]
-      const step = items.length > 1 ? items[1].offsetTop - items[0].offsetTop : 0
-      el.style.transform = shown ? `translateY(${(-shown * step).toFixed(2)}px)` : ''
-      const idx = Math.floor(shown + 1e-3)
-      if (idx !== current) { current = idx; onSection(idx) }
+      // interpolate between the resting offsets of the panels either side
+      const k = Math.min(Math.max(0, Math.floor(target)), rest.length - 1)
+      const f = target - k
+      const y = rest.length ? rest[k] + ((rest[k + 1] ?? rest[k]) - rest[k]) * f - rest[0] : 0
+      el.style.transform = y ? `translateY(${(-y).toFixed(2)}px)` : ''
+      // a crossfade: the outgoing panel is held where the new one now sits
+      // (only between ordinary panels: a statement or split has already scrolled away)
+      if (!linear && Math.abs(k - current) === 1) {
+        const smooth = (i: number) => dots[i]?.closest<HTMLElement>('[data-panel]')?.dataset.smooth != null
+        const hi = Math.max(k, current)
+        outgoing = smooth(hi) || smooth(hi - 1) ? -1 : current
+        outgoingAt = now
+      } else if (!linear && k !== current) outgoing = -1
+      // once it has faded, let go: held out of place it stretches the page's scroll height
+      if (linear || now - outgoingAt > 500) outgoing = -1
+      current = k
+      items.forEach((it, i) => {
+        it.style.opacity = i === k || (linear && i === k + 1) ? '1' : '0'
+        it.style.translate = i === outgoing ? `0 ${(rest[k] - rest[i]).toFixed(2)}px` : ''
+      })
     }
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
       el.style.transform = ''
+      clear()
     }
-  }, [enabled, left, track, onSection])
+  }, [enabled, left, track])
 }
 
 /** stable back-face props per project (memo-friendly) */
-const backs = new Map<string, { title: string; label: string }>()
+const backs = new Map<string, { title: string; label: string; plain?: boolean }>()
 const backFor = (w: WorkItem) => {
   let b = backs.get(w.href)
-  if (!b) { b = { title: w.title, label: 'Case study' }; backs.set(w.href, b) }
+  if (!b) { b = { title: w.title, label: 'Case study', plain: w.heroBoard || !!w.vignette }; backs.set(w.href, b) }
   return b
 }
 
+/** consecutive sections sharing a `group` become one run (a chapter with sub-chapters) */
+function runsOf(sections: CaseSection[]) {
+  const runs: { group?: string; items: { s: CaseSection; i: number }[] }[] = []
+  sections.forEach((s, i) => {
+    const last = runs[runs.length - 1]
+    if (s.group && last?.group === s.group) last.items.push({ s, i })
+    else runs.push({ group: s.group, items: [{ s, i }] })
+  })
+  return runs
+}
+
 type Panel = { key: string; scene: SceneKey; item?: WorkItem; layout?: PanelLayout; more?: SceneKey[]; section?: CaseSection }
+/** layouts that span both columns: the copy column gives way */
+const spans = (l?: PanelLayout) => l === 'full' || l === 'columns' || l === 'statement' || l === 'split'
 
 export default function Carousel() {
   const { slug } = useParams()
@@ -348,8 +409,7 @@ export default function Carousel() {
   usePagedScroll(track, mode === 'home')
 
   useTrackMotion(track, blurs, marker, setActive)
-  const [section, setSection] = useState(0)
-  useCasePanels(mode === 'case', left, track, setSection)
+  useCasePanels(mode === 'case', left, track)
 
   // reset scroll before paint on mode change, so the clicked card (now panel 0,
   // pinned at the same spot) never jumps
@@ -384,11 +444,7 @@ export default function Carousel() {
   }
 
   const goTo = (i: number) => {
-    if (mode === 'case') {
-      left.current?.querySelectorAll<HTMLElement>('[data-panel]')[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    } else {
-      (track.current?.children[i] as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    (track.current?.children[i] as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const showHero = mode === 'home' || transition
@@ -399,14 +455,16 @@ export default function Carousel() {
       {/* always-present sticky rail: holds the stepper, defines the pinned spot */}
       <div className="carousel__rail" aria-hidden={false}>
         <div className="carousel__rail-pin">
-          <nav className="scroll-marker glass" aria-label={mode === 'case' ? 'Case study sections' : 'Projects'} ref={marker}>
+          {/* project stepper: homepage only (case studies have none) */}
+          {mode === 'home' && (
+          <nav className="scroll-marker glass" aria-label="Projects" ref={marker}>
             <div className="scroll-marker__window">
             <div className="scroll-marker__strip">
             {panels.map((p, i) => (
               <button
                 key={p.key}
                 className="scroll-marker__bar"
-                aria-label={mode === 'case' ? `Section ${i + 1}: ${caseItem!.sections[i].heading}` : `Go to ${p.item?.title}`}
+                aria-label={`Go to ${p.item?.title}`}
                 aria-current={i === active ? 'true' : undefined}
                 onClick={() => goTo(i)}
               >
@@ -416,6 +474,7 @@ export default function Carousel() {
             </div>
             </div>
           </nav>
+          )}
         </div>
       </div>
 
@@ -445,23 +504,44 @@ export default function Carousel() {
         <div className={`case-left${transition ? ' is-entering' : ''}${!caseItem ? ' is-leaving' : ''}`} ref={caseItem ? left : undefined}>
           <div className="case-left__inner">
           <header className="case-left__head">
-            <p className="eyebrow">Case study</p>
-            <h1 className="case-left__title">{shown!.title}</h1>
-            <p className="lede muted">{shown!.description}</p>
+            {shown!.brand === 'miro' ? <MiroLogo height={26} className="case-left__brand" /> : <p className="eyebrow">Case study</p>}
+            <h1 className="case-left__title">{shown!.headline ?? shown!.title}</h1>
+            {!shown!.headline && <p className="lede muted">{shown!.description}</p>}
+            {shown!.intro && <p className="case-left__intro">{shown!.intro}</p>}
+            {shown!.video && <VideoEmbed video={shown!.video} />}
           </header>
-          {shown!.sections.map((s, i) => (
-            <section className={`case-left__section${s.layout === 'full' ? ' is-full' : ''}`} data-panel={i} key={s.heading}>
-              {/* waypoint: where the right-hand panel advances / retreats */}
-              <span className={`waypoint${i <= section ? ' is-on' : ''}`} aria-hidden />
-              {/* full-width sections carry their copy on the panel itself */}
-              {s.layout !== 'full' && (
-                <>
-                  <h2 className="case-left__h2">{s.heading}</h2>
-                  {s.body.map((b) => <p className="lede" key={b}>{b}</p>)}
-                </>
-              )}
-            </section>
-          ))}
+          {runsOf(shown!.sections).map((run) => {
+            const one = (s: CaseSection, i: number, row?: number) => (
+              <section
+                className={`case-left__section${spans(s.layout) ? ' is-full' : ''}${run.group ? ' is-sub' : ''}`}
+                data-panel={i}
+                data-smooth={s.layout === 'statement' || s.layout === 'split' ? s.layout : undefined}
+                key={s.heading}
+                style={row ? { gridRow: row } : undefined}
+              >
+                {/* waypoint (invisible): where the right-hand panel advances / retreats */}
+                <span className="waypoint" aria-hidden />
+                {/* full-width sections carry their copy on the panel itself; untitled ones are spacers */}
+                {!spans(s.layout) && s.heading && (
+                  <>
+                    {/* a chapter's title sits in the margin; a sub-chapter's leads its copy */}
+                    <h2 className="case-left__h2">{s.heading}</h2>
+                    {s.body.map((b) => <p className="lede" key={b}>{b}</p>)}
+                  </>
+                )}
+              </section>
+            )
+            if (!run.group) return run.items.map(({ s, i }) => one(s, i))
+            // a chapter with sub-chapters: its title rides in the margin for the whole run
+            return (
+              <div className="case-left__run" key={run.group}>
+                <div className="case-left__run-label" style={{ gridRow: `1 / span ${run.items.length}` }}>
+                  <p className="case-left__chapter">{run.group}</p>
+                </div>
+                {run.items.map(({ s, i }, k) => one(s, i, k + 1))}
+              </div>
+            )
+          })}
           </div>
         </div>
       )}
@@ -469,22 +549,67 @@ export default function Carousel() {
       <div className="carousel__track-wrap">
         <div className="carousel__track" ref={track}>
           {panels.map((p, i) => (
-            <div className="carousel__item" key={p.key}>
+            <div className="carousel__item" data-gl-fade key={p.key}>
               {p.item ? (
                 <Link className="carousel__link" to={p.item.href} onClick={(e) => { if (mode === 'case') { e.preventDefault(); return } open(p.item!) }} tabIndex={mode === 'case' ? -1 : 0}>
-                  <GLSlot variant="wide" scene={scenes[p.scene]} blur={blurs.current[i]} spin={spinFor(p.key)} back={backFor(p.item)} tilt className={toneClass(p.scene)}>
+                  <GLSlot variant="wide" scene={scenes[p.scene]} flat={FLAT_SCENES.has(p.scene)} blur={blurs.current[i]} spin={spinFor(p.key)} back={backFor(p.item)} tilt className={toneClass(p.scene)}>
                     <div className="stack stack--tight">
                       <h2 className="title">{p.item.title}</h2>
                       <p className="lede">{p.item.description}</p>
                     </div>
                   </GLSlot>
                 </Link>
+              ) : null}
+              {/* the case study opens on the live headline board, over the card's back face */}
+              {p.item ? (
+                mode === 'case' && (
+                  <>
+                    {p.item.heroBoard && <div className="case-board"><CaseBoard /></div>}
+                    {p.item.vignette && <div className="case-board"><Vignette k={p.item.vignette} /></div>}
+                    {/* stickers land once the board has faded in */}
+                    {p.item.stickers && <CardStickers delay={1100} />}
+                  </>
+                )
+              ) : p.layout === 'split' && p.section ? (
+                // the copy across both columns, then the section's shelf full width
+                <div className="panel panel--split">
+                  <div className="panel__stage split">
+                    <div className="split__copy">
+                      <h2 className="case-left__h2">{p.section.heading}</h2>
+                      {p.section.body[0] && <p className="lede">{p.section.body[0]}</p>}
+                    </div>
+                    <div className="split__copy split__copy--right">
+                      {p.section.body.slice(1).map((b) => <p className="lede" key={b}>{b}</p>)}
+                    </div>
+                    {p.section.shelf && <div className="split__shelf"><PagedShelf shelf={p.section.shelf} bare /></div>}
+                  </div>
+                </div>
+              ) : p.layout === 'statement' && p.section?.statement ? (
+                // one sentence centred across both columns, no card behind it
+                <div className="panel panel--statement">
+                  <div className="panel__stage"><StatementReveal script={p.section.statement} /></div>
+                </div>
+              ) : p.layout === 'columns' && p.section?.columns ? (
+                // one card per column; each animates in on its own once the
+                // section is reached (data-gl-fade mirrors the fade into WebGL)
+                <div className="panel panel--columns">
+                  <div className="pillars">
+                    {p.section.columns.map((c, j) => (
+                      <div key={c.title} className={`pillar${active >= i ? ' is-in' : ''}`} data-gl-fade style={{ transitionDelay: active >= i ? `${j * 140}ms` : '0ms' }}>
+                        <GLSlot variant="fill" scene={scenes[c.scene]} blur={blurs.current[i]} className={toneClass(c.scene)}>
+                          <h3 className="pillar__title">{c.title}</h3>
+                        </GLSlot>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className={`panel panel--${p.layout ?? 'single'}`}>
                   {[p.scene, ...(p.more ?? [])]
                     .slice(0, p.layout === 'grid' ? 4 : p.layout === 'stack' ? 2 : 1)
                     .map((k, j) => (
                       <GLSlot key={j} variant="fill" scene={scenes[k]} blur={blurs.current[i]} className={toneClass(k)}>
+                        {p.section?.vignettes?.[j] && <Vignette k={p.section.vignettes[j]} />}
                         {p.layout === 'full' && j === 0 && p.section ? (
                           <div className="panel__copy">
                             <h2 className="case-left__h2">{p.section.heading}</h2>

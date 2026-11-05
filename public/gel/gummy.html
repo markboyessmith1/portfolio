@@ -1,0 +1,778 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gummy Hands Loop</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e6e6e6; overflow: hidden; }
+  canvas { display: block; }
+  #hud { position: fixed; left: 12px; bottom: 10px; font: 12px/1.4 system-ui, sans-serif; color: #888; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="hud">gummy hands — one hand travelling the four cards</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+RectAreaLightUniformsLib.init();
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js';
+
+const params = new URLSearchParams(location.search);
+const FREEZE = params.has('t') ? parseFloat(params.get('t')) : null;   // ?t=12.3 freezes the loop there
+const ONLY = params.get('only');                                        // ?only=2 shows one card, big
+
+// Mark's tuned gummy (from the jig)
+const P = {   // Mark's final gummy (from the jig)
+  cherry: "#E0102A",
+  orange: "#FF7A00",
+  lemon: "#e0c410",
+  apple: "#5BD62A",
+  pineapple: "#6e15b7",
+  absorb: 4.75,
+  refract: 0.076,
+  milk: 0,
+  glow: 3,
+  body: 0.89,
+  thinGlow: 1.06,
+  deep: 0.35,
+  roughness: 0.22,
+  clearcoat: 0.08,
+  clearcoatRoughness: 0.07,
+  specular: 0.26,
+  reflections: 0.6,
+  wobble: 0.56,
+  squash: 0.245,
+  keyLight: 5.3,
+  fillLight: 4.1,
+  rimLeft: 6.05,
+  rimRight: 6.05,
+  topLight: 2.4,
+  ambient: 1.24,
+  sun: 1.4,
+  exposure: 0.88,
+  shadow: 0.47,
+  background: "#f2f2f2",
+  steam: 0.71,
+  speed: 1,
+  paused: false, time: 0,
+};
+const MATS = [], STAGES = [], HANDMESH = [];   // every gummy material, every card's lights, every gummy mesh
+// which flavour each card's travelling hand is (it changes flavour in flight), and the others
+const FLAVOUR = ['lemon', 'cherry', 'orange', 'pineapple'];
+const SECOND = 'apple', GEL = 'apple';
+const S = 1.75;                                  // the glove's scale (about 2 units long)
+const CAMZ = 7.4, FOV = 34;
+const HALF = CAMZ * Math.tan(THREE.MathUtils.degToRad(FOV / 2));   // half a card, in world units at z = 0
+const FLOOR_Y = -1.75;   // (just under the gestures, inside the card)
+
+// ─── renderer: one canvas, four square tiles ───────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.LinearToneMapping;
+renderer.toneMappingExposure = P.exposure;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.autoClear = false;
+document.body.appendChild(renderer.domElement);
+const envTex = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+
+// the gel's density: back faces → depth first; each front pixel absorbs by the jelly behind it
+// real candy: (1) the hands' back faces → a depth buffer: how thick the gel is at each pixel; (2) the card
+// drawn without the gummies → what's behind them; (3) each gummy pixel looks through to (2), bent by its
+// surface and thickness (refraction), losing the colours its dye absorbs by thickness (Beer–Lambert),
+// with a glassy clearcoat and sharp highlights on top
+const G = { uBack: { value: null }, uScene: { value: null }, uRes: { value: new THREE.Vector2(1, 1) },
+            uNear: { value: 0.1 }, uFar: { value: 100 }, uAbsorb: { value: P.absorb }, uRefract: { value: P.refract },
+            uMilk: { value: P.milk }, uGlow: { value: P.glow }, uBody: { value: P.body },
+            uThinGlow: { value: P.thinGlow }, uDeep: { value: P.deep } };
+const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+const backRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: true });
+backRT.depthTexture = new THREE.DepthTexture(1, 1);
+const backMat = new THREE.MeshDepthMaterial({ side: THREE.BackSide });
+
+function jelly(flavour) {
+  const tint = new THREE.Color(P[flavour]);
+  const m = new THREE.MeshPhysicalMaterial({
+    color: tint.clone(), roughness: P.roughness, metalness: 0, transparent: true,
+    clearcoat: P.clearcoat, clearcoatRoughness: P.clearcoatRoughness,
+    specularIntensity: P.specular, envMapIntensity: P.reflections, ior: 1.45,
+  });
+  m.userData.flavour = flavour;
+  m.userData.tint = tint;
+  m.userData.u = { uTime: { value: 0 }, uWobble: { value: 0 } };
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, m.userData.u, G);
+    sh.uniforms.uTint = { value: m.userData.tint };
+    sh.fragmentShader = 'uniform vec3 uTint; uniform float uNear, uFar, uAbsorb, uRefract, uMilk, uGlow, uBody, uThinGlow, uDeep; uniform sampler2D uBack, uScene; uniform vec2 uRes;\n' +
+      sh.fragmentShader.replace('#include <opaque_fragment>',
+      `vec2 suv = gl_FragCoord.xy / uRes;
+       float bz = texture2D(uBack, suv).x;
+       float backZ = perspectiveDepthToViewZ(bz, uNear, uFar);
+       float th = bz >= 0.9999 ? 0.2 : clamp((-vViewPosition.z) - backZ, 0.0, 4.0);
+       vec3 nv = normalize(normal);
+       // refraction: look through, bent by the surface's slant and how much gel is in the way
+       vec3 behind = texture2D(uScene, suv - nv.xy * uRefract * (0.4 + th)).rgb;
+       // coloured absorption: the dye soaks up what isn't its colour, more the thicker the gel
+       vec3 sigma = (vec3(1.0) - uTint) * uAbsorb;
+       vec3 T = exp(-sigma * th);
+       float fres = pow(1.0 - clamp(abs(dot(normalize(vViewPosition), nv)), 0.0, 1.0), 4.0);
+       // the gel's body: light scattered inside it comes back out in the dye's colour — more in thick
+       // gel (dense, rich), brighter at the thin edges (light passing straight through), darkest deep inside
+       float dens = 1.0 - exp(-th * uAbsorb * 0.45);
+       vec3 seen = behind * T * mix(uThinGlow, 1.0, dens);
+       vec3 glowC = uTint * uGlow * (0.45 + 0.55 * (1.0 - dens * uDeep));
+       // (bright flavours overshoot to white: cap the glow's brightness so yellows stay saturated)
+       float gl = dot(glowC, vec3(0.2126, 0.7152, 0.0722));
+       glowC *= min(1.0, 0.62 / max(gl, 1e-4));
+       vec3 inside = mix(seen, glowC * mix(vec3(1.0), T + 0.25, dens * uDeep), uBody * (0.35 + 0.65 * dens));
+       inside *= (1.0 - 0.45 * fres);
+       float il = dot(inside, vec3(0.2126, 0.7152, 0.0722));
+       inside *= min(1.0, 0.9 / max(il, 1e-4));       // (and the whole of it: never brighter than the backdrop)
+       vec3 surface = totalDiffuse * uMilk + totalSpecular;
+       #ifdef USE_CLEARCOAT
+         surface += (clearcoatSpecularDirect + clearcoatSpecularIndirect) * material.clearcoat;
+       #endif
+       outgoingLight = inside + surface;
+       diffuseColor.a = 1.0;
+       #include <opaque_fragment>`);
+    sh.vertexShader = 'uniform float uTime; uniform float uWobble;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+       float w = sin(position.x * 40.0 + uTime * 21.0) * 0.6 + sin(position.y * 32.0 - uTime * 17.0) * 0.4 + sin(position.z * 48.0 + uTime * 13.0) * 0.3;
+       transformed += normal * w * uWobble * 0.012;`);
+  };
+  MATS.push(m);
+  return m;
+}
+
+// studio: big softbox key, soft fill, two rim strips behind, a top bounce
+function stage() {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#f2f2f2');
+  scene.environment = envTex;
+  scene.background = new THREE.Color(P.background);
+  const area = (w, h, power, pos) => { const l = new THREE.RectAreaLight('#ffffff', power, w, h); l.position.copy(pos); l.lookAt(0, 0, 0); scene.add(l); return l; };
+  const lights = {
+    keyLight: area(2.2, 2.2, P.keyLight, new THREE.Vector3(4, 5, 6)),       // (small and bright: crisp highlights)
+    fillLight: area(4, 6, P.fillLight, new THREE.Vector3(-6, 1, 4)),
+    rimLeft: area(0.35, 7, P.rimLeft, new THREE.Vector3(-4.5, 1, -4)),      // (thin strips: sharp edge lines)
+    rimRight: area(0.35, 7, P.rimRight, new THREE.Vector3(4.5, 1, -4)),
+    topLight: area(6, 6, P.topLight, new THREE.Vector3(0, 7, 0)),
+    ambient: new THREE.HemisphereLight('#ffffff', '#ece8f2', P.ambient),
+    sun: new THREE.DirectionalLight('#ffffff', P.sun),
+  };
+  lights.sun.position.set(1, 9, 2); scene.add(lights.ambient, lights.sun);
+  STAGES.push({ scene, lights });
+  // the cameras look straight down -z, so a card's neighbour is exactly a shift of the world (see toFrame)
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 100);
+  camera.position.set(0, 0, CAMZ);
+  camera.lookAt(0, 0, 0);
+  return { scene, camera };
+}
+
+// ─── the hand ─────────────────────────────────────────────────────────────────────────────────────
+let TEMPLATE = null, CENTRE = null, FIX = new THREE.Vector3(), FIST_REACH = 0.3;
+const SHADOW_TEX = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gr.addColorStop(0, 'rgba(40,30,50,0.55)'); gr.addColorStop(0.45, 'rgba(40,30,50,0.22)'); gr.addColorStop(1, 'rgba(40,30,50,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
+})();
+
+
+// ─── felt (?mat=felt): three.js's own fabric tools on the same hands ─────────────────────────────
+// a matte base with sheen (the soft grazing-angle glow of a napped fabric), a fibre tangle and clumps
+// worked into the surface normal and the colour in the shader, and "shells" — the mesh repeated a few
+// times, each a hair larger, with a fibre pattern cut through it — for a genuinely fuzzy outline
+const MAT = params.get('mat') === 'felt' ? 'felt' : 'gummy';
+if (MAT === 'felt') Object.assign(P, {                       // soft studio for felt: broad, even, low contrast
+  keyLight: 2.2, fillLight: 4.5, rimLeft: 1.6, rimRight: 1.4, topLight: 3.0, ambient: 1.6, sun: 0.5, exposure: 0.95, shadow: 0.32,
+});
+renderer.toneMappingExposure = P.exposure;
+const FELT = { fuzz: 0.042, shells: 12, sheen: 0.7, sheenRough: 0.85, fibre: 0.28, clump: 0.2, pastel: 0.42 };   // (soft: a gentle nap, a long fine fuzz)
+const FELT_NOISE = `
+  float fh(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+  float fn(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(fh(i), fh(i + vec3(1,0,0)), f.x), mix(fh(i + vec3(0,1,0)), fh(i + vec3(1,1,0)), f.x), f.y),
+               mix(mix(fh(i + vec3(0,0,1)), fh(i + vec3(1,0,1)), f.x), mix(fh(i + vec3(0,1,1)), fh(i + vec3(1,1,1)), f.x), f.y), f.z); }
+  // fibres: a fine noise, warped so it breaks into short curling strands
+  float fibres(vec3 p) { vec3 w = vec3(fn(p * 0.7), fn(p * 0.7 + 17.3), fn(p * 0.7 + 41.1)) * 3.0; return fn(p * 2.2 + w); }
+`;
+// pastel: the flavour eased toward a soft milky tint (felt dyes read chalky, not saturated)
+const pastel = hex => { const c = new THREE.Color(hex), h = {}; c.getHSL(h);
+  return new THREE.Color().setHSL(h.h, h.s * 0.6, h.l + (0.86 - h.l) * FELT.pastel); };
+function feltMat(flavour, shell = -1) {
+  const col = pastel(P[flavour]);
+  const m = new THREE.MeshPhysicalMaterial({
+    color: col.clone(), roughness: 1, metalness: 0,
+    sheen: FELT.sheen, sheenRoughness: FELT.sheenRough, sheenColor: col.clone().lerp(new THREE.Color('#ffffff'), 0.6),
+    transparent: shell >= 0, depthWrite: shell < 0, envMapIntensity: 0.4,
+  });
+  m.userData.flavour = flavour; m.userData.tint = col;
+  m.userData.u = { uTime: { value: 0 }, uWobble: { value: 0 } };
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, m.userData.u);
+    sh.uniforms.uTint = { value: m.userData.tint };
+    sh.vertexShader = 'uniform float uTime; uniform float uWobble; varying vec3 vObj;\n' + sh.vertexShader
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vObj = position * 60.0;
+        ${shell >= 0 ? `transformed += normal * ${((shell + 1) / FELT.shells * FELT.fuzz).toFixed(5)} / ${S.toFixed(3)};` : ''}`);
+    sh.fragmentShader = 'uniform vec3 uTint; varying vec3 vObj;\n' + FELT_NOISE + sh.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        float fb = fibres(vObj), cl = fn(vObj * 0.18);
+        // colour: mottled by clumps, flecked lighter and darker along the fibres
+        diffuseColor.rgb *= mix(1.0 - ${FELT.clump.toFixed(2)} * 0.5, 1.0, cl) * mix(0.93, 1.04, fb);   // (soft flecks)
+        ${shell >= 0 ? `
+        // a shell: keep only the fibre tips, fewer the further out — the fuzz thins to nothing
+        float lv = ${((shell + 1) / FELT.shells).toFixed(4)};
+        if (fibres(vObj * 1.7 + 3.1) < 0.35 + lv * 0.6) discard;
+        diffuseColor.a = (1.0 - lv) * 0.7;
+        diffuseColor.rgb *= 0.9 + 0.2 * lv;` : ''}`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        // the nap: fibres and clumps tilt the surface normal, so light picks out the texture
+        { float e = 0.35;
+          float h0 = fibres(vObj) * ${FELT.fibre.toFixed(2)} + fn(vObj * 0.18) * ${FELT.clump.toFixed(2)};
+          float hx = fibres(vObj + vec3(e,0,0)) * ${FELT.fibre.toFixed(2)} + fn((vObj + vec3(e,0,0)) * 0.18) * ${FELT.clump.toFixed(2)};
+          float hy = fibres(vObj + vec3(0,e,0)) * ${FELT.fibre.toFixed(2)} + fn((vObj + vec3(0,e,0)) * 0.18) * ${FELT.clump.toFixed(2)};
+          normal = normalize(normal - vec3(hx - h0, hy - h0, 0.0) * 0.5); }`);
+  };
+  MATS.push(m);
+  return m;
+}
+
+function makeHand(scene, flavour) {
+  const h = SkeletonUtils.clone(TEMPLATE);
+  const mat = MAT === 'felt' ? feltMat(flavour) : jelly(flavour);
+  const shellMats = [];
+  h.traverse(o => {
+    if (!o.isMesh) return;
+    o.material = mat; o.frustumCulled = false;
+    if (MAT === 'felt') {
+      // the fuzz: shells sharing the glove's skeleton, so they bend with it
+      for (let k = 0; k < FELT.shells; k++) {
+        const sm = feltMat(flavour, k); shellMats.push(sm);
+        const shell = new THREE.SkinnedMesh(o.geometry, sm);
+        shell.bind(o.skeleton, o.bindMatrix); shell.frustumCulled = false; shell.renderOrder = 1 + k;
+        o.parent.add(shell);
+      }
+    } else { o.layers.enable(1); HANDMESH.push(o); }
+  });
+  h.scale.setScalar(S);
+  h.position.copy(CENTRE).multiplyScalar(-S).sub(FIX);
+  const squash = new THREE.Group(); squash.add(h);
+  const pivot = new THREE.Group(); pivot.add(squash);
+  scene.add(pivot);
+  const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: SHADOW_TEX, transparent: true, depthWrite: false }));
+  // (tilted toward the camera: it looks along the floor almost edge-on, which squashed the shadow to a line)
+  blob.rotation.x = -Math.PI / 2 + 0.95; scene.add(blob);
+  const bones = {};
+  h.traverse(o => { if (o.isBone) bones[o.name] = o; });
+  const rest = {}; for (const n in bones) rest[n] = bones[n].quaternion.clone();
+  const hand = {
+    pivot, squash, mat, bones, blob, shells: shellMats, sq: { x: 0, v: 0 }, wb: { x: 0, v: 0 },
+    pose({ index = [0, 0, 0], middle = [0, 0, 0], ring = [0, 0, 0], pinky = [0, 0, 0], tuck = 0, spread = 0 } = {}) {
+      const F = { Index: index, Middle: middle, Ring: ring, Pinky: pinky };
+      for (const n in bones) bones[n].quaternion.copy(rest[n]);
+      let k = 0;
+      for (const f in F) {
+        for (let j = 0; j < 3; j++) {
+          const b = bones[`Finger_${f}${j + 1}`];
+          b.rotation.y += F[f][j];
+          if (j === 0) b.rotation.z += (k - 1.5) * spread;
+        }
+        k++;
+      }
+      bones.Finger_Thumb1.rotation.x += 0.9 * tuck;
+      bones.Finger_Thumb2.rotation.y += 0.7 * tuck;
+      bones.Finger_Thumb3.rotation.y += 0.7 * tuck;
+    },
+    set(state) { pivot.position.copy(state.pos); pivot.quaternion.copy(state.q); this.pose(state.pose); },
+    tip() { pivot.updateMatrixWorld(true); return bones.Finger_Index_end.getWorldPosition(new THREE.Vector3()); },
+    hit(power) { this.sq.v -= 9 * power; this.wb.v += 14 * power; },
+    step(dt, t) {
+      this.sq.v += (-this.sq.x * 260 - this.sq.v * 9) * dt; this.sq.x += this.sq.v * dt;
+      this.wb.v += (-this.wb.x * 90 - this.wb.v * 4) * dt; this.wb.x += this.wb.v * dt;
+      const s = this.sq.x * P.squash;
+      squash.scale.set(1 + s, 1 - s * 0.5, 1 - s * 0.5);
+      mat.userData.u.uWobble.value = Math.abs(this.wb.x) * P.wobble + 0.06;
+      mat.userData.u.uTime.value = t;
+      const hgt = Math.max(0, pivot.position.y - FLOOR_Y);
+      blob.position.set(pivot.position.x, FLOOR_Y + 0.001, pivot.position.z);
+      blob.scale.set(1.9 + hgt * 0.45, (1.9 + hgt * 0.45) * 0.42, 1);
+      blob.material.opacity = Math.min(1, P.shadow * 1.6 / (1 + hgt * 0.35));
+      blob.visible = pivot.visible;
+    },
+    show(v) { pivot.visible = v; blob.visible = v; },
+  };
+  hand.pose();
+  return hand;
+}
+const FIST = { index: [1.5, 1.5, 1.35], middle: [1.5, 1.5, 1.35], ring: [1.5, 1.5, 1.35], pinky: [1.5, 1.5, 1.35], tuck: 1 };
+const POINT = { index: [0, 0, 0], middle: [1.5, 1.5, 1.3], ring: [1.5, 1.5, 1.3], pinky: [1.5, 1.5, 1.3], tuck: 1 };
+const OPEN = { spread: 0.06 };
+const mixPose = (a, b, u) => {
+  const out = {};
+  for (const k of ['index', 'middle', 'ring', 'pinky']) {
+    const A = a[k] || [0, 0, 0], B = b[k] || [0, 0, 0];
+    out[k] = A.map((v, i) => v + (B[i] - v) * u);
+  }
+  out.tuck = (a.tuck || 0) + ((b.tuck || 0) - (a.tuck || 0)) * u;
+  out.spread = (a.spread || 0) + ((b.spread || 0) - (a.spread || 0)) * u;
+  return out;
+};
+
+// ─── orientation, from named world directions (the glove's axes measured from its bones) ─────────
+let M0inv = null, PROBE = null;
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function measure() {
+  const scene = new THREE.Scene();
+  const h = makeHand(scene, 'pineapple');
+  scene.updateMatrixWorld(true);
+  const k = h.bones.Finger_Middle1.getWorldPosition(new THREE.Vector3());
+  const tip = h.bones.Finger_Middle_end.getWorldPosition(new THREE.Vector3());
+  const F0 = tip.clone().sub(k).normalize();
+  h.pose({ middle: [1.0, 0, 0] }); scene.updateMatrixWorld(true);
+  const d = h.bones.Finger_Middle_end.getWorldPosition(new THREE.Vector3()).sub(tip);
+  const P0 = d.sub(F0.clone().multiplyScalar(d.dot(F0))).normalize();
+  M0inv = new THREE.Matrix4().makeBasis(F0, P0, F0.clone().cross(P0)).invert();
+  h.pose({}); scene.updateMatrixWorld(true);
+  FIX = new THREE.Box3().setFromObject(h.pivot, true).getCenter(new THREE.Vector3());
+  h.pose(FIST); scene.updateMatrixWorld(true);
+  FIST_REACH = new THREE.Box3().setFromObject(h.pivot, true).max.x - FIX.x;
+  scene.remove(h.pivot, h.blob);
+  PROBE = makeHand(new THREE.Scene(), 'pineapple');      // (re-made with the centre fix, for tip offsets)
+}
+function orient(f, p) {
+  f = f.clone().normalize();
+  p = p.clone().sub(f.clone().multiplyScalar(p.dot(f))).normalize();
+  return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(f, p, f.clone().cross(p)).multiply(M0inv));
+}
+// where the index fingertip sits from the hand's centre, for an orientation and pose
+function tipOffset(q, pose) {
+  PROBE.pivot.position.set(0, 0, 0); PROBE.pivot.quaternion.copy(q); PROBE.pose(pose);
+  return PROBE.tip();
+}
+// the hand's centre that puts its fingertip on `target`
+const pivotFor = (target, q, pose) => target.clone().sub(tipOffset(q, pose));
+function lead(v, bank = 0) {
+  const d = v.clone().normalize();
+  const palm = Math.abs(d.y) > 0.92 ? V(0, 0, -1) : V(0, -1, 0);
+  palm.applyAxisAngle(d, bank);
+  return orient(d, palm);
+}
+
+// ─── motion helpers ──────────────────────────────────────────────────────────────────────────────
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+const smoother = x => { x = clamp01(x); return x * x * x * (x * (6 * x - 15) + 10); };
+const bez = (p0, p1, p2, p3, u) => {
+  const v = 1 - u;
+  return p0.clone().multiplyScalar(v * v * v).add(p1.clone().multiplyScalar(3 * v * v * u))
+    .add(p2.clone().multiplyScalar(3 * v * u * u)).add(p3.clone().multiplyScalar(u * u * u));
+};
+
+// ─── the shared world: four cards side by side ──────────────────────────────────────────────────
+// card i's world sits at OFF[i] (TL, TR, BR, BL). A point at depth z, moved from one card's frame to
+// another's, shifts by the cards' spacing scaled by its distance from the camera — so it lands on the
+// same pixel of the grid: a hand leaving one card's edge is exactly the hand entering the next
+const OFF = [V(-HALF, HALF, 0), V(HALF, HALF, 0), V(HALF, -HALF, 0), V(-HALF, -HALF, 0)];
+const toFrame = (p, from, to) => p.clone().add(OFF[from].clone().sub(OFF[to]).multiplyScalar((CAMZ - p.z) / CAMZ));
+
+// ─── the four cards ──────────────────────────────────────────────────────────────────────────────
+// each card: landing state (where the travelling hand settles), action(t) for IN ≤ t ≤ E, final = action(E),
+// dive (how its flight in swings in depth), extras(t, dt) for its own props and second hands
+const IN = 1.5;                                                       // every hand-over flight, seconds
+
+function particlesBurst(scene) {
+  const parts = [], cols = [P.cherry, P.orange, P.lemon, P.apple, '#ffffff'];
+  const ribbon = new THREE.PlaneGeometry(0.16, 0.05, 6, 1);
+  { const pa = ribbon.attributes.position; for (let i = 0; i < pa.count; i++) pa.setZ(i, Math.sin(pa.getX(i) * 40) * 0.02); }
+  const sparkG = new THREE.SphereGeometry(0.025, 6, 6);
+  for (let i = 0; i < 70; i++) { const m = new THREE.Mesh(ribbon, new THREE.MeshStandardMaterial({ color: cols[i % 5], roughness: 0.4, side: THREE.DoubleSide, emissive: cols[i % 5], emissiveIntensity: 0.25 })); m.visible = false; scene.add(m); parts.push({ m, spark: false }); }
+  for (let i = 0; i < 26; i++) { const m = new THREE.Mesh(sparkG, new THREE.MeshBasicMaterial({ color: i % 2 ? '#FFE27A' : '#FFFFFF', transparent: true })); m.visible = false; scene.add(m); parts.push({ m, spark: true }); }
+  let age = 99, seed = 1;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };   // (repeatable)
+  return {
+    fire(at) {
+      age = 0; seed = 7;
+      for (const p of parts) {
+        const a = rnd() * Math.PI * 2, el = (rnd() - 0.3) * Math.PI * 0.8, sp = p.spark ? 5 + rnd() * 3 : 1.6 + rnd() * 2.4;
+        p.v = V(Math.cos(a) * Math.cos(el), Math.sin(el) + 0.5, Math.sin(a) * Math.cos(el) * 0.7).multiplyScalar(sp);
+        p.w = V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(14);
+        p.m.position.copy(at); p.m.rotation.set(rnd() * 6, rnd() * 6, rnd() * 6);
+        p.life = p.spark ? 0.35 + rnd() * 0.25 : 1.3 + rnd() * 0.6; p.m.visible = true;
+      }
+    },
+    update(dt) {
+      age += dt;
+      for (const p of parts) {
+        if (!p.m.visible) continue;
+        if (age > p.life) { p.m.visible = false; continue; }
+        p.v.multiplyScalar(Math.exp(-(p.spark ? 3.5 : 2.2) * dt)); p.v.y -= (p.spark ? 1 : 2.2) * dt;
+        p.m.position.addScaledVector(p.v, dt);
+        p.m.rotation.x += p.w.x * dt; p.m.rotation.y += p.w.y * dt; p.m.rotation.z += p.w.z * dt;
+        const k = 1 - smooth((age - p.life * 0.6) / (p.life * 0.4));
+        if (p.spark) { p.m.lookAt(p.m.position.clone().add(p.v)); p.m.scale.set(k, k, k * (1 + p.v.length() * 0.6)); p.m.material.opacity = k; }
+        else p.m.scale.setScalar(k);
+      }
+    },
+    hide() { age = 99; parts.forEach(p => p.m.visible = false); },
+  };
+}
+
+function steamGlass(scene, z, size) {
+  const N = 512, c = document.createElement('canvas'); c.width = c.height = N;
+  const g = c.getContext('2d'), tex = new THREE.CanvasTexture(c);
+  const fogTex = document.createElement('canvas'); fogTex.width = fogTex.height = N;
+  { const fg = fogTex.getContext('2d'); fg.fillStyle = 'rgb(250,250,252)'; fg.fillRect(0, 0, N, N);
+    let sd = 3; const r = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    for (let i = 0; i < 2600; i++) { fg.fillStyle = `rgba(208,212,222,${0.25 + r() * 0.35})`; fg.beginPath(); fg.arc(r() * N, r() * N, r() * 2.2 + 0.4, 0, 7); fg.fill(); } }
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
+  plane.position.z = z; scene.add(plane);
+  let last = null;
+  const api = {
+    reset() { g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, N, N); g.drawImage(fogTex, 0, 0); tex.needsUpdate = true; last = null; },
+    level(a) { mat.opacity = P.steam * a; plane.visible = a > 0.005; },
+    wipe(p) {
+      const u = (p.x / size + 0.5) * N, v = (0.5 - p.y / size) * N;
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = 22; g.strokeStyle = 'rgba(0,0,0,0.95)';
+      g.beginPath(); g.moveTo(last ? last[0] : u, last ? last[1] : v); g.lineTo(u, v); g.stroke();
+      last = [u, v]; tex.needsUpdate = true;
+    },
+  };
+  api.reset();
+  return api;
+}
+
+function cardSketch(st) {
+  // one hand sketching a squiggly gel line, left to right, in one flowing pass
+  const pts = [];
+  for (let k = 0; k <= 160; k++) {
+    const u = k / 160;
+    pts.push(V(-1.35 + 2.7 * u + Math.cos(u * Math.PI * 7) * 0.07 * Math.sin(u * Math.PI),
+               0.5 + Math.sin(u * Math.PI * 7) * 0.22 * Math.sin(u * Math.PI) + 0.12 * Math.sin(u * Math.PI * 2.3), 0.5));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  const geo = new THREE.TubeGeometry(curve, 600, 0.075, 14, false);
+  const gelMat = MAT === 'felt' ? feltMat(GEL) : jelly(GEL);   // (in felt: a strand of yarn)
+  const gel = new THREE.Mesh(geo, gelMat); gel.layers.enable(1); HANDMESH.push(gel); st.scene.add(gel);
+  const total = geo.index.count;
+  const q = orient(V(0.15, 1, 0.5), V(-0.15, 0, 1));
+  const DN = 2.4, E = IN + DN;
+  const prog = t => { const u = clamp01((t - IN) / DN); return (u < 0.12 ? u * u / 0.24 : u - 0.06) / 0.94; };
+  return {
+    E, D: E + 2.0, dive: [2.0, -1.4],
+    landing: { pos: pivotFor(curve.getPointAt(0), q, POINT), q, pose: POINT },
+    action: t => ({ pos: pivotFor(curve.getPointAt(clamp01(prog(t))), q, POINT), q, pose: POINT }),
+    extras(t) {
+      const fade = 1 - smooth((t - E - 1.0) / 0.6);
+      gel.visible = t >= IN && fade > 0.01;
+      geo.setDrawRange(0, Math.floor(total * clamp01(prog(t)) / 6) * 6);
+      gelMat.opacity = fade; gelMat.userData.u.uTime.value = t; gelMat.userData.u.uWobble.value = 0.05;
+    },
+    hide() { gel.visible = false; },
+  };
+}
+
+function cardFist(st) {
+  const B = makeHand(st.scene, SECOND);
+  const conf = particlesBurst(st.scene);
+  const qA = orient(V(1, 0, 0), V(0, -1, 0)), qB = orient(V(-1, 0, 0), V(0, -1, 0));
+  const GAP = FIST_REACH * 0.75, HIT = IN + 0.55, E = IN + 2.2, Y0 = 0.25;
+  // the distance of each fist from the bump point over time: closing in, the punch, the spring back, a float
+  const reach = t => {
+    if (t < IN) return GAP + 1.0;
+    if (t < HIT) { const u = (t - IN) / (HIT - IN); return GAP + 1.0 * (1 - u * u); }
+    return GAP + 0.45 * smooth((t - HIT) / 0.45) + 0.1 * Math.sin((t - HIT) * 2.6) * smooth((t - HIT) / 0.7);
+  };
+  const stateA = t => ({ pos: V(-reach(t), Y0 + 0.06 * Math.sin(t * 3), 0), q: qA, pose: FIST });
+  let fired = false;
+  return {
+    E, D: E + 1.6, dive: [2.0, -1.4],
+    landing: stateA(IN - 1e-4),
+    action: t => stateA(t),
+    onHit() { },
+    extras(t, dt, A) {
+      if (t < 0.05) { fired = false; conf.hide(); }
+      if (t >= HIT && !fired) { fired = true; A.hit(1); B.hit(1); conf.fire(V(0, Y0 + 0.1, 0.2)); }
+      conf.update(dt);
+      // the second hand: swoops in from off the right, mirrors the first, swoops back out to the right
+      B.pose(mixPose(OPEN, FIST, smooth((t - 0.5) / 0.7)));
+      const home = V(reach(t), Y0 + 0.06 * Math.sin(t * 3), 0);
+      if (t < IN) {
+        const u = clamp01((t - 0.1) / (IN - 0.1)), e = 1 - (1 - u) ** 3;
+        const far = V(5.5, 1.4, 1.2), p = bez(far, V(3.2, 1.8, 2.2), V(1.8, 0.6, -1.0), home, e);
+        const p2 = bez(far, V(3.2, 1.8, 2.2), V(1.8, 0.6, -1.0), home, Math.min(1, e + 0.02));
+        B.pivot.position.copy(p);
+        B.pivot.quaternion.copy(lead(p2.sub(p))).slerp(qB, smooth((u - 0.55) / 0.45));
+        B.show(t > 0.1);
+      } else if (t < E) {
+        B.pivot.position.copy(home); B.pivot.quaternion.copy(qB);
+      } else {
+        const u = clamp01((t - E) / 1.3), e = 0.35 * u + 0.65 * u * u;
+        const far = V(6, 1.6, 1.5), p = bez(home, V(1.6, 0.5, -0.8), V(3.4, 1.6, 2.0), far, e);
+        const p2 = bez(home, V(1.6, 0.5, -0.8), V(3.4, 1.6, 2.0), far, Math.min(1, e + 0.02));
+        B.pivot.position.copy(p);
+        B.pivot.quaternion.copy(qB).slerp(lead(p2.sub(p)), smooth(u / 0.4));
+        B.show(u < 1);
+      }
+      B.step(dt, t);
+    },
+    hide() { conf.hide(); B.show(false); },
+  };
+}
+
+function cardHeart(st) {
+  // the camera's glass steams up; the hand, behind it, points into it and wipes a heart clear
+  const GZ = 0.25;                                                   // the glass
+  const pts = [];
+  for (let k = 0; k <= 120; k++) {
+    const a = Math.PI * 2 * k / 120;
+    const x = 16 * Math.sin(a) ** 3, y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+    pts.push(V(x * 0.05, y * 0.05 + 0.6, GZ - 0.14));   // (the glove's skin runs past its last bone: keep the bone well back so the tip only kisses the glass)
+  }
+  const curve = new THREE.CatmullRomCurve3(pts, true);
+  const glass = steamGlass(st.scene, GZ, 2 * HALF + 0.4);
+  // pointing into the glass: index forward (toward the camera) and a little up, palm down, so the
+  // fingertip is the frontmost point and nothing else reaches the glass
+  const q = orient(V(0.05, 0.45, 1), V(0, -1, 0.35));
+  const PRESS = 0.3, DN = 2.0, BACK = 0.45, E = IN + PRESS + DN + BACK;
+  const hover = V(0, 0, -0.4);
+  const tipAt = t => {
+    if (t < IN + PRESS) return curve.getPointAt(0).add(hover.clone().multiplyScalar(1 - smooth((t - IN) / PRESS)));
+    if (t < IN + PRESS + DN) return curve.getPointAt(smoother((t - IN - PRESS) / DN));
+    const u = smooth((t - IN - PRESS - DN) / BACK);
+    return curve.getPointAt(0).add(V(0, 0.15 * u, -0.4 * u));
+  };
+  return {
+    E, D: E + 2.2, dive: [-0.6, -1.8],                               // (its flight in stays behind the glass)
+    landing: { pos: pivotFor(curve.getPointAt(0).add(hover), q, POINT), q, pose: POINT },
+    action: t => ({ pos: pivotFor(tipAt(t), q, POINT), q, pose: POINT }),
+    extras(t) {
+      if (t < 0.03) glass.reset();
+      // the steam creeps in as the hand arrives, and only clears once it has gone
+      glass.level(smooth((t - 0.5) / 2.0) * (1 - smooth((t - E - 0.6) / 1.4)));
+      const d = (t - IN - PRESS) / DN;
+      if (d > 0 && d < 1.02) glass.wipe(curve.getPointAt(smoother(Math.min(1, d))));
+    },
+    hide() { glass.level(0); },
+  };
+}
+
+function cardCancan(st) {
+  // upright as it lands; flips upside down, the back of the hand to us, the index and middle fingers
+  // the legs: knee lift, then the straight kick, each leg in turn; upright again before it flies
+  const qStand = orient(V(0, 1, 0), V(0, 0, 1));
+  const qDance = orient(V(0, -1, 0), V(0, 0, -1));
+  const FLIP = 0.6, STEP = 1.0, E = IN + FLIP + STEP * 3 + FLIP + 0.1;
+  const SPOT = V(0, 0.15, 0);
+  const legs = ['index', 'middle', 'index'];
+  const state = t => {
+    const flip = smooth((t - IN) / FLIP) * (1 - smooth((t - (E - FLIP - 0.05)) / FLIP));
+    const tk = [1.5 * flip, 1.5 * flip, 1.3 * flip];
+    const pose = { index: [0, 0, 0], middle: [0, 0, 0], ring: tk, pinky: tk, tuck: flip, spread: 0.06 * (1 - flip) };
+    let hop = 0;
+    legs.forEach((leg, i) => {
+      const s = t - IN - FLIP - i * STEP;
+      if (s < 0 || s > STEP) return;
+      const knee = smooth(s / 0.18) * (1 - smooth((s - 0.36) / 0.14));
+      const kick = smooth((s - 0.55) / 0.14) * (1 - smooth((s - 0.78) / 0.18));
+      pose[leg] = [-1.3 * knee - 1.5 * kick, 1.6 * knee, 0.2 * kick];
+      hop += 0.1 * Math.sin(Math.PI * clamp01((s - 0.5) / 0.4));
+    });
+    return { pos: SPOT.clone().add(V(0, hop, 0)), q: qStand.clone().slerp(qDance, flip), pose };
+  };
+  return {
+    E, D: E + 1.6, dive: [2.0, -1.4],
+    landing: state(IN - 1e-4), action: state, extras() {}, hide() {},
+  };
+}
+
+// ─── the hand-over: one flight, seen by both cards ──────────────────────────────────────────────
+// in card b's frame: from where card a's action ended to card b's landing, a swoop that dives toward the
+// camera and back (or, for the glass, stays behind it), fingertips leading; the outgoing card shows the
+// very same flight moved into its frame (toFrame)
+function transit(a, b, t) {
+  const A = cards[a], B = cards[b];
+  const from = A.final, to = B.landing;
+  const p0 = toFrame(from.pos, a, b), p3 = to.pos;
+  const dir = p3.clone().sub(p0);
+  const c1 = p0.clone().addScaledVector(dir, 0.3).add(V(0, 0.4, B.dive[0]));
+  const c2 = p3.clone().addScaledVector(dir, -0.28).add(V(0, 0.3, B.dive[1]));
+  const u = clamp01(t / IN);
+  const ease = x => 0.3 * x + 0.7 * x * x * (3 - 2 * x);                 // (leaves moving, lands soft)
+  const e = ease(u), e2 = ease(Math.min(1, u + 0.015));
+  const pos = bez(p0, c1, c2, p3, e);
+  const vel = bez(p0, c1, c2, p3, e2).sub(pos);
+  let q = from.q.clone();
+  if (vel.lengthSq() > 1e-10) q.slerp(lead(vel, 0.5 * Math.sin(Math.PI * u)), smooth(u / 0.3));
+  q.slerp(to.q, smooth((u - 0.62) / 0.38));
+  return { pos, q, pose: mixPose(from.pose, to.pose, smooth((u - 0.1) / 0.8)) };
+}
+
+// ─── the loop ────────────────────────────────────────────────────────────────────────────────────
+let cards = [], TOTAL = 0, starts = [];
+function sizeAll() {
+  renderer.setSize(innerWidth, innerHeight);
+  const v = renderer.getDrawingBufferSize(new THREE.Vector2());
+  backRT.setSize(v.x, v.y); sceneRT.setSize(v.x, v.y); G.uRes.value.copy(v);
+}
+function tiles() {
+  const w = innerWidth, h = innerHeight;
+  if (ONLY) { const s = Math.min(w, h) * 0.95; return { s, xy: () => [(w - s) / 2, (h - s) / 2] }; }
+  const s = Math.min(w / 2, h / 2) * 0.98, ox = (w - 2 * s) / 2, oy = (h - 2 * s) / 2;
+  const pos = [[0, 1], [1, 1], [1, 0], [0, 0]];
+  return { s, xy: i => [ox + pos[i][0] * s, oy + pos[i][1] * s] };
+}
+function renderAll() {
+  const T = tiles();
+  renderer.setScissorTest(true);
+  renderer.setRenderTarget(backRT); renderer.setClearColor(0x000000, 0); renderer.clear();
+  cards.forEach((c, i) => {
+    if (ONLY && i !== +ONLY - 1) return;
+    const [x, y] = T.xy(i);
+    renderer.setViewport(x, y, T.s, T.s); renderer.setScissor(x, y, T.s, T.s);
+    const bg = c.st.scene.background; c.st.scene.background = null;
+    c.st.scene.overrideMaterial = backMat; c.st.camera.layers.set(1);
+    renderer.render(c.st.scene, c.st.camera);
+    c.st.scene.overrideMaterial = null; c.st.camera.layers.set(0); c.st.scene.background = bg;
+  });
+  // what's behind the gummies: each card drawn without them
+  const shown = HANDMESH.map(m => m.visible);
+  HANDMESH.forEach(m => m.visible = false);
+  renderer.setRenderTarget(sceneRT); renderer.setClearColor(0xf2f2f2, 1); renderer.clear();
+  cards.forEach((c, i) => {
+    if (ONLY && i !== +ONLY - 1) return;
+    const [x, y] = T.xy(i);
+    renderer.setViewport(x, y, T.s, T.s); renderer.setScissor(x, y, T.s, T.s);
+    renderer.render(c.st.scene, c.st.camera);
+  });
+  HANDMESH.forEach((m, k) => m.visible = shown[k]);
+  renderer.setRenderTarget(null); G.uBack.value = backRT.depthTexture; G.uScene.value = sceneRT.texture;
+  renderer.setClearColor(0xe6e6e6, 1); renderer.clear();
+  cards.forEach((c, i) => {
+    if (ONLY && i !== +ONLY - 1) return;
+    const [x, y] = T.xy(i);
+    // (no gap between tiles: a hand crossing the seam stays whole)
+    renderer.setViewport(x, y, T.s, T.s); renderer.setScissor(x, y, T.s, T.s);
+    renderer.render(c.st.scene, c.st.camera);
+  });
+}
+
+function advance(T, dt) {
+  const n = cards.length;
+  cards.forEach((c, i) => {
+    const local = ((T - starts[i]) % TOTAL + TOTAL) % TOTAL;
+    const prev = (i + n - 1) % n, next = (i + 1) % n;
+    const A = c.hand;
+    let st = null;
+    if (local < IN) st = transit(prev, i, local);                               // arriving
+    else if (local < c.E) st = c.action(local);                                 // its own act
+    else if (local < c.E + IN) { const s = transit(i, next, local - c.E); st = { ...s, pos: toFrame(s.pos, next, i) }; }   // leaving
+    if (st) { A.show(true); A.set(st); } else A.show(false);
+    // (its flavour: the last card's, turning into this one's as it flies in; into the next's as it leaves)
+    const fl = k => MAT === 'felt' ? pastel(P[FLAVOUR[k]]) : new THREE.Color(P[FLAVOUR[k]]);
+    if (local < IN) A.mat.userData.tint.copy(fl(prev).lerp(fl(i), smooth(local / IN)));
+    else if (local < c.E) A.mat.userData.tint.copy(fl(i));
+    else A.mat.userData.tint.copy(fl(i).lerp(fl(next), smooth((local - c.E) / IN)));
+    A.mat.color.copy(A.mat.userData.tint);
+    A.shells.forEach(m => m.color.copy(A.mat.userData.tint));
+    A.step(dt, local);
+    if (local <= c.D) c.extras(local, dt, A); else c.hide();
+  });
+}
+
+new GLTFLoader().load('hand.glb', (gltf) => {
+  TEMPLATE = gltf.scene;
+  CENTRE = new THREE.Box3().setFromObject(TEMPLATE).getCenter(new THREE.Vector3());
+  measure();
+  cards = [cardSketch, cardFist, cardHeart, cardCancan].map((f, i) => {
+    const st = stage(); const c = f(st); c.st = st;
+    c.hand = makeHand(st.scene, FLAVOUR[i]);                   // the travelling hand's copy in this card
+    c.final = c.action(c.E);
+    return c;
+  });
+  let acc = 0;
+  starts = cards.map(c => { const s = acc; acc += c.E; return s; });
+  TOTAL = acc;
+  document.getElementById('hud').textContent += `  ·  loop ${TOTAL.toFixed(1)}s`;
+  sizeAll();
+  if (FREEZE !== null) {
+    for (let T = 0; T <= FREEZE; T += 1 / 60) advance(T, 1 / 60);
+    renderAll(); document.title = 'ready'; return;
+  }
+  if (params.has('jig')) buildGui();            // (the material/scene jig only with ?jig)
+  let prev = performance.now();
+  renderer.setAnimationLoop(() => {
+    const now = performance.now(), dt = Math.min(0.033, (now - prev) / 1000); prev = now;
+    if (scrubbed) { replayTo(P.time); scrubbed = false; }
+    else if (!P.paused) { P.time = (P.time + dt * P.speed) % TOTAL; advance(P.time, dt * P.speed); }
+    renderAll();
+    timeCtl && timeCtl.updateDisplay();
+  });
+});
+let scrubbed = false, timeCtl = null;
+function replayTo(T) {                          // (re-run everything up to T, so springs, confetti and steam are right)
+  for (let t = 0; t <= T; t += 1 / 60) advance(t, 1 / 60);
+}
+function buildGui() {
+  const gui = new GUI({ title: 'Gummy jig' });
+  const allMats = (prop, k) => v => MATS.forEach(m => { m[prop] = v; });
+  const c = gui.addFolder('Flavours');
+  const reflav = f => v => MATS.filter(m => m.userData.flavour === f).forEach(m => { m.userData.tint.set(v); m.color.set(v); });
+  for (const f of ['cherry', 'orange', 'lemon', 'apple', 'pineapple']) c.addColor(P, f).onChange(reflav(f));
+  const g = gui.addFolder('Gel');
+  g.add(P, 'absorb', 0, 10, 0.05).name('dye depth (thick = deep)').onChange(v => G.uAbsorb.value = v);
+  g.add(P, 'refract', 0, 0.12, 0.001).name('refraction').onChange(v => G.uRefract.value = v);
+  g.add(P, 'milk', 0, 1, 0.01).name('cloudiness').onChange(v => G.uMilk.value = v);
+  g.add(P, 'glow', 0, 3, 0.01).name('inner glow').onChange(v => G.uGlow.value = v);
+  g.add(P, 'body', 0, 1, 0.01).name('body (denser)').onChange(v => G.uBody.value = v);
+  g.add(P, 'thinGlow', 0.5, 3, 0.01).name('thin-part glow').onChange(v => G.uThinGlow.value = v);
+  g.add(P, 'deep', 0, 1, 0.01).name('deep core').onChange(v => G.uDeep.value = v);
+  const sf = gui.addFolder('Surface');
+  sf.add(P, 'roughness', 0, 1, 0.01).onChange(allMats('roughness'));
+  sf.add(P, 'clearcoat', 0, 1, 0.01).name('wet coat').onChange(allMats('clearcoat'));
+  sf.add(P, 'clearcoatRoughness', 0, 1, 0.01).name('wet coat blur').onChange(allMats('clearcoatRoughness'));
+  sf.add(P, 'specular', 0, 1, 0.01).name('highlight strength').onChange(allMats('specularIntensity'));
+  sf.add(P, 'reflections', 0, 3, 0.01).onChange(allMats('envMapIntensity'));
+  const l = gui.addFolder('Studio lights');
+  const light = k => v => STAGES.forEach(st => { st.lights[k].intensity = v; });
+  l.add(P, 'keyLight', 0, 10, 0.05).name('key softbox').onChange(light('keyLight'));
+  l.add(P, 'fillLight', 0, 6, 0.05).name('fill').onChange(light('fillLight'));
+  l.add(P, 'rimLeft', 0, 12, 0.05).name('rim left').onChange(light('rimLeft'));
+  l.add(P, 'rimRight', 0, 12, 0.05).name('rim right').onChange(light('rimRight'));
+  l.add(P, 'topLight', 0, 4, 0.05).name('top bounce').onChange(light('topLight'));
+  l.add(P, 'ambient', 0, 2, 0.01).onChange(light('ambient'));
+  l.add(P, 'sun', 0, 3, 0.01).name('overhead').onChange(light('sun'));
+  l.add(P, 'exposure', 0.3, 2, 0.01).onChange(v => renderer.toneMappingExposure = v);
+  const sc = gui.addFolder('Scene');
+  sc.addColor(P, 'background').onChange(v => STAGES.forEach(st => st.scene.background.set(v)));
+  sc.add(P, 'shadow', 0, 1, 0.01).name('floor shadow');
+  sc.add(P, 'steam', 0, 1, 0.01).name('steam thickness');
+  const mo = gui.addFolder('Motion');
+  mo.add(P, 'wobble', 0, 1.5, 0.01).name('jelly wobble');
+  mo.add(P, 'squash', 0, 0.5, 0.005).name('impact squash');
+  mo.add(P, 'speed', 0, 2, 0.01);
+  mo.add(P, 'paused').name('pause');
+  timeCtl = mo.add(P, 'time', 0, TOTAL, 0.01).name('scrub (pause first)').onChange(() => { if (P.paused) scrubbed = true; });
+  gui.add({ copy() {
+    const out = JSON.stringify(Object.fromEntries(Object.entries(P).filter(([k]) => !['time', 'paused'].includes(k))), null, 2);
+    navigator.clipboard.writeText(out).then(() => { document.getElementById('hud').textContent = 'settings copied to clipboard'; console.log(out); });
+  } }, 'copy').name('📋 copy settings');
+  [c, sf, l, sc, mo].forEach(f => f.close());
+}
+addEventListener('resize', sizeAll);
+</script>
+</body>
+</html>
