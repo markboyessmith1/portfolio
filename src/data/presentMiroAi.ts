@@ -111,14 +111,12 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'No clear direction',
       layout: 'split',
       eyebrow: 'No blueprint',
-      title: 'Nobody was thinking about interaction paradigms beyond chat.',
-      body: ['We set out to bring frontier intelligence to early and late majority teams through visual collaboration. Nobody was doing it, and the technology wasn’t there yet.'],
-      bullets: [
-        { title: 'How much of the apple to bite off', text: 'and how to make room for it on an ageing platform that was hard to add to.' },
-        { title: 'Strip it back first', text: 'years of accrued complexity had to go before new capabilities could land.' },
-        { title: 'What is the right way to work with agents?', text: 'everyone was figuring that out at the same time as us.' },
+      title: 'There was no existing paradigm for working with AI on an infinite canvas.',
+      body: [
+        'Design couldn’t answer everything. But nobody had a model for doing real work with AI on a canvas, from early ideation to late-stage artifacts, in a multiplayer space. No one had conviction on how this would change the way teams work.',
+        'So we asked ourselves: as users of these technologies, what would we want to see?',
       ],
-      call: 'Frame it as existential, not a feature gap. That changed what we were willing to stop doing.',
+      call: 'That question became the starting point for a prototype we took to our sales teams.',
       criteria: ['First principles', 'Agency'],
     },
     {
