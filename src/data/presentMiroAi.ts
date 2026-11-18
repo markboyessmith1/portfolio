@@ -25,10 +25,15 @@ export type DeckMedia = CardText & (
   | { kind: 'todo'; caption: string }
 )
 
+/** A section's ground: Miro's cloud, white, or the inverted dark. Nothing else. */
+export type Ground = 'cloud' | 'white' | 'dark'
+
 export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles' | 'Communication' | 'Partnership'
 
 export type DeckSlide = {
   chapter: string
+  /** set on a section's first slide; the slides after it keep it until the next one sets another */
+  ground?: Ground
   /** 'shelf': title and paragraph over a row of cards (the case study's shelves).
       'band': title and paragraphs across, a film full width beneath (the case study's vision band).
       'numbered': the case study's numbered card; the last `listApart` bullets sit on a card of their own. */
@@ -60,6 +65,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
   slides: [
     {
       chapter: 'Intro',
+      ground: 'cloud',
       layout: 'title',
       eyebrow: 'Miro · 2026 · Past work review',
       title: 'Journey to the _Intelligent Canvas_',
@@ -101,6 +107,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
+      ground: 'white',
       layout: 'statement',
       eyebrow: 'An existential moment',
       title: 'Teams were jumping straight to building with their agents. Collaboration was moving later, and away from the canvas.',
@@ -178,6 +185,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Operationalisation',
+      ground: 'dark',
       layout: 'numbered',
       eyebrow: 'Operationalising our vision',
       title: 'Five key investments, across technology and experience.',
@@ -263,6 +271,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
+      ground: 'cloud',
       layout: 'shelf',
       eyebrow: 'Investment · Strip out complexity',
       title: 'Simplifying the canvas.',
@@ -373,6 +382,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Challenges',
+      ground: 'white',
       layout: 'statement',
       eyebrow: 'Key challenges',
       title: 'Two challenges that defined it.',
@@ -470,6 +480,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Outcomes',
+      ground: 'dark',
       layout: 'metrics',
       eyebrow: 'Week one of full rollout, October 2026',
       title: 'What changed.',
@@ -489,6 +500,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Appendix',
+      ground: 'cloud',
       layout: 'full',
       eyebrow: 'Appendix',
       title: 'How we think about success.',

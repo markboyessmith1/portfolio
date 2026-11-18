@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
-import { DECK, type DeckMedia, type DeckSlide } from '../data/presentMiroAi'
+import { DECK, type DeckMedia, type DeckSlide, type Ground } from '../data/presentMiroAi'
 import { useAccess } from '../lib/access'
 import './present.css'
 
@@ -28,17 +28,11 @@ const runs = slides.reduce<{ chapter: string; from: number; to: number }[]>((out
   return out
 }, [])
 
-/** each chapter's hue (Miro's sticky palette): it tints the slides and their cards */
-const HUE: Record<string, string> = {
-  Intro: '#a9a6a0',
-  'No clear direction': '#ffd02f',
-  Operationalisation: '#68d3f8',
-  Challenges: '#ff8a7a',
-  'How AI changed the work': '#8f7fee',
-  Outcomes: '#9ed452',
-  Appendix: '#a9a6a0',
-}
-const hueOf = (chapter: string) => HUE[chapter] ?? '#a9a6a0'
+/** each slide's ground (Miro's cloud, white, or the inverted dark): a section sets it on its first
+    slide, and the slides after it keep it until the next section sets another */
+const grounds = slides.reduce<Ground[]>((out, s, i) => [...out, s.ground ?? out[i - 1] ?? 'white'], [])
+/** a chapter's ground, for its swatch in the chapter list (its first slide's) */
+const groundOfChapter = (c: string) => grounds[slides.findIndex((s) => s.chapter === c)]
 /** words between underscores in a title are set in Apris, Miro's display serif (as in the case study's mission) */
 const plain = (t: string) => t.replace(/_/g, '')
 function Title({ text }: { text: string }) {
@@ -226,14 +220,13 @@ function Presentation() {
   const slide = slides[index]
 
   return (
-    <div className={`pres${clean ? ' pres--clean' : ''}${fine ? ' pres--fine' : ''}`} style={{ '--hue': hueOf(slide.chapter) } as CSSProperties}>
+    <div className={`pres pres--g-${grounds[index]}${clean ? ' pres--clean' : ''}${fine ? ' pres--fine' : ''}`}>
       <div className="pres__track" ref={track} tabIndex={-1}>
         {slides.map((s, i) => (
           <section
             key={i}
             data-i={i}
-            className={`ps ps--${s.layout}${i === index ? ' is-on' : ''}${seen.has(i) ? ' is-seen' : ''}`}
-            style={{ '--hue': hueOf(s.chapter) } as CSSProperties}
+            className={`ps ps--${s.layout} ps--g-${grounds[i]}${i === index ? ' is-on' : ''}${seen.has(i) ? ' is-seen' : ''}`}
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${N}: ${plain(s.title)}`}
             aria-hidden={i !== index}
@@ -270,7 +263,7 @@ function Presentation() {
                   return (
                     <li key={c}>
                       <button type="button" className={on ? 'is-on' : undefined} aria-current={on ? 'true' : undefined} onClick={() => { go(first); setList(false) }}>
-                        <span className="pres-dot" style={{ background: hueOf(c) }} aria-hidden />
+                        <span className={`pres-swatch pres-swatch--${groundOfChapter(c)}`} aria-hidden />
                         {c}
                       </button>
                     </li>
@@ -287,7 +280,7 @@ function Presentation() {
         <span className="pres__byline">Mark Boyes-Smith</span>
         <nav className="scrub" aria-label="Slides">
           {runs.map((r) => (
-            <span key={r.from} className="scrub__run" style={{ '--hue': hueOf(r.chapter) } as CSSProperties}>
+            <span key={r.from} className="scrub__run">
               {slides.slice(r.from, r.to + 1).map((s, k) => {
                 const i = r.from + k
                 return (

@@ -1,30 +1,70 @@
 /* /present/miro-ai: the Miro AI talk as a horizontal, scrolling presentation,
    in the portfolio's house style: white page, warm neutral ink, ABC Areal /
    Inter at 550 for headings, big superellipse cards, the case study's glass
-   pills, numbered list card and dark KPI card. Each chapter carries a hue
-   from Miro's sticky palette, which tints its slides and media cards.
-   Light by default; follows the system into dark (cards keep their light
-   palette, as the case study's do). */
+   pills, numbered list card and dark KPI card. Each section sits on one of
+   three grounds, and only these: Miro's cloud, white, or the inverted dark
+   (see Grounds below). The grounds carry their own tokens, so the deck looks
+   the same whatever the system theme. */
 
 html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 
 .pres {
-  --pbg: var(--neutral-0);
-  --todo: #d9480f;
+  --cloud: #f4f4f1; /* Miro's cloud (cloud-100): the board's own colour */
   --px: clamp(20px, 5.5vw, 104px);
-  --hue: #a9a6a0;
   position: fixed;
   inset: 0;
-  background: var(--pbg);
+  background: var(--ground);
   color: var(--ink);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .pres { --pbg: var(--neutral-950); --todo: #ff8a5c; }
+
+/* ---------- grounds: Miro's cloud, white, and the inverted dark. Nothing else ----------
+   A section sets its ground on its first slide (presentMiroAi.ts); a slide wears it as
+   .ps--g-*, and the chrome takes the current slide's (.pres--g-*). Cards take the ground
+   they're not: white on cloud, cloud on white, and a step up from the dark on the dark. */
+.pres, .pres--g-cloud, .pres--g-white, .ps--g-cloud, .ps--g-white {
+  --ink: var(--neutral-900);
+  --ink-body: var(--neutral-800);
+  --ink-2: #6B6863;
+  --ink-3: var(--neutral-400);
+  --surface: var(--neutral-0);
+  --line: var(--neutral-200);
+  --todo: #d9480f;
+  --glass-bg: color-mix(in srgb, var(--neutral-100) 66%, transparent);
+  --glass-border: color-mix(in srgb, var(--neutral-0) 18%, transparent);
+  --nav-edge: color-mix(in srgb, var(--neutral-0) 60%, transparent);
+  --pill-highlight: var(--neutral-0);
+  --shadow: color-mix(in srgb, var(--neutral-950) 8%, transparent);
+  --button-bg: var(--neutral-950);
+  --button-bg-hover: var(--neutral-1000);
+  --button-ink: var(--neutral-0);
+  color-scheme: light;
 }
-:root[data-theme="dark"] .pres { --pbg: var(--neutral-950); --todo: #ff8a5c; }
+.pres, .pres--g-white, .ps--g-white { --ground: var(--neutral-0); --card: var(--cloud); }
+.pres--g-cloud, .ps--g-cloud { --ground: var(--cloud); --card: var(--neutral-0); }
+/* the inverted dark: the case study's dark chapter (Design approach) */
+.pres--g-dark, .ps--g-dark {
+  --ground: var(--neutral-950);
+  --card: var(--neutral-900);
+  --surface: var(--neutral-900);
+  --ink: var(--neutral-50);
+  --ink-body: color-mix(in srgb, var(--neutral-50) 88%, transparent);
+  --ink-2: var(--neutral-400);
+  --ink-3: var(--neutral-500);
+  --line: var(--neutral-800);
+  --todo: #ff8a5c;
+  --glass-bg: color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  --glass-border: color-mix(in srgb, var(--neutral-0) 10%, transparent);
+  --nav-edge: color-mix(in srgb, var(--neutral-0) 10%, transparent);
+  --pill-highlight: color-mix(in srgb, var(--neutral-0) 18%, transparent);
+  --shadow: color-mix(in srgb, var(--neutral-1000) 40%, transparent);
+  --button-bg: var(--neutral-50);
+  --button-bg-hover: var(--neutral-0);
+  --button-ink: var(--neutral-950);
+  color-scheme: dark;
+}
 
 /* ---------- the strip ---------- */
 .pres__track {
@@ -55,8 +95,8 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
   scrollbar-width: none;
   padding: 104px var(--px) 92px;
   display: grid;
-  background: color-mix(in srgb, var(--hue) 9%, var(--pbg));
-  transition: background-color .4s ease;
+  background: var(--ground);
+  color: var(--ink);
 }
 .ps::-webkit-scrollbar { display: none; }
 .ps-inner {
@@ -79,7 +119,12 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 }
 
 /* ---------- type ---------- */
-.pres-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); }
+.pres-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+/* the chapter list shows each chapter's ground */
+.pres-swatch { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent); }
+.pres-swatch--cloud { background: var(--cloud); }
+.pres-swatch--white { background: var(--neutral-0); }
+.pres-swatch--dark { background: var(--neutral-950); }
 .ps-eyebrow {
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 14px;
@@ -151,7 +196,7 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
   max-width: 56ch;
   padding: 16px 20px;
   border-radius: 20px; corner-shape: superellipse(1.6);
-  background: color-mix(in srgb, var(--hue) 24%, var(--surface));
+  background: var(--card);
   font-size: clamp(15px, 1.15vw, 18px); line-height: 1.45; font-weight: 500; letter-spacing: -0.015em;
   color: var(--ink);
 }
@@ -184,7 +229,6 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 }
 .ps-fig--cap .ps-frame { --cap: 44px; }
 .ps-card {
-  --card: color-mix(in srgb, var(--hue) 26%, #fff);
   position: relative;
   box-sizing: border-box;
   max-width: 100%; max-height: 100%;
@@ -219,6 +263,8 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 .ps-fig--bleed .ps-card > video, .ps-fig--bleed .ps-card > img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; border-radius: 0; box-shadow: none; }
 /* diagrams sit on a white card of their own */
 .ps-fig--svg .ps-card { --card: #fff; box-shadow: inset 0 0 0 1px color-mix(in srgb, #191918 8%, transparent); }
+/* on the dark, the KPI card steps up from the ground, as the cards do */
+.ps--g-dark :is(.ps-kpis, .ps-kpi--tile) { background: var(--neutral-900); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
 .ps-fig--svg .ps-card > img { border-radius: 0; box-shadow: none; }
 /* a placeholder for an asset still to come */
 .ps-fig--todo .ps-card {
@@ -335,8 +381,8 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 .ps-timeline { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 24px; }
 .ps-timeline::before { content: ''; position: absolute; left: 0; right: 0; top: 7px; height: 1px; background: color-mix(in srgb, var(--ink) 18%, transparent); }
 .ps-timeline__item { position: relative; display: grid; gap: 6px; align-content: start; padding-top: 36px; }
-.ps-timeline__dot { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: var(--pbg); border: 2px solid var(--ink-3); }
-.ps-timeline__item.is-major .ps-timeline__dot { top: -1px; width: 18px; height: 18px; border: 0; background: var(--ink); box-shadow: 0 0 0 5px color-mix(in srgb, var(--hue) 40%, transparent); }
+.ps-timeline__dot { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: var(--ground); border: 2px solid var(--ink-3); }
+.ps-timeline__item.is-major .ps-timeline__dot { top: -1px; width: 18px; height: 18px; border: 0; background: var(--ink); box-shadow: 0 0 0 5px color-mix(in srgb, var(--ink) 12%, transparent); }
 .ps-timeline__item.is-held .ps-timeline__dot { border-style: dashed; }
 .ps-timeline__when { font-size: 13px; font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .ps-timeline__what { font-family: var(--font-display); font-size: clamp(16px, 1.3vw, 20px); font-weight: 550; line-height: 1.2; letter-spacing: -0.02em; color: var(--ink); }
@@ -388,9 +434,11 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
   position: relative; overflow: hidden; isolation: isolate;
   aspect-ratio: var(--r, 1.7778);
   border-radius: clamp(18px, 1.8vw, 28px); corner-shape: superellipse(1.6);
-  background: color-mix(in srgb, var(--hue) 26%, #fff);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #191918 8%, transparent);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
+/* live scenes are drawn for a light board: on the dark they keep the cloud */
+.ps--g-dark .ps-shelf__media:has(> iframe) { background: var(--cloud); }
 .ps-shelf__media > :is(video, img, iframe) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; border: 0; }
 .ps-shelf__media > iframe { background: transparent; pointer-events: none; }
 .ps-shelf__media.is-todo { display: grid; place-items: center; padding: 16px; text-align: center; background: none; box-shadow: none; border: 1.5px dashed color-mix(in srgb, var(--todo) 55%, transparent); color: var(--todo); font-size: 14px; }
@@ -458,7 +506,7 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
   border-radius: 2px; background: color-mix(in srgb, var(--ink) 14%, transparent);
   transition: background-color .2s ease, height .2s ease;
 }
-.scrub__tick.is-past::before { background: color-mix(in srgb, var(--hue) 75%, var(--ink) 15%); }
+.scrub__tick.is-past::before { background: color-mix(in srgb, var(--ink) 45%, transparent); }
 .scrub__tick.is-on::before { height: 6px; background: var(--ink); }
 .scrub__tick:hover::before { height: 6px; }
 .scrub__tick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
@@ -480,22 +528,21 @@ html:has(.pres) { overflow: hidden; overscroll-behavior: none; }
 /* the nav and arrows float over slides that can scroll: a soft wash behind each */
 .pres__nav::before, .pres__foot::before {
   content: ''; position: fixed; left: 0; right: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(var(--wash-dir, to bottom), color-mix(in srgb, var(--hue) 9%, var(--pbg)) 40%, transparent);
+  background: linear-gradient(var(--wash-dir, to bottom), var(--ground) 40%, transparent);
 }
 .pres__nav::before { top: 0; height: 90px; }
 .pres__foot::before { --wash-dir: to top; bottom: 0; height: 80px; }
 
-/* dark: the case study's white glass pill would wash out its light text, so it goes dark glass */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .pres-chapter .chapterbar.glass { background: color-mix(in srgb, var(--neutral-800) 80%, transparent); border-color: color-mix(in srgb, var(--neutral-0) 10%, transparent); }
-  :root:not([data-theme="light"]) .pres-chapter .chapterbar__btn { background: var(--neutral-700); }
-  :root:not([data-theme="light"]) .pres-chapter .chapterbar__list { background: color-mix(in srgb, var(--neutral-900) 92%, transparent); }
-  :root:not([data-theme="light"]) .pres-chapter .chapterbar__list button:hover { background: color-mix(in srgb, var(--neutral-0) 8%, transparent); }
+/* on the dark, the pills go dark glass, as the case study's header does over its dark chapter */
+.pres :is(.pres-round.glass, .chapterbar.glass, .chapterbar__btn) { transition: background-color .4s ease, border-color .4s ease, box-shadow .4s ease, color .4s ease, transform .2s ease, opacity .2s ease; }
+.pres--g-dark :is(.pres-round.glass, .pres-chapter .chapterbar.glass, .pres-chapter .chapterbar__list.glass) {
+  background: color-mix(in srgb, var(--neutral-900) 72%, transparent);
+  border-color: color-mix(in srgb, var(--neutral-0) 10%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--neutral-1000) 30%, transparent),
+              0 8px 28px color-mix(in srgb, var(--neutral-1000) 40%, transparent);
 }
-:root[data-theme="dark"] .pres-chapter .chapterbar.glass { background: color-mix(in srgb, var(--neutral-800) 80%, transparent); border-color: color-mix(in srgb, var(--neutral-0) 10%, transparent); }
-:root[data-theme="dark"] .pres-chapter .chapterbar__btn { background: var(--neutral-700); }
-:root[data-theme="dark"] .pres-chapter .chapterbar__list { background: color-mix(in srgb, var(--neutral-900) 92%, transparent); }
-:root[data-theme="dark"] .pres-chapter .chapterbar__list button:hover { background: color-mix(in srgb, var(--neutral-0) 8%, transparent); }
+.pres--g-dark .pres-chapter .chapterbar__btn { background: var(--neutral-800); color: var(--neutral-50); }
+.pres--g-dark .pres-chapter .chapterbar__list button:hover { background: color-mix(in srgb, var(--neutral-0) 8%, transparent); }
 
 /* the email gate on the live site */
 .pres--gate { display: grid; place-items: center; padding: 24px; }
