@@ -296,18 +296,14 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Challenges',
-      layout: 'statement',
+      layout: 'full',
       eyebrow: '01 · Meeting people where they’re at',
       title: 'Most of our customers sat in the early to late majority.',
       body: ['Our feed-forward research programme put the prototype in front of select users to see how they understood the concepts. It stripped out PMM jargon like “Sidekicks”, which customers just called AI or their agent. We’d built a translation layer nobody needed.'],
-      bullets: [
-        { title: 'Holdouts', text: 'some didn’t want AI at all.' },
-        { title: 'The majority', text: 'early to late majority, where most of our customers sat.' },
-        { title: 'Frontiers', text: 'teams already working with agents every day.' },
-      ],
       call: 'Sometimes we chose the well-trodden path, even when it felt like a poor decision from an innovation point of view.',
+      media: [{ kind: 'image', src: '/diagrams/ai-cohorts.svg', alt: 'Four customer cohorts on a scale from less ready for AI to AI-first: holdouts, cautious adopters, active adopters and frontier teams, with what each needed from the canvas.', caption: 'Customer cohorts' }],
       criteria: ['Partnership'],
-      notes: 'This is where our feed-forward research programme became incredibly helpful: putting the prototype in front of select users to understand how they read the different concepts. It helped us remove a lot of the product jargon PMM had introduced over consecutive releases, like Sidekicks, which our entire customer base just knew as AI or their agent. We were creating a translation layer that was completely unnecessary in the product.',
+      notes: 'The spectrum: holdouts, some didn’t want AI at all; the early to late majority, where most of our customers sat; frontiers, teams already working with agents every day. This is where our feed-forward research programme became incredibly helpful: putting the prototype in front of select users to understand how they read the different concepts. It helped us remove a lot of the product jargon PMM had introduced over consecutive releases, like Sidekicks, which our entire customer base just knew as AI or their agent. We were creating a translation layer that was completely unnecessary in the product.',
     },
     {
       chapter: 'Challenges',
@@ -341,6 +337,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { title: 'June', text: 'in customers’ hands.' },
       ],
       body: ['Leadership committed to the date very early. As it got closer, the quality of our AI’s output wasn’t meeting our expectations. As a trio we knew we probably had one shot with customers, and we didn’t want to blow it before we felt ready.'],
+      media: [{ kind: 'embed', src: '/media/ai/board-creation.html', caption: 'BoardGen: Sidekick builds a plan section by section, and you can edit while it works' }],
       notes: 'The pressure was fair: GTM needed to close significant deals and enthuse their sales teams. It all fell to me, Damir and Henrik. Then go straight into the quality story.',
     },
     {
