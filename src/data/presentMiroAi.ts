@@ -13,21 +13,32 @@
    slides use roles. `criteria` tags which of the reviewers' six criteria the
    slide is there to prove. */
 
-export type DeckMedia =
+/** Shelf cards (layout 'shelf') read these: an eyebrow, title and line under the media,
+    as on the case study's shelves. `ratio` is the media's width ÷ height. */
+type CardText = { eyebrow?: string; title?: string; body?: string; ratio?: number }
+
+export type DeckMedia = CardText & (
   | { kind: 'video'; src: string; poster?: string; caption?: string }
   | { kind: 'image'; src: string; caption?: string; alt: string }
+  /** a live prototype scene from public/media (the rehearsal artifact plays a recording of it) */
   | { kind: 'embed'; src: string; caption?: string }
   | { kind: 'todo'; caption: string }
+)
 
 export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles' | 'Communication' | 'Partnership'
 
 export type DeckSlide = {
   chapter: string
-  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline' | 'stack' | 'mosaic'
+  /** 'shelf': title and paragraph over a row of cards (the case study's shelves).
+      'band': title and paragraphs across, a film full width beneath (the case study's vision band).
+      'numbered': the case study's numbered card; the last `listApart` bullets sit on a card of their own. */
+  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline' | 'stack' | 'mosaic' | 'shelf' | 'band' | 'numbered'
   eyebrow?: string
+  /** words between underscores are set in Apris, Miro's display serif */
   title: string
   body?: string[]
   bullets?: { title?: string; text: string }[]
+  listApart?: number
   media?: DeckMedia[]
   /** The decision Mark made here, set apart so the questions land on his calls. */
   call?: string
@@ -51,9 +62,9 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'Intro',
       layout: 'title',
       eyebrow: 'Miro · 2026 · Past work review',
-      title: 'Journey to the Intelligent Canvas',
-      body: ['Mark Boyes-Smith, Sr Director, AI Design'],
-      media: [{ kind: 'video', src: '/media/miro-ai-cover.mp4' }],
+      title: 'Journey to the _Intelligent Canvas_',
+      body: ['Bringing frontier AI capabilities to Miro’s 100 million users.', 'Mark Boyes-Smith, Sr Director, AI Design'],
+      media: [{ kind: 'embed', src: '/media/ai/decisions.html', caption: 'Big decisions, made together, with agents doing the legwork' }],
       notes: 'Intro line: "I\'m Mark, Sr Director, AI Design at Miro. We were acquired by Bending Spoons last month after a successful exit, so I\'m looking at what\'s next for 2027." Keep it under a minute.',
     },
     {
@@ -77,7 +88,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'Intro',
       layout: 'timeline',
       eyebrow: 'The mission · February to October 2026',
-      title: 'Make the canvas the best shared visual space for human‑to‑human and human‑to‑agent collaboration.',
+      title: 'Make the canvas the best shared visual space for _human‑to‑human_ and human‑to‑agent _collaboration._',
       timeline: [
         { when: 'Feb 2026', what: 'Kick-off', detail: 'Vision work starts; seven teams, one mission', major: true },
         { when: 'Mar', what: 'Go-to-market enablement' },
@@ -93,6 +104,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       layout: 'statement',
       eyebrow: 'An existential moment',
       title: 'Teams were jumping straight to building with their agents. Collaboration was moving later, and away from the canvas.',
+      body: ['The canvas had to become more than a surface for early ideation: a place to visualise high volumes of agent work, coordinate teams of humans and agents, and spread the AI workflows that work.'],
       criteria: ['First principles'],
       notes: 'Our moat of visual collaboration was being eaten by the frontier labs and by every other product. Teams were putting up with having conversations in comms tools. Left alone, that meant lower team usage exactly where Miro adds the most value.',
     },
@@ -113,7 +125,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       eyebrow: 'No blueprint',
       title: 'There was no existing paradigm for working with AI on an infinite canvas.',
       body: [
-        'Design couldn’t answer everything. But nobody had a model for doing real work with AI on a canvas, from early ideation to late-stage artifacts, in a multiplayer space. No one had conviction on how this would change the way teams work.',
+        'To build a canvas where humans and agents collaborate, we had to think beyond the chatbot. Intelligence belonged in the canvas itself. Working with an agent on an infinite canvas was wide open, with no patterns to borrow, and no one had conviction on how it would change the way teams work.',
         'So we asked ourselves: as users of these technologies, what would we want to see?',
       ],
       call: 'That question became the starting point for a prototype we took to our sales teams.',
@@ -121,10 +133,13 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'full',
+      layout: 'band',
       eyebrow: 'We started with a vision',
-      title: 'A vision you could hand someone as a link, and use like a real product.',
-      body: ['It had to carry the conversations of about 2,000 people, so it couldn’t be something only the design team could move around. A very small team built it, then took it to customers and broke it down with the teams.'],
+      title: 'A vision you could hand someone as a link, and use like a _real product._',
+      body: [
+        'We built the vision like production software: one experience covering the end state and boundary concepts for all five investments. It became our All Hands story, Show and Tell playground, customer testing ground and engineering spec.',
+        'It had to carry the conversations of about 2,000 people, so it couldn’t be something only the design team could move around. A very small team built it, then took it to customers and broke it down with the teams.',
+      ],
       media: [{ kind: 'video', src: '/media/vision-sizzle-rko26.mp4', poster: '/media/vision-sizzle-rko26.jpg' }],
       criteria: ['Communication', 'Partnership', 'Craft'],
       notes: 'I led the vision with Ari (global head of design) and Tilo (principal designer), working closely with our execs Andrea and Jeff. First time I\'ve seen a design vision at this fidelity: ideas buried deep in the prototype you could actually use.',
@@ -139,13 +154,13 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'grid',
+      layout: 'shelf',
       eyebrow: 'Then we distilled three principles from it',
-      title: 'Humanity. Forward momentum. Radical simplicity.',
+      title: 'Humanity. Forward momentum. _Radical simplicity._',
       media: [
-        { kind: 'video', src: '/media/principles/humanity.mp4', poster: '/media/principles/humanity.jpg', caption: 'Humanity' },
-        { kind: 'video', src: '/media/principles/momentum.mp4', poster: '/media/principles/momentum.jpg', caption: 'Forward momentum' },
-        { kind: 'video', src: '/media/principles/simplicity.mp4', poster: '/media/principles/simplicity.jpg', caption: 'Radical simplicity' },
+        { kind: 'video', src: '/media/principles/humanity.mp4', poster: '/media/principles/humanity.jpg', title: 'Humanity', body: 'Made by people, for people. Collaboration stays front and centre, and every detail, from the brand to the smallest interaction, is crafted so the work feels human.', ratio: 16 / 9 },
+        { kind: 'video', src: '/media/principles/momentum.mp4', poster: '/media/principles/momentum.jpg', title: 'Forward momentum', body: 'Every moment moves the work on. Agents prepare, suggest and follow through, so the team goes from a first idea to a decision without losing pace.', ratio: 16 / 9 },
+        { kind: 'video', src: '/media/principles/simplicity.mp4', poster: '/media/principles/simplicity.jpg', title: 'Radical simplicity', body: 'Strip back years of accrued complexity. Fewer tools, less chrome and one prompt to make anything, so there is more room for the work itself.', ratio: 16 / 9 },
       ],
       criteria: ['Craft'],
     },
@@ -163,9 +178,11 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Operationalisation',
-      layout: 'statement',
+      layout: 'numbered',
       eyebrow: 'Operationalising our vision',
       title: 'Five key investments, across technology and experience.',
+      body: ['We ran these in parallel, with forums for air-traffic control on the interdependencies between teams.'],
+      listApart: 1,
       bullets: [
         { title: 'Engine and infrastructure', text: 'Critical upgrades to our core agentic infrastructure and engine, unlocking performance and scale, and letting us tap into the latest technology as it evolved.' },
         { title: 'Context and tooling', text: 'Teaching the engine to use all of Miro’s toolkit to create canvas experiences, in the context of the team’s work.' },
@@ -212,16 +229,16 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Operationalisation',
-      layout: 'mosaic',
+      layout: 'shelf',
       eyebrow: '01',
-      title: 'We explored more divergent concepts.',
+      title: 'We explored more _divergent concepts._',
       media: [
-        { kind: 'video', src: `${AI}/picture-sorting-clef.mp4`, caption: 'Twelve pictures sorted in about 1.5 seconds' },
-        { kind: 'video', src: `${AI}/point-and-jev.mp4`, caption: 'Say “here” and “this”, and the board knows' },
-        { kind: 'video', src: `${AI}/builds-while-typing.mp4`, caption: 'The board builds while you type' },
-        { kind: 'video', src: `${AI}/jev2hands.mp4`, caption: 'Moving the canvas with your hands, through the webcam' },
-        { kind: 'video', src: `${SIMPLIFY}/soundscape-ring.mp4`, caption: '360° soundscape: hear the collaboration around you' },
-        { kind: 'video', src: `${AI}/ai-cursor-identity.mp4`, caption: 'Generated stickers that become your cursor' },
+        { kind: 'video', src: `${AI}/auto-sort.mp4`, eyebrow: 'Auto-sort', title: 'Write a sticky, click away, and it’s already in the right frame.', body: 'My first test with a decision model: AI that doesn’t write, it just picks from a few options in a few hundred milliseconds.', ratio: 1920 / 1200 },
+        { kind: 'video', src: `${AI}/point-and-jev.mp4`, eyebrow: 'Point and talk', title: 'Say “here” and “this”, and the board knows what you’re pointing at.', body: 'It’s how you’d talk to someone standing next to you.', ratio: 1920 / 1206 },
+        { kind: 'video', src: `${AI}/builds-while-typing.mp4`, eyebrow: 'Type to build', title: 'The board builds while you type, one word at a time.', body: 'Each circle and sticky lands as I finish its word, and backspacing takes it away again.', ratio: 1920 / 1206 },
+        { kind: 'video', src: `${AI}/picture-sorting-clef.mp4`, eyebrow: 'Vision', title: 'Ask which sweaters are beach-ready, and the board sorts them.', body: 'Twelve pictures take about a second and a half.', ratio: 1920 / 1206 },
+        { kind: 'video', src: `${AI}/ai-cursor-identity.mp4`, eyebrow: 'Cursor identity', title: 'Pick a color, an animal and a ride, and your cursor is yours.', body: 'Generated stickers that follow you round the canvas.', ratio: 1600 / 1280 },
+        { kind: 'video', src: `${AI}/sticky-stack-endless-ideas.mp4`, eyebrow: 'Ideas', title: 'Infinite idea machine', body: 'A sticky stack that never runs out of ideas.', ratio: 1920 / 1200 },
       ],
       criteria: ['Craft', 'Technical AI'],
       notes: 'Scroll the mosaic. Decision models: a fast model that picks rather than writes. Explain internal names (JEV, Clef) as "a fast decision model". Be honest: most of this didn\'t reach production. Sticker packs became the most adopted feature in Miro for a while.',
@@ -246,38 +263,65 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'split',
+      layout: 'shelf',
       eyebrow: 'Investment · Strip out complexity',
       title: 'Simplifying the canvas.',
-      body: ['Fifteen years of experiential debt. Before AI could feel effortless, the canvas around it had to get simpler.'],
-      media: [{ kind: 'video', src: `${SIMPLIFY}/home-v2.mp4` }, { kind: 'video', src: `${SIMPLIFY}/toolbar-agentic.mp4` }],
+      body: ['As a 15-year-old product, Miro had accumulated an incredible amount of capability, and a significant amount of experiential debt, made harder to resolve as teams were incentivised to own their own activation and adoption metrics. We stripped back the home, organisational and canvas experience, so the best opportunities reached people at the right point in time.'],
+      media: [
+        { kind: 'embed', src: `${SIMPLIFY}/toolbar-voice.html`, eyebrow: 'Tools', title: 'A handful of tools made for the agentic era, and one prompt to make anything.', body: 'The few tools you reach for by hand, a prompt that makes whatever you describe, and your voice when you’d rather talk.', ratio: 1.4 },
+        { kind: 'embed', src: `${SIMPLIFY}/card-fan.html`, eyebrow: 'Your landing spot', title: 'Important over urgent.', body: 'Miro brings up the decisions, reviews and blockers that actually need you and holds back the rest.', ratio: 1.2059 },
+        { kind: 'video', src: `${SIMPLIFY}/home-v2.mp4`, eyebrow: 'Home', title: 'Your spaces, boards and people in one calm place.', body: 'So you pick up right where you left off.', ratio: 16 / 9 },
+        { kind: 'video', src: `${SIMPLIFY}/brand-details.mp4`, eyebrow: 'Details', title: 'Tiny details, made for people, by people.', body: 'From the brand to the smallest interaction, crafted by hand so the work feels human.', ratio: 1.7778 },
+        { kind: 'video', src: `${SIMPLIFY}/tables.mp4`, eyebrow: 'Tables', title: 'Improving the fidelity of control on your data.', ratio: 1280 / 720 },
+      ],
       criteria: ['Craft'],
     },
     {
       chapter: 'No clear direction',
-      layout: 'grid',
+      layout: 'shelf',
       eyebrow: 'Investment · Context and tooling',
       title: 'Agents that work where you work.',
-      body: ['Through MCP, outside agents join the board as collaborators, not as a separate product.'],
-      media: [{ kind: 'video', src: `${AI}/ai-all-in-this-together.mp4` }, { kind: 'video', src: `${AI}/ai-jamming-with-you.mp4` }],
+      body: ['Your own agents, wherever they run, could read, create and edit work on the canvas. Through MCP, outside agents like Claude became first-class collaborators, doing real work on the board alongside the team.'],
+      media: [
+        { kind: 'embed', src: `${AI}/multiplayer-chat.html`, eyebrow: 'Agents', title: 'Multiplayer chat', body: 'One conversation for the whole room: people and agents in the same thread.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/agent-kanban.html`, eyebrow: 'Agents', title: 'Agents building on the canvas', body: 'Sidekick, Claude and others building on the board, cursors and all.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/agent-task-cards.html`, eyebrow: 'Agents', title: 'Agent task cards', body: 'Hand off a task and track it on a card: what the agent is doing, and what it did.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/agent-sidebar.html`, eyebrow: 'Agents', title: 'Sidebar', body: 'A persistent home for longer work with an agent, beside the board.', ratio: 16 / 9 },
+        { kind: 'video', src: `${AI}/ai-start-faster.mp4`, eyebrow: 'Agents', title: 'Inline chat', body: 'Ask right where you are on the canvas, and the answer lands in place.', ratio: 1600 / 1280 },
+        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, eyebrow: 'Agents', title: 'Wave to summon an agent', body: 'A wave of the cursor, and an agent comes over to help.', ratio: 2716 / 2160 },
+      ],
       criteria: ['Technical AI'],
     },
     {
       chapter: 'No clear direction',
-      layout: 'grid',
+      layout: 'shelf',
       eyebrow: 'Investment · Engine and infrastructure',
       title: 'Generative experiences.',
-      body: ['Hitting a 9/10 should feel effortless: editable diagrams, docs and tables, not static output.'],
-      media: [{ kind: 'video', src: `${AI}/ai-start-faster.mp4` }, { kind: 'video', src: `${AI}/ai-just-tell-me.mp4` }, { kind: 'video', src: `${AI}/retroflow.mp4` }],
+      body: ['Capable generation that made hitting a 9/10 feel effortless: describe what you need and the board builds it, as editable diagrams, docs and tables rather than a static image, ready for the team to pick up.'],
+      media: [
+        { kind: 'embed', src: `${AI}/board-creation.html`, eyebrow: 'Generative', title: 'Full board creation', body: 'Describe what you need and the whole board builds, editable from the first frame.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/create.html`, eyebrow: 'Generative', title: 'MCP', body: 'Ask from a terminal and Miro sets itself up through MCP: the spaces, the boards and the people.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/recipes.html`, eyebrow: 'Generative', title: 'Skills', body: 'Pick a skill and the agent knows how to do the job, from a retro to a roadmap.', ratio: 16 / 9 },
+        { kind: 'video', src: `${AI}/ai-just-tell-me.mp4`, eyebrow: 'Generative', title: 'Questions', body: 'Before it builds, the agent asks what it needs to know to get it right.', ratio: 1600 / 1280 },
+        { kind: 'embed', src: `${AI}/next-best-action.html`, eyebrow: 'Generative', title: 'Next best actions', body: 'Suggestions for what to do next, offered right where the work is.', ratio: 16 / 9 },
+        { kind: 'video', src: `${AI}/widget-creator.mp4`, eyebrow: 'Generative', title: 'Extending Miro', body: 'A sticker for your team, a custom widget for your workflow, or an interactive playground, built with AI right on the board.', ratio: 1920 / 1080 },
+      ],
       criteria: ['Craft', 'Technical AI'],
     },
     {
       chapter: 'No clear direction',
-      layout: 'grid',
+      layout: 'shelf',
       eyebrow: 'Investment · New interaction paradigms',
       title: 'Real-time agentic collaboration.',
-      body: ['Voice, cursors and chat: the agent is in the room, in real time.'],
-      media: [{ kind: 'video', src: `${AI}/ai-catches-you-up.mp4` }, { kind: 'video', src: `${AI}/ai-proactive-suggestions.mp4` }, { kind: 'video', src: `${AI}/voice-mode.mp4` }],
+      body: ['AI that works in the room with everyone: people and agents shaping the same canvas together, in real time, through voice, cursors and chat.'],
+      media: [
+        { kind: 'video', src: `${SIMPLIFY}/voice-mode.mp4`, eyebrow: 'Real-time', title: 'Voice mode', body: 'Talk to the board, and the agent builds as you speak.', ratio: 1920 / 1080 },
+        { kind: 'embed', src: `${AI}/rda-matrix.html`, eyebrow: 'Real-time', title: 'Real-time transcription', body: 'The meeting transcribes as it happens, and the board keeps up with the conversation.', ratio: 16 / 9 },
+        { kind: 'embed', src: `${AI}/huddle.html`, eyebrow: 'Real-time', title: 'Huddles', body: 'One tap on the headset and you’re talking, right on the board.', ratio: 16 / 9 },
+        { kind: 'video', src: `${AI}/jev2hands.mp4`, eyebrow: 'Real-time', title: 'Decision models', body: 'A fast model reading the room in real time, so the canvas responds to what people mean.', ratio: 1662 / 1080 },
+        { kind: 'video', src: `${AI}/ai-proactive-suggestions.mp4`, eyebrow: 'Real-time', title: 'Proactive suggestions', body: 'A decision model reads what you’re making, and only when it’s sure does Sidekick offer the template that fits.', ratio: 1600 / 1280 },
+        { kind: 'video', src: `${SIMPLIFY}/soundscape-ring.mp4`, eyebrow: 'Real-time', title: 'Soundscape', body: 'Soft, living sound tells you when someone joins, reacts, or an agent finishes.', ratio: 16 / 9 },
+      ],
       criteria: ['Craft'],
     },
     {
@@ -308,13 +352,12 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'grid',
+      layout: 'split',
       eyebrow: 'Cutting room floor',
       title: 'Real-time voice and multiplayer AI didn’t make it to production.',
+      body: ['Agentic tooling moved faster than anything we’d worked with. Some real-time multiplayer concepts that shone in demos never shipped. Later in the year, decision models gave us a way to revisit them.'],
       media: [
-        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
-        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
-        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
+        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots with the board as their backend' },
       ],
       notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
     },
