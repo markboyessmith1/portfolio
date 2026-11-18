@@ -539,7 +539,7 @@ export const site = {
   ],
   /** /resume: from the LinkedIn profile export (Downloads/Profile.pdf) */
   resume: {
-    headline: 'AI Design Leader, Advisor',
+    headline: 'AI Design Leader, Product Maker',
     location: 'United Kingdom',
     email: 'mark@boyes-smith.com',
     linkedin: 'https://www.linkedin.com/in/markboyessmith',
