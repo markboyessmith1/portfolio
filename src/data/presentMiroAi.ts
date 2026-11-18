@@ -248,6 +248,18 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'Challenges',
       layout: 'statement',
+      eyebrow: 'Key challenges',
+      title: 'Four things that tested us.',
+      bullets: [
+        { title: 'Meeting customers where they are', text: 'Some didn’t want AI at all. How far to lean in, down to the toolbar.' },
+        { title: 'Time to launch', text: 'Go-to-market needed a date to sell towards.' },
+        { title: 'Quality', text: 'BoardGen: from designing backwards to working forwards from the model, and holding July to October.' },
+        { title: 'What didn’t ship', text: 'Ideas that shone in demos, and what I’d do differently.' },
+      ],
+    },
+    {
+      chapter: 'Challenges',
+      layout: 'statement',
       eyebrow: 'Meeting customers where they are',
       title: 'Some of our customers didn’t want AI at all.',
       criteria: ['Partnership'],
