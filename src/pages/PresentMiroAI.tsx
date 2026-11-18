@@ -144,6 +144,23 @@ function SlideBody({ slide: s, active }: { slide: DeckSlide; active: boolean }) 
     </div>
   )
 
+  if (s.layout === 'timeline') {
+    return (
+      <div className="slide__inner">
+        {text}
+        <ol className="timeline">
+          {s.timeline?.map((t) => (
+            <li key={t.when} className={`timeline__item${t.major ? ' is-major' : ''}${t.held ? ' is-held' : ''}`}>
+              <span className="timeline__when">{t.when}</span>
+              <span className="timeline__what">{t.what}</span>
+              {t.detail && <span className="timeline__detail">{t.detail}</span>}
+            </li>
+          ))}
+        </ol>
+      </div>
+    )
+  }
+
   if (s.layout === 'metrics') {
     return (
       <div className="slide__inner">

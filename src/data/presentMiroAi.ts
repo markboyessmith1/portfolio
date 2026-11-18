@@ -23,7 +23,7 @@ export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles'
 
 export type DeckSlide = {
   chapter: string
-  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live'
+  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline'
   eyebrow?: string
   title: string
   body?: string[]
@@ -32,6 +32,8 @@ export type DeckSlide = {
   /** The decision Mark made here, set apart so the questions land on his calls. */
   call?: string
   metrics?: { value: string; label: string }[]
+  /** Milestones, left to right. `major` ones get the big marker; `held` reads as a plan we moved. */
+  timeline?: { when: string; what: string; detail?: string; major?: boolean; held?: boolean }[]
   criteria?: Criterion[]
   todo?: string[]
   notes?: string
@@ -66,6 +68,21 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       media: [{ kind: 'video', src: `${SIMPLIFY}/prototypes.mp4`, caption: 'Everything we made was in code' }],
       criteria: ['Communication'],
       notes: 'One project, Intelligent Canvas 2.0, February to October. Invite interruptions. Plan for ~30 minutes of talking.',
+    },
+    {
+      chapter: 'Intro',
+      layout: 'timeline',
+      eyebrow: 'The mission · February to October 2026',
+      title: 'Make the canvas the best shared visual space for human‑to‑human and human‑to‑agent collaboration.',
+      timeline: [
+        { when: 'Feb 2026', what: 'Kick-off', detail: 'Vision work starts; seven teams, one mission', major: true },
+        { when: 'Mar', what: 'Go-to-market enablement' },
+        { when: '19 May', what: 'Canvas ’26, San Francisco', detail: 'Agents on the canvas, MCP, agentic Sidekicks announced', major: true },
+        { when: 'Jul', what: 'Planned launch, held', detail: 'BoardGen quality wasn’t there yet', held: true },
+        { when: '10 Sep', what: 'Bending Spoons agreement', detail: '$1.355bn, announced' },
+        { when: 'Oct', what: 'Intelligent Canvas 2.0', detail: 'Full rollout to Miro’s users', major: true },
+      ],
+      notes: 'Dates: Canvas ’26 press release, San Francisco, 19 May 2026 (miro.com/newsroom). Bending Spoons agreement announced 10 Sep 2026, $1.355bn enterprise value (Goodwin). The rest from my own timeline.',
     },
     {
       chapter: 'Intro',
