@@ -14,6 +14,7 @@
    environment variables. */
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { mail } from './email.js'
 
 const env = (name: string): string => {
   const v = process.env[name]
@@ -203,31 +204,19 @@ export const redirect = (to: string, cookies: string[] = []) => {
   return new Response(null, { status: 302, headers: h })
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
-
-/** Plain text → simple paragraphs (for messages written on the review screen). */
-export function textHtml(text: string) {
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#111;max-width:560px">
-${text.trim().split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px">${esc(p).replace(/\n/g, '<br>')}</p>`).join('\n')}
-</div>`
-}
-
-/** A plain email, with an optional button. */
-export function emailHtml(lines: string[], button?: { href: string; label: string }) {
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#111;max-width:480px">
-${lines.map((l) => `<p style="margin:0 0 14px">${esc(l)}</p>`).join('\n')}
-${button ? `<p style="margin:22px 0"><a href="${esc(button.href)}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px">${esc(button.label)}</a></p>` : ''}
-</div>`
-}
-
 /** Email the visitor a sign-in link that lands them on the case study they asked from. */
 export async function sendAccessLink(req: Request, email: string, slug?: string) {
   const link = `${origin(req)}/api/access?t=${sign({ k: 'access', e: email, ...(slug ? { s: slug } : {}) }, TTL.access)}`
-  await sendEmail(
-    email,
-    'Your portfolio link',
-    emailHtml(['You’re in. Thanks for your interest in my work.', 'This link opens every case study. Next time, entering this email on any case study lets you straight in.'], { href: link, label: 'Open the portfolio' }),
-  )
+  const m = mail({
+    preheader: 'Your link to my case studies.',
+    eyebrow: 'Portfolio',
+    title: 'You’re in.',
+    lines: ['Thanks for your interest in my work. This link opens every case study, so have a look around.'],
+    sign: true,
+    button: { href: link, label: 'Open the portfolio' },
+    footnote: 'Next time, just enter this email on any case study and you’ll go straight in.',
+  })
+  await sendEmail(email, 'You’re in: my case studies', m.html, { text: m.text })
 }
 
 export const isAdmin = (req: Request) => !!verify(readCookie(req, COOKIE.admin), 'admin')

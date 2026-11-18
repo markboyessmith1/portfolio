@@ -2,7 +2,8 @@
    A message from Mark, written on the review screen. Plain text in, simple HTML out. Replies thread
    when inReplyTo carries the Message-ID of their last email, and come back through Resend's inbound. */
 
-import { isAdmin, isEmail, json, normEmail, sendEmail, textHtml } from '../_lib/core.js'
+import { isAdmin, isEmail, json, normEmail, sendEmail } from '../_lib/core.js'
+import { letter } from '../_lib/email.js'
 
 export async function POST(req: Request) {
   if (!isAdmin(req)) return json({ error: 'unauthorised' }, { status: 401 })
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   if (!isEmail(email) || !subject || !body) return json({ error: 'bad-request' }, { status: 400 })
 
   try {
-    const id = await sendEmail(email, subject, textHtml(body), {
+    const id = await sendEmail(email, subject, letter(body).html, {
       text: body,
       ...(inReplyTo ? { headers: { 'In-Reply-To': inReplyTo, References: inReplyTo } } : {}),
     })
