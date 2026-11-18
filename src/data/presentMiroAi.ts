@@ -55,16 +55,9 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Intro',
-      layout: 'statement',
+      layout: 'split',
       eyebrow: 'One project, deep',
       title: 'Making Miro matter in the agentic era, with no blueprint. Then holding the launch until the AI was worth using.',
-      notes: 'One project, Intelligent Canvas 2.0, February to October. Invite interruptions. Plan for ~30 minutes of talking.',
-    },
-    {
-      chapter: 'Intro',
-      layout: 'split',
-      eyebrow: 'How I’ll show it',
-      title: 'The story, then the real stuff.',
       bullets: [
         { title: 'This walkthrough', text: 'the problem, the calls I made and what changed.' },
         { title: 'Two prototypes, live', text: 'an early one and a later one, so you can see how the thinking moved.' },
@@ -72,6 +65,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       media: [{ kind: 'video', src: `${SIMPLIFY}/prototypes.mp4`, caption: 'Everything we made was in code' }],
       criteria: ['Communication'],
+      notes: 'One project, Intelligent Canvas 2.0, February to October. Invite interruptions. Plan for ~30 minutes of talking.',
     },
     {
       chapter: 'Intro',
