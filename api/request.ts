@@ -5,8 +5,12 @@
    Resend's inbound and show on the review screen). Asking again while pending sends nothing new. */
 
 import {
-  addToAudience, config, COOKIE, emailHtml, inAudience, isEmail, isSlug, json, normEmail, origin, sendEmail, setCookie, sign, TTL,
+  addToAudience, config, COOKIE, inAudience, isEmail, isSlug, json, normEmail, origin, sendEmail, setCookie, sign, TTL,
 } from './_lib/core.js'
+import { mail } from './_lib/email.js'
+
+// "miro-ai" -> "Miro AI"-ish label for the request email
+const site = (slug: string) => slug.split('-').map((w) => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1))).join(' ')
 
 export async function POST(req: Request) {
   let body: Record<string, unknown>
@@ -29,25 +33,28 @@ export async function POST(req: Request) {
 
     await addToAudience(config.requests, email)
     const approve = `${origin(req)}/api/approve?t=${sign({ k: 'approve', e: email, ...(slug ? { s: slug } : {}) }, TTL.approve)}`
+    const where = slug ? site(slug) : null
+    const toMark = mail({
+      preheader: `${email} would like to see your case studies.`,
+      eyebrow: 'Portfolio request',
+      title: `${email} would like to see your work.`,
+      lines: [where ? `They asked from the ${where} case study.` : 'They asked from the portfolio page.', 'Approving sends them a link that opens every case study.'],
+      button: { href: approve, label: 'Review and approve' },
+      footnote: 'Reply to write to them directly. Everyone who’s asked is on your review screen at /admin.',
+    })
+    const toThem = mail({
+      preheader: 'I’ll be in touch as soon as you’re approved.',
+      eyebrow: 'Portfolio',
+      title: 'Thanks for asking.',
+      lines: [
+        'I look at every request myself, and I’ll email you as soon as you’re in.',
+        'If you like, reply and tell me a bit about what you’re working on.',
+      ],
+      sign: true,
+    })
     await Promise.all([
-      sendEmail(
-        config.admin,
-        `Portfolio request from ${email}`,
-        emailHtml(
-          [`${email} asked for access${slug ? ` from /work/${slug}` : ''}.`, 'Approving lets them in with their email on any case study.', `Review screen: ${origin(req)}/admin`],
-          { href: approve, label: `Approve ${email}` },
-        ),
-        email,
-      ),
-      sendEmail(
-        email,
-        'Thanks for your interest',
-        emailHtml([
-          'Thanks for asking to see my work. I review every request personally and will email you as soon as you’re approved.',
-          'Once you are, entering this email on any case study opens it. Feel free to reply with a note about what you’re hiring for.',
-          'Mark',
-        ]),
-      ),
+      sendEmail(config.admin, `Portfolio request from ${email}`, toMark.html, { replyTo: email, text: toMark.text }),
+      sendEmail(email, 'Thanks for asking to see my work', toThem.html, { text: toThem.text }),
     ])
     return json({ status: 'reviewing' })
   } catch (err) {
