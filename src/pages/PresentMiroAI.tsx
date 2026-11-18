@@ -144,6 +144,22 @@ function SlideBody({ slide: s, active }: { slide: DeckSlide; active: boolean }) 
     </div>
   )
 
+  if (s.layout === 'stack') {
+    const n = s.logos?.length ?? 1
+    const v = s.media?.[0]
+    return (
+      <div className="stack">
+        <div className="stack__video">
+          {v?.kind === 'video' ? <Media media={v} active={active} /> : <><span>TO FILL</span><p>Prototype video, 16:9</p></>}
+        </div>
+        {s.logos?.map((l, i) => {
+          const a = -Math.PI / 2 + (i * 2 * Math.PI) / n
+          return <span key={l} className="stack__logo" style={{ left: `${50 + 46 * Math.cos(a)}%`, top: `${50 + 44 * Math.sin(a)}%` }}>{l}</span>
+        })}
+      </div>
+    )
+  }
+
   if (s.layout === 'timeline') {
     return (
       <div className="slide__inner">

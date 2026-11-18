@@ -23,7 +23,7 @@ export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles'
 
 export type DeckSlide = {
   chapter: string
-  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline'
+  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline' | 'stack'
   eyebrow?: string
   title: string
   body?: string[]
@@ -34,6 +34,7 @@ export type DeckSlide = {
   metrics?: { value: string; label: string }[]
   /** Milestones, left to right. `major` ones get the big marker; `held` reads as a plan we moved. */
   timeline?: { when: string; what: string; detail?: string; major?: boolean; held?: boolean }[]
+  logos?: string[]
   criteria?: Criterion[]
   todo?: string[]
   notes?: string
@@ -126,6 +127,14 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       media: [{ kind: 'video', src: '/media/vision-sizzle-rko26.mp4', poster: '/media/vision-sizzle-rko26.jpg' }],
       criteria: ['Communication', 'Partnership', 'Craft'],
       notes: 'I led the vision with Ari (global head of design) and Tilo (principal designer), working closely with our execs Andrea and Jeff. First time I\'ve seen a design vision at this fidelity: ideas buried deep in the prototype you could actually use.',
+    },
+    {
+      chapter: 'No clear direction',
+      layout: 'stack',
+      title: 'The vision prototype',
+      logos: ['React', 'shadcn/ui', 'Claude', 'Liveblocks', 'Supabase', 'Vercel', 'OpenAI'],
+      media: [{ kind: 'todo', caption: 'Prototype video, 16:9' }],
+      notes: 'Let the video run. The stack around it: all real code, no Figma.',
     },
     {
       chapter: 'No clear direction',
