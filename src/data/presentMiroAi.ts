@@ -1,15 +1,17 @@
 /* The Miro AI case study as a talk: a full-screen, slide-by-slide deck at
    /present/miro-ai, shaped for a 45-minute past work review (Fin, 19 Nov 2026).
 
-   Running order follows the review's brief: the problem first, the calls Mark made
-   (with PM, Eng and AI), the model layer, the quality bar, how the team built,
-   the dead ends, then outcomes last. Copy and media are reused from the case
-   study (src/data/site.ts, notes/miro-ai-narrative.md, public/media).
+   Chapters follow the reviewers' four prompts: no clear direction, the call with
+   PM/Eng/AI and the pushback, the quality bar, and how AI changed how we built.
+   'live' slides are the hand-offs to real assets (two prototypes, the spec sheets).
+   Story and facts from Mark's own walkthrough (18 Nov), plus the case study
+   (src/data/site.ts, notes/miro-ai-narrative.md, public/media).
 
    `todo` marks content that doesn't exist yet: it renders as a dashed
-   placeholder on the slide so the gaps are obvious while rehearsing.
-   `notes` are speaker notes (press N). `criteria` tags which of the reviewers'
-   six criteria the slide is there to prove. */
+   placeholder so the gaps are obvious while rehearsing.
+   `notes` are speaker notes (press N). Colleagues are named in notes only;
+   slides use roles. `criteria` tags which of the reviewers' six criteria the
+   slide is there to prove. */
 
 export type DeckMedia =
   | { kind: 'video'; src: string; poster?: string; caption?: string }
@@ -21,7 +23,7 @@ export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles'
 
 export type DeckSlide = {
   chapter: string
-  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics'
+  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live'
   eyebrow?: string
   title: string
   body?: string[]
@@ -36,11 +38,12 @@ export type DeckSlide = {
 }
 
 const AI = '/media/ai'
+const SIMPLIFY = '/media/simplify'
 
 export const DECK: { title: string; slides: DeckSlide[] } = {
   title: 'Journey to the Intelligent Canvas',
   slides: [
-    // ---- Opening -------------------------------------------------------
+    // ---- Intro --------------------------------------------------------
     {
       chapter: 'Intro',
       layout: 'title',
@@ -54,95 +57,93 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'Intro',
       layout: 'statement',
       eyebrow: 'One project, deep',
-      title: 'When work moved into chats with agents, we worked out what a shared canvas is for. Then we held a launch until the AI was worth keeping.',
-      notes: 'Set expectations: one project, Intelligent Canvas 2.0, six months, from the problem to the calls. Invite interruptions. Plan for ~30 minutes of talking.',
+      title: 'Making Miro matter in the agentic era, with no blueprint. Then holding the launch until the AI was worth using.',
+      notes: 'One project, Intelligent Canvas 2.0, February to October. Invite interruptions. Plan for ~30 minutes of talking.',
+    },
+    {
+      chapter: 'Intro',
+      layout: 'split',
+      eyebrow: 'How I’ll show it',
+      title: 'The story, then the real stuff.',
+      bullets: [
+        { title: 'This walkthrough', text: 'the problem, the calls I made and what changed.' },
+        { title: 'Two prototypes, live', text: 'an early one and a later one, so you can see how the thinking moved.' },
+        { title: 'The spec sheets', text: 'like cursor chat, to show how we worked with engineering.' },
+      ],
+      media: [{ kind: 'video', src: `${SIMPLIFY}/prototypes.mp4`, caption: 'Everything we made was in code' }],
+      criteria: ['Communication'],
     },
     {
       chapter: 'Intro',
       layout: 'split',
       eyebrow: 'Context',
-      title: 'Six months. Seven teams. Nearly 100 people.',
+      title: 'Seven teams, about 100 people, six months.',
       body: [
-        'In 2026 we set out to reimagine Miro as an agentic collaboration platform. In October we launched Intelligent Canvas 2.0 to Miro’s 100 million users.',
-        'I co-led the program and was responsible for the end-to-end product experience strategy and how we operationalised it.',
+        'In 2026 we set out to make Miro a collaboration platform for the agentic era. In October we launched Intelligent Canvas 2.0 to Miro’s 100 million users.',
+        'I led the product experience, as one of three leads with my product and engineering partners.',
       ],
       media: [{ kind: 'image', src: '/diagrams/stream-structure.svg', alt: 'The AI stream: five formal teams (Surface, Behaviour, Context, Harness, AI Trust) and two virtual teams (Board Gen, Evals Infra).', caption: 'The AI stream' }],
-      todo: ['Who I co-led with (role), so "I" vs "we" is clean'],
-      notes: 'Say "I" for the calls, "we" for the build. Don\'t open with the $1.4bn exit or the numbers.',
+      notes: 'The trio: me, Damir (product partner) and Henrik (engineering leader), with about 100 people beneath us. Say "I" for the calls, "we" for the build. Don\'t open with the $1.4bn exit or the numbers.',
     },
 
-    // ---- The problem ---------------------------------------------------
+    // ---- Prompt 2: no clear direction ---------------------------------
     {
-      chapter: 'The problem',
+      chapter: 'No clear direction',
       layout: 'statement',
       eyebrow: 'An existential moment',
       title: 'Teams were jumping straight to building with their agents. Collaboration was moving later, and away from the canvas.',
       criteria: ['First principles'],
-      notes: 'As individuals could do more on their own, people turned to agents for early, open-ended work. Team engagement in early ideation declined across the industry. Left alone, that meant lower team usage exactly where Miro adds the most value.',
+      notes: 'Our moat of visual collaboration was being eaten by the frontier labs and by every other product. Teams were putting up with having conversations in comms tools. Left alone, that meant lower team usage exactly where Miro adds the most value.',
     },
     {
-      chapter: 'The problem',
+      chapter: 'No clear direction',
       layout: 'statement',
       eyebrow: 'The clay pot',
       title: 'Get your hands on the clay and you own the pot. Hand someone a finished, glazed pot and all they can do is break it.',
-      notes: 'Agent output was hard to adopt and the process behind it hard to trace, so teams couldn\'t build on it. This is why "editable, collaborative artifacts" became a goal, not a nice-to-have.',
+      notes: 'Agent output was hard to adopt and the process behind it hard to trace. This is why editable, collaborative artifacts became a goal, not a nice-to-have.',
     },
     {
-      chapter: 'The problem',
+      chapter: 'No clear direction',
       layout: 'split',
-      eyebrow: 'The reframe',
-      title: 'Not a surface for early ideas. A place to see and steer agent work.',
+      eyebrow: 'No blueprint',
+      title: 'Nobody was thinking about interaction paradigms beyond chat.',
+      body: ['We set out to bring frontier intelligence to early and late majority teams through visual collaboration. Nobody was doing it, and the technology wasn’t there yet.'],
       bullets: [
-        { text: 'Visualise and understand high volumes of agent work' },
-        { text: 'Untangle the new process bottlenecks' },
-        { text: 'Coordinate teams of humans and agents' },
-        { text: 'Codify and spread the AI workflows that work' },
+        { title: 'How much of the apple to bite off', text: 'and how to make room for it on an ageing platform that was hard to add to.' },
+        { title: 'Strip it back first', text: 'years of accrued complexity had to go before new capabilities could land.' },
+        { title: 'What is the right way to work with agents?', text: 'everyone was figuring that out at the same time as us.' },
       ],
-      call: 'I framed this as existential, not a feature gap. That changed what we were willing to stop doing.',
-      criteria: ['First principles', 'Communication'],
-      media: [{ kind: 'todo', caption: 'Optional: an early framing artifact (strategy board or memo) from Jan–Feb' }],
+      call: 'Frame it as existential, not a feature gap. That changed what we were willing to stop doing.',
+      criteria: ['First principles', 'Agency'],
     },
-
-    // ---- Creating clarity ---------------------------------------------
     {
-      chapter: 'Creating clarity',
+      chapter: 'No clear direction',
       layout: 'statement',
       eyebrow: 'The mission',
       title: 'Make the canvas the best shared visual space for human-to-human and human-to-agent collaboration.',
-      notes: 'One simple mission across 7 teams. Signals we\'d expect: MCP growth and retention, stickiness of the core AI experience, content survival and board share rates.',
+      notes: 'One simple mission across 7 teams. Signals: MCP growth and retention, stickiness of the core AI experience, content survival and board share rates.',
     },
     {
-      chapter: 'Creating clarity',
-      layout: 'split',
-      eyebrow: 'Two ways in, one foundation',
-      title: 'If work starts in external agents, what is Miro for?',
-      body: [
-        'Sidekicks inside the canvas, and MCP for people already working through Claude, ChatGPT or Codex. Both on the same core read, write and update tools, so every improvement reached both.',
-      ],
-      call: 'One tool layer for first- and third-party agents, instead of two products.',
-      criteria: ['First principles', 'Partnership'],
-      media: [{ kind: 'image', src: '/diagrams/ai-stack.svg', alt: 'Miro’s AI stack: Sidekicks and Flows in Miro, third-party agents via MCP, all on shared context, behaviour, trust and tools layers.', caption: 'Productecture' }],
-    },
-    {
-      chapter: 'Creating clarity',
-      layout: 'split',
-      eyebrow: 'Every level of adoption',
-      title: 'From holdouts to frontier teams, on one canvas.',
-      body: ['We had to build for the agentic era without unsettling the reliable canvas teams had built their workflows around.'],
-      media: [{ kind: 'image', src: '/diagrams/ai-cohorts.svg', alt: 'Four customer cohorts from holdouts to frontier teams, and what each needed.', caption: 'Customer cohorts' }],
-    },
-    {
-      chapter: 'Creating clarity',
+      chapter: 'No clear direction',
       layout: 'full',
-      eyebrow: 'The vision, built like production software',
-      title: 'One experience for the end state of all five investments.',
-      body: ['It became our All Hands story, Show and Tell playground, customer testing ground and engineering spec.'],
+      eyebrow: 'Creating the clarity',
+      title: 'A vision you could hand someone as a link, and use like a real product.',
+      body: ['It had to carry the conversations of about 2,000 people, so it couldn’t be something only the design team could move around. A very small team built it, then took it to customers and broke it down with the teams.'],
       media: [{ kind: 'video', src: '/media/vision-sizzle-rko26.mp4', poster: '/media/vision-sizzle-rko26.jpg' }],
-      criteria: ['Communication', 'Partnership'],
-      notes: 'This is how I got PM and Eng behind a direction: one coded vision used everywhere. Then open the live prototype in another tab if they want to poke at it.',
+      criteria: ['Communication', 'Partnership', 'Craft'],
+      notes: 'I led the vision with Ari (global head of design) and Tilo (principal designer), working closely with our execs Andrea and Jeff. First time I\'ve seen a design vision at this fidelity: ideas buried deep in the prototype you could actually use.',
     },
     {
-      chapter: 'Creating clarity',
+      chapter: 'No clear direction',
+      layout: 'live',
+      eyebrow: 'Live',
+      title: 'Prototype 1: where we started.',
+      body: ['Switch to the early prototype.'],
+      todo: ['Which prototype, and its link open in a tab', 'The one thing to point at, and what we later threw away from it'],
+      notes: 'Keep it to 3–4 minutes. Show the rough edges: they asked for explorations and dead ends.',
+    },
+    {
+      chapter: 'No clear direction',
       layout: 'grid',
       eyebrow: 'Principles',
       title: 'Humanity. Forward momentum. Radical simplicity.',
@@ -154,37 +155,204 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['Craft'],
     },
     {
-      chapter: 'Creating clarity',
-      layout: 'grid',
-      eyebrow: 'Dead ends',
-      title: 'The versions we threw away, and why.',
-      media: [
-        { kind: 'todo', caption: 'A #bad-versions exploration of my own' },
-        { kind: 'todo', caption: 'A boundary concept we dropped, and the reason' },
-        { kind: 'todo', caption: 'An early chat-first direction we moved away from' },
-      ],
-      criteria: ['Craft', 'Agency'],
-      todo: ['2–3 discarded explorations with one line each on why they died'],
-      notes: 'The reviewers explicitly asked for explorations, dead ends and throwaway versions. Messy is fine. Kept the core design team at about five on purpose so rough ideas were welcome.',
+      chapter: 'No clear direction',
+      layout: 'split',
+      eyebrow: 'Two ways in, one foundation',
+      title: 'If work starts in external agents, what is Miro for?',
+      body: ['Sidekicks inside the canvas, and MCP for people already working through Claude, ChatGPT or Codex. Both on the same core read, write and update tools, so every improvement reached both.'],
+      call: 'One tool layer for first- and third-party agents, instead of two products.',
+      criteria: ['First principles', 'Technical AI'],
+      media: [{ kind: 'image', src: '/diagrams/ai-stack.svg', alt: 'Miro’s AI stack: Sidekicks and Flows in Miro, third-party agents via MCP, all on shared context, behaviour, trust and tools layers.', caption: 'Productecture' }],
     },
 
-    // ---- The model layer ----------------------------------------------
+    // ---- Prompt 3: the call and the pushback --------------------------
     {
-      chapter: 'The model layer',
-      layout: 'split',
-      eyebrow: 'Tool formats',
-      title: 'Let the model work in formats it reasons well in. Then make it editable.',
-      body: [
-        'Agents write SVG, Markdown, Mermaid, HTML and CSV, formats they have seen endlessly in training. The engine translates that into native, editable canvas content.',
-      ],
-      call: 'The formats bet: quality goes up, and people can still get their hands on the clay.',
-      criteria: ['Technical AI', 'First principles'],
-      media: [{ kind: 'todo', caption: 'Diagram: prompt → model writes SVG / Mermaid → translator → editable stickies, shapes, docs' }],
-      todo: ['A real example of the same board as SVG source and as canvas objects'],
-      notes: 'Strongest first-principles answer. Be ready to go one level deeper: why not call canvas tools directly? (Tool-call chains for 2D layout were brittle; models are bad at coordinates, good at known formats.) Confirm this reasoning is accurate before saying it.',
+      chapter: 'The pushback',
+      layout: 'statement',
+      eyebrow: 'Meeting customers where they are',
+      title: 'Some of our customers didn’t want AI at all.',
+      criteria: ['Partnership'],
+      notes: 'This was the biggest challenge of the project, and it came up week on week. Our beliefs were split between reinforcing the enterprise base and betting the farm on being the next agentic leader, knowing the enterprise base wouldn\'t sustain us forever.',
     },
     {
-      chapter: 'The model layer',
+      chapter: 'The pushback',
+      layout: 'split',
+      eyebrow: 'A broad spectrum',
+      title: 'You can ship faster than competitors, and still outrun your customers.',
+      bullets: [
+        { title: 'Facilitators', text: 'want to know exactly what participants see. They don’t want people playing with AI mid-workshop.' },
+        { title: 'Enterprise', text: 'what does an agent do in a board with someone who isn’t allowed to see what you can?' },
+        { title: 'The business', text: 'had to move faster towards agents than many customers could adopt.' },
+      ],
+      media: [{ kind: 'image', src: '/diagrams/ai-cohorts.svg', alt: 'Four customer cohorts from holdouts to frontier teams, and what each needed.', caption: 'Customer cohorts' }],
+      criteria: ['Partnership', 'First principles'],
+    },
+    {
+      chapter: 'The pushback',
+      layout: 'split',
+      eyebrow: 'Down to the toolbar',
+      title: 'Is the AI chat open or closed by default?',
+      body: ['Chat was familiar and a great stepping stone. But the second we added it, we created friction for people who didn’t want AI there. It felt like we’d annoy half our customers whichever way we went.'],
+      bullets: [
+        { text: 'The same belief split ran through packaging and the website' },
+        { text: 'Onboarding and the default experience' },
+        { text: 'Credits for AI, when everyone else paid per seat' },
+      ],
+      media: [{ kind: 'video', src: `${SIMPLIFY}/toolbars-mono.mp4`, poster: `${SIMPLIFY}/toolbars-mono.jpg`, caption: 'Toolbar explorations' }],
+      todo: ['What we decided on the default, and why'],
+      criteria: ['Craft', 'Partnership'],
+    },
+    {
+      chapter: 'The pushback',
+      layout: 'split',
+      eyebrow: 'Time to launch',
+      title: 'Go-to-market needed a date to sell towards.',
+      bullets: [
+        { title: 'February', text: 'we start.' },
+        { title: 'March', text: 'enable the go-to-market teams.' },
+        { title: 'May', text: 'ready in some form for our Canvas events.' },
+        { title: 'June', text: 'in customers’ hands.' },
+      ],
+      body: ['Near the date we had all the pieces, but not the maturity or infrastructure to get repeatable, quality results. This was on another scale from anything Miro had tried.'],
+      notes: 'The pressure was fair: GTM needed to close significant deals and enthuse their sales teams. It all fell to me, Damir and Henrik. Then go straight into the quality story.',
+    },
+
+    // ---- Prompt 1: quality --------------------------------------------
+    {
+      chapter: 'Quality',
+      layout: 'statement',
+      eyebrow: 'BoardGen',
+      title: 'The best models in the world don’t matter if the output is worse than what a person would make. People just won’t use it.',
+      criteria: ['Craft'],
+      notes: 'That was our problem all along. A big technology problem with creating great content on the board, solved through engineering, and a design problem in how we approached it.',
+    },
+    {
+      chapter: 'Quality',
+      layout: 'split',
+      eyebrow: 'Where we started',
+      title: 'We designed backwards from the end state. The models didn’t care.',
+      body: ['Early on we took a heavy-handed design approach, layered over models that already worked in a very specific way. We weren’t running our own models.'],
+      bullets: [
+        { text: 'How the brand aesthetic should feel' },
+        { text: 'Which format to use for which exercise' },
+        { text: 'How to lay those formats out' },
+        { text: 'How to overlay your brand and everything we knew about your context' },
+      ],
+      media: [{ kind: 'todo', caption: 'An early, heavy-handed BoardGen design: the board we mocked up versus what the model produced' }],
+      criteria: ['Craft', 'Technical AI'],
+    },
+    {
+      chapter: 'Quality',
+      layout: 'split',
+      eyebrow: 'The flip',
+      title: 'Work forwards from what the model can do.',
+      body: [
+        'Find the limits of each model, then engineer the prompt that gets it to a good result. We wrote a set of core principles we believed would realistically lead to good output, and worked from there.',
+        'Less designing the output, more creating the right environment for a prompt to succeed.',
+      ],
+      call: 'Drop “start with the end in mind” for generation, and work forwards from the model. It caused real tension in the team for a while.',
+      criteria: ['First principles', 'Technical AI'],
+      todo: ['The core principles, as written', 'One before/after where a principle changed the output'],
+    },
+    {
+      chapter: 'Quality',
+      layout: 'split',
+      eyebrow: 'The engineering fix',
+      title: 'Let the model write formats it reasons well in. Then make them editable.',
+      body: ['Agents write SVG, Markdown, Mermaid, HTML and CSV, formats they’ve seen endlessly in training. The engine turns that into native, editable canvas content.'],
+      media: [{ kind: 'todo', caption: 'Diagram: prompt → model writes SVG / Mermaid → translator → editable stickies, shapes, docs' }],
+      criteria: ['Technical AI'],
+      notes: 'Be ready to go one level deeper on why not call canvas tools directly. Confirm the reasoning with engineering\'s version before saying it.',
+    },
+    {
+      chapter: 'Quality',
+      layout: 'split',
+      eyebrow: 'Evals',
+      title: 'An evals team that could turn around improvements fast.',
+      criteria: ['Technical AI'],
+      media: [{ kind: 'todo', caption: 'The test set or rubric: even a spreadsheet of graded boards' }],
+      todo: [
+        'What we graded (prompts, board types)',
+        'The rubric for “good”, and design’s part in writing it',
+        'The bar we needed to clear before launch',
+        'One failure mode the evals caught, and the fix',
+      ],
+      notes: 'Expect the hardest pushing here. Fin rates model-layer depth and evals above everything else.',
+    },
+    {
+      chapter: 'Quality',
+      layout: 'grid',
+      eyebrow: 'Same prompt, two engines',
+      title: 'BoardGen V1 vs V2.',
+      media: [
+        { kind: 'todo', caption: 'BoardGen V1 output' },
+        { kind: 'todo', caption: 'BoardGen V2 output, same prompt' },
+      ],
+      criteria: ['Craft'],
+      todo: ['Side-by-side boards on the same prompt; zoom into one detail'],
+    },
+    {
+      chapter: 'Quality',
+      layout: 'statement',
+      eyebrow: 'The call',
+      title: 'We planned to launch in July. We launched in October. You only get one chance to burn a customer.',
+      criteria: ['Agency', 'Partnership'],
+      notes: 'If we take this one shot and miss because the quality isn\'t good enough, they don\'t come back. So we kept it under wraps longer, improved the models, completely changed our infrastructure, and rolled out in October.',
+    },
+    {
+      chapter: 'Quality',
+      layout: 'split',
+      eyebrow: 'Handling the pushback',
+      title: 'More transparency, not a privacy screen.',
+      body: ['The delay was really uncomfortable for our go-to-market partners and our executives. So we opened up the inner workings of the team.'],
+      bullets: [
+        { text: 'Very structured goals we had to hit' },
+        { text: 'Week on week: what we’d done, and how far off the goals we were' },
+        { text: 'Kept basic and open, so people understood why' },
+      ],
+      call: 'Shielding the team would have ended with us chopping the edges off the product to fit the date.',
+      media: [{ kind: 'todo', caption: 'The weekly goals update we shared (redacted)' }],
+      criteria: ['Partnership', 'Communication'],
+      notes: 'A very tense period, and a very rewarding one.',
+    },
+    {
+      chapter: 'Quality',
+      layout: 'full',
+      eyebrow: 'IC 1.0 → IC 2.0',
+      title: 'From one-shot format agents to agents that plan, see and iterate.',
+      media: [{ kind: 'image', src: '/diagrams/ic-comparison.svg', alt: 'Twelve capabilities compared between IC 1.0 (non-agentic) and IC 2.0 (agentic).' }],
+    },
+
+    // ---- Prompt 4: AI changed how we built ----------------------------
+    {
+      chapter: 'How AI changed the work',
+      layout: 'split',
+      eyebrow: 'A completely AI-forward team',
+      title: 'We didn’t open Figma once.',
+      body: [
+        'Everything was in code. Since June, designers have merged more than 700 pull requests into production, behind pipelines and gates engineering built for them.',
+        'The bigger change was using AI to explore new technology at very high fidelity, before it was ready.',
+      ],
+      media: [{ kind: 'todo', caption: 'The designer PR graph, or one real merged PR' }],
+      criteria: ['First principles', 'Agency'],
+    },
+    {
+      chapter: 'How AI changed the work',
+      layout: 'split',
+      eyebrow: 'Autopilot',
+      title: 'Why touch the board at all, if it’s up on everyone’s screen?',
+      body: ['Ambient intelligence that listens to the conversation, grabs the notes and puts the right material in front of the team at the right time, while staying multiplayer if you want to step in.'],
+      bullets: [
+        { text: 'Liveblocks and tldraw, as there was no standalone Miro for prototypes yet' },
+        { text: 'A range of OpenAI voice models' },
+        { text: 'Motion, and shaders that trail the canvas where you touch' },
+      ],
+      media: [{ kind: 'todo', caption: 'Autopilot prototype clip' }],
+      criteria: ['Technical AI', 'Agency'],
+      notes: 'Built before decision models were available. Designers wouldn\'t have even looked for these technologies before, let alone played with them. Taking the gloves off cranked up the creativity.',
+    },
+    {
+      chapter: 'How AI changed the work',
       layout: 'grid',
       eyebrow: 'Decision models',
       title: 'AI that doesn’t write. It picks, in a few hundred milliseconds.',
@@ -193,11 +361,24 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { kind: 'video', src: `${AI}/point-and-jev.mp4`, caption: 'Say “here” and “this”, and the board knows' },
         { kind: 'video', src: `${AI}/builds-while-typing.mp4`, caption: 'The board builds while you type' },
       ],
-      criteria: ['Technical AI', 'Agency'],
-      notes: 'My own experiments: 21 videos from the first sorting test onwards. Speed changed what was possible. Explain internal names (JEV, Clef) as "a fast decision model" rather than naming them. Be honest: most of this didn\'t reach production.',
+      criteria: ['Technical AI'],
+      notes: 'My own experiments: 21 videos from the first sorting test onwards. Explain internal names (JEV, Clef) as "a fast decision model". Be honest: most of this didn\'t reach production.',
     },
     {
-      chapter: 'The model layer',
+      chapter: 'How AI changed the work',
+      layout: 'grid',
+      eyebrow: 'The gloves off',
+      title: 'Early thinking, at a quality you can hand someone and watch them play.',
+      media: [
+        { kind: 'video', src: `${AI}/jev2hands.mp4`, caption: 'Moving the canvas with your hands, through the webcam' },
+        { kind: 'video', src: `${SIMPLIFY}/soundscape-ring.mp4`, caption: '360° soundscape: hear the collaboration around you' },
+        { kind: 'video', src: `${AI}/ai-cursor-identity.mp4`, caption: 'Generated stickers that become your cursor' },
+      ],
+      criteria: ['Craft', 'Agency'],
+      notes: 'Also eye tracking and more generative UI. Sticker packs became the most adopted feature in Miro for a while, because the prompt engineering was spot on.',
+    },
+    {
+      chapter: 'How AI changed the work',
       layout: 'grid',
       eyebrow: 'Making agents legible',
       title: 'You can’t trust an agent you can’t see working.',
@@ -208,101 +389,23 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['Craft', 'Technical AI'],
     },
     {
-      chapter: 'The model layer',
-      layout: 'split',
-      eyebrow: 'Where it broke',
-      title: 'A failure mode we found, and how we fixed it.',
-      criteria: ['Technical AI'],
-      media: [{ kind: 'todo', caption: 'Before/after of the failure (layout, selection context, multi-artifact turns…)' }],
-      todo: [
-        'The failure mode, in one line',
-        'How we caught it (eval, user test, dogfooding)',
-        'What we changed: prompt, tool, harness or UI',
-        'How we checked the fix held',
-      ],
-      notes: 'Expect the hardest pushing here. Fin rates model-layer depth and evals above everything else.',
-    },
-
-    // ---- The quality call ---------------------------------------------
-    {
-      chapter: 'The quality call',
-      layout: 'statement',
-      eyebrow: 'Canvas ’26, a fixed date',
-      title: 'Sidekicks satisfaction was low, and what AI put on the board wasn’t good enough.',
-      criteria: ['Craft'],
-      notes: 'Tell it with the tension in it. GTM was ready and the event date was fixed.',
+      chapter: 'How AI changed the work',
+      layout: 'live',
+      eyebrow: 'Live',
+      title: 'The spec sheets: cursor chat.',
+      body: ['Switch to the spec. This is how a prototype became something engineering could build.'],
+      media: [{ kind: 'video', src: `${AI}/multiplayer-chat.mp4`, caption: 'Cursor chat' }],
+      todo: ['Cursor chat spec open in a tab'],
+      criteria: ['Partnership', 'Craft'],
+      notes: 'Spec sheets sat beside the vision prototype. We stopped having reviews where designers and engineers saw the build together for the first time.',
     },
     {
-      chapter: 'The quality call',
-      layout: 'grid',
-      eyebrow: 'Same prompt, two engines',
-      title: 'BoardGen V1 vs V2.',
-      media: [
-        { kind: 'todo', caption: 'BoardGen V1 output' },
-        { kind: 'todo', caption: 'BoardGen V2 output, same prompt' },
-      ],
-      criteria: ['Craft'],
-      todo: ['Side-by-side boards on the same prompt; zoom into one detail I sent back'],
-      notes: 'This is the craft moment. Zoom right in.',
-    },
-    {
-      chapter: 'The quality call',
-      layout: 'split',
-      eyebrow: 'The hold',
-      title: 'We held the launch a few weeks until BoardGen V2 was ready.',
-      body: ['Rather than send more people into a weak experience, we made the new engine the priority, and didn’t push activation until quality was fixed.'],
-      call: 'Hold the launch, despite a fixed event date.',
-      criteria: ['Agency', 'Partnership'],
-      todo: ['Who pushed back (roles, not names) and how I brought them round'],
-      media: [{ kind: 'todo', caption: 'Artifact from the decision: the review doc, Slack thread or launch-readiness board' }],
-    },
-    {
-      chapter: 'The quality call',
-      layout: 'split',
-      eyebrow: 'How we knew it was ready',
-      title: 'The eval that told us V2 was good enough.',
-      criteria: ['Technical AI'],
-      media: [{ kind: 'todo', caption: 'The test set or rubric: even a spreadsheet of graded boards' }],
-      todo: [
-        'What we graded (prompts, board types)',
-        'The rubric for "good", and who wrote it',
-        'The threshold we needed to hit',
-        'What the evals infra team built, and design’s part in it',
-      ],
-      notes: 'Biggest gap against Fin\'s criteria. Design owns the rubric for "good" as much as engineering owns the harness.',
-    },
-    {
-      chapter: 'The quality call',
-      layout: 'full',
-      eyebrow: 'IC 1.0 → IC 2.0',
-      title: 'From one-shot format agents to agents that plan, see and iterate.',
-      media: [{ kind: 'image', src: '/diagrams/ic-comparison.svg', alt: 'Twelve capabilities compared between IC 1.0 (non-agentic) and IC 2.0 (agentic).' }],
-    },
-
-    // ---- How the team built -------------------------------------------
-    {
-      chapter: 'How we built',
-      layout: 'split',
-      eyebrow: 'From vision to spec',
-      title: 'Spec sheets beside the prototype, so engineers trusted it.',
-      body: [
-        'We stopped having review sessions where designers and engineers saw the build together for the first time.',
-      ],
-      media: [{ kind: 'todo', caption: 'A spec sheet next to its prototype branch (e.g. agent prompt planning)' }],
-      criteria: ['Partnership'],
-    },
-    {
-      chapter: 'How we built',
-      layout: 'split',
-      eyebrow: 'Work in code',
-      title: 'Designers merged 700+ pull requests into production since June.',
-      body: [
-        'Engineering built the pipelines and gates to make design contributions safe. Several design engineers emerged from the team, including me. Vibe Lab let teams share prototypes outside production.',
-      ],
-      call: 'Train the team to ship to production, and protect it with eng gates rather than reviews.',
-      criteria: ['First principles', 'Agency'],
-      media: [{ kind: 'video', src: '/media/simplify/prototypes.mp4', caption: 'Prototyping in code' }],
-      todo: ['The PR graph over time', 'One real PR a designer merged'],
+      chapter: 'How AI changed the work',
+      layout: 'live',
+      eyebrow: 'Live',
+      title: 'Prototype 2: where we ended up.',
+      body: ['Switch to the later prototype.'],
+      todo: ['Which prototype, and its link open in a tab', 'What changed since prototype 1, and why'],
     },
 
     // ---- What didn't ship ---------------------------------------------
@@ -310,24 +413,25 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'What didn’t ship',
       layout: 'grid',
       eyebrow: 'Shone in demos',
-      title: 'Real-time voice and multiplayer AI never made it to production.',
+      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
       media: [
         { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
         { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
         { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
       ],
-      notes: 'Agentic tooling moved weekly; our focus shifted several times. Have a strong opinion on why these didn\'t ship.',
+      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
     },
     {
       chapter: 'What didn’t ship',
       layout: 'split',
       eyebrow: 'What I’d do differently',
-      title: 'Evals on day one. Vision and spec split earlier.',
+      title: 'Work forwards from day one. Evals from day one.',
       bullets: [
-        { title: 'Evals for board quality from the start', text: 'not when Sidekicks satisfaction dropped. We found the gap late, close to a fixed date.' },
-        { title: 'Split the vision prototype from the spec sooner', text: 'one prototype got hard to keep coherent, and we lost time telling vision from spec.' },
+        { title: 'Start from the model’s limits', text: 'we lost time designing generation backwards from a brand opinion.' },
+        { title: 'Evals for board quality from the start', text: 'we found the quality gap close to a fixed date.' },
       ],
       criteria: ['Communication'],
+      todo: ['Check these are the two you believe'],
     },
 
     // ---- Outcomes -----------------------------------------------------
@@ -342,7 +446,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { value: '+35%', label: 'Tool calls per user (8.8 → 11.9)' },
         { value: '73%', label: 'CSAT on the new engine' },
       ],
-      todo: ['Confirm the 73% CSAT figure (the prep notes still had it as X%)'],
+      todo: ['Confirm the 73% CSAT figure'],
     },
     {
       chapter: 'Outcomes',
