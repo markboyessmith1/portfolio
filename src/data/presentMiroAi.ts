@@ -161,7 +161,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['First principles'],
     },
     {
-      chapter: 'No clear direction',
+      chapter: 'Operationalisation',
       layout: 'statement',
       eyebrow: 'Operationalising our vision',
       title: 'Five key investments, across technology and experience.',
@@ -176,13 +176,28 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['First principles', 'Agency'],
     },
     {
-      chapter: 'No clear direction',
+      chapter: 'Operationalisation',
       layout: 'split',
       eyebrow: 'Teams built around the investments',
       title: 'Five formal teams, two virtual ones.',
       body: ['Surface, Behaviour, Context, Harness and AI Trust, plus virtual teams for Board Gen and Evals Infra cutting across them.'],
       media: [{ kind: 'image', src: '/diagrams/stream-structure.svg', alt: 'The AI stream’s seven domains: Surface, Behaviour, Context, Harness, AI Trust, and virtual teams Board Gen and Evals Infra.', caption: 'Team structure' }],
       criteria: ['Partnership', 'Agency'],
+    },
+    {
+      chapter: 'Operationalisation',
+      layout: 'split',
+      eyebrow: 'How we ran it',
+      title: 'Five investments in parallel, one shared picture.',
+      bullets: [
+        { title: 'Air-traffic control', text: 'Forums for the interdependencies between teams.' },
+        { title: 'The vision as the spec', text: 'All Hands story, Show and Tell playground, customer testing ground and engineering spec, in one prototype.' },
+        { title: 'Labs', text: 'Every bet taken through many coded iterations, ready for new models the moment they landed.' },
+        { title: 'A lean design team', text: 'Usually five designers, each owning an investment.' },
+      ],
+      media: [{ kind: 'todo', caption: 'Operating rhythm diagram: forums, cadence, who met when' }],
+      todo: ['Cadence: weekly / fortnightly rituals and who was in them', 'Leadership trio and how decisions were made', 'How the ~100 people were grouped and reported'],
+      criteria: ['Partnership', 'Communication'],
     },
     {
       chapter: 'No clear direction',
