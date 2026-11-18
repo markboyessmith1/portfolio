@@ -237,6 +237,17 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
+      layout: 'grid',
+      eyebrow: 'Making agents legible',
+      title: 'You can’t trust an agent you can’t see working.',
+      media: [
+        { kind: 'video', src: `${AI}/ai-see-ya-work.mp4`, caption: 'Agent cursors move where agents really read and write' },
+        { kind: 'video', src: `${AI}/megaplan.mp4`, caption: 'Planning mode checks what it needs, then plans on the board' },
+      ],
+      criteria: ['Craft', 'Technical AI'],
+    },
+    {
+      chapter: 'No clear direction',
       layout: 'split',
       eyebrow: 'Two ways in, one foundation',
       title: 'If work starts in external agents, what is Miro for?',
@@ -473,17 +484,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       criteria: ['Craft', 'Agency'],
       notes: 'Also eye tracking and more generative UI. Sticker packs became the most adopted feature in Miro for a while, because the prompt engineering was spot on.',
-    },
-    {
-      chapter: 'How AI changed the work',
-      layout: 'grid',
-      eyebrow: '01 · Making agents legible',
-      title: 'You can’t trust an agent you can’t see working.',
-      media: [
-        { kind: 'video', src: `${AI}/ai-see-ya-work.mp4`, caption: 'Agent cursors move where agents really read and write' },
-        { kind: 'video', src: `${AI}/megaplan.mp4`, caption: 'Planning mode checks what it needs, then plans on the board' },
-      ],
-      criteria: ['Craft', 'Technical AI'],
     },
     {
       chapter: 'How AI changed the work',
