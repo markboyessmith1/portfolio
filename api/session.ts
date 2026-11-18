@@ -5,8 +5,15 @@
 import { config, COOKIE, inAudience, isAdmin, json, readCookie, verify } from './_lib/core.js'
 
 export async function GET(req: Request) {
-  const admin = isAdmin(req)
-  const claims = verify(readCookie(req, COOKIE.session), 'session')
+  let admin = false
+  let claims: ReturnType<typeof verify<'session'>> = null
+  try {
+    admin = isAdmin(req)
+    claims = verify(readCookie(req, COOKIE.session), 'session')
+  } catch (err) {
+    // missing ACCESS_SECRET: nobody is signed in, but answer cleanly so the site still renders its gates
+    console.error(err)
+  }
   let granted = admin
   if (!granted && claims) {
     try { granted = await inAudience(config.access, claims.e) } catch (err) {
