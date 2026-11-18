@@ -129,7 +129,7 @@ function SlideBody({ slide: s, active }: { slide: DeckSlide; active: boolean }) 
       {s.bullets && (
         <ul className="slide__list">
           {s.bullets.map((b, i) => (
-            <li key={i}>{b.title && <strong>{b.title}: </strong>}{b.text}</li>
+            <li key={i}>{b.title && <strong>{b.title}{s.layout === 'statement' ? '' : ': '}</strong>}{b.text}</li>
           ))}
         </ul>
       )}
