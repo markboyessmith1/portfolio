@@ -298,6 +298,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       layout: 'statement',
       eyebrow: '01 · Meeting people where they’re at',
       title: 'Most of our customers sat in the early to late majority.',
+      body: ['Our feed-forward research programme put the prototype in front of select users to see how they understood the concepts. It stripped out PMM jargon like “Sidekicks”, which customers just called AI or their agent. We’d built a translation layer nobody needed.'],
       bullets: [
         { title: 'Holdouts', text: 'some didn’t want AI at all.' },
         { title: 'The majority', text: 'early to late majority, where most of our customers sat.' },
@@ -305,7 +306,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       call: 'Sometimes we chose the well-trodden path, even when it felt like a poor decision from an innovation point of view.',
       criteria: ['Partnership'],
-      notes: 'This was the biggest challenge of the project, and it came up week on week. Our beliefs were split between reinforcing the enterprise base and betting the farm on being the next agentic leader, knowing the enterprise base wouldn\'t sustain us forever.',
+      notes: 'This is where our feed-forward research programme became incredibly helpful: putting the prototype in front of select users to understand how they read the different concepts. It helped us remove a lot of the product jargon PMM had introduced over consecutive releases, like Sidekicks, which our entire customer base just knew as AI or their agent. We were creating a translation layer that was completely unnecessary in the product.',
     },
     {
       chapter: 'Challenges',
