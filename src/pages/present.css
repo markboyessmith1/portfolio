@@ -214,3 +214,5 @@
   .slide--grid .slide__media--2, .slide--grid .slide__media--3 { grid-template-columns: minmax(0, 1fr); }
   .media video, .media img { max-height: 40vh; }
 }
+.slide--statement .slide__list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; column-gap: 40px; margin-top: 48px; }
+@media (max-width: 820px) { .slide--statement .slide__list { grid-template-columns: minmax(0, 1fr); } }
