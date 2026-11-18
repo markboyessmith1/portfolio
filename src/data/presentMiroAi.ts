@@ -210,15 +210,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'live',
-      eyebrow: 'Live',
-      title: 'Prototype 1: where we started.',
-      body: ['Switch to the early prototype.'],
-      todo: ['Which prototype, and its link open in a tab', 'The one thing to point at, and what we later threw away from it'],
-      notes: 'Keep it to 3–4 minutes. Show the rough edges: they asked for explorations and dead ends.',
-    },
-    {
-      chapter: 'No clear direction',
       layout: 'split',
       eyebrow: 'Two ways in, one foundation',
       title: 'If work starts in external agents, what is Miro for?',
