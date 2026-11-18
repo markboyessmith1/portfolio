@@ -121,13 +121,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'statement',
-      eyebrow: 'The mission',
-      title: 'Make the canvas the best shared visual space for human-to-human and human-to-agent collaboration.',
-      notes: 'One simple mission across 7 teams. Signals: MCP growth and retention, stickiness of the core AI experience, content survival and board share rates.',
-    },
-    {
-      chapter: 'No clear direction',
       layout: 'full',
       eyebrow: 'Creating the clarity',
       title: 'A vision you could hand someone as a link, and use like a real product.',
