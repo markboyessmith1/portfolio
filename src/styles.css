@@ -52,8 +52,9 @@
   --bg-edge: var(--neutral-25);
   --surface: var(--neutral-0);          /* light cards */
   --surface-inverse: var(--neutral-950);/* dark cards */
-  --ink: var(--neutral-950);            /* primary text */
-  --ink-2: var(--neutral-500);          /* secondary text */
+  --ink: var(--neutral-900);            /* primary text / headings */
+  --ink-body: var(--neutral-800);       /* body copy: a touch softer than --ink */
+  --ink-2: #6B6863;                     /* secondary text */
   --ink-3: var(--neutral-400);          /* tertiary / disabled */
   --on-inverse: var(--neutral-50);      /* text and objects on dark cards */
   --on-inverse-2: color-mix(in srgb, var(--neutral-50) 60%, transparent);
@@ -87,8 +88,8 @@
   --nav-lift-soft: 0 1px 2px color-mix(in srgb, var(--neutral-950) 4%, transparent),
                    0 4px 14px color-mix(in srgb, var(--neutral-950) 5%, transparent);
   --text-max: 500px; /* case-study copy: chapter text and shelf captions, centred in their column */
-  --font: 'Inter', 'Inter Placeholder', system-ui, -apple-system, sans-serif;
-  --font-display: 'Satoshi', var(--font); /* alt: 'General Sans' */
+  --font: 'ABC Areal', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'ABC Areal', 'Inter', system-ui, sans-serif;
   --font-serif: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
 }
 
@@ -102,6 +103,7 @@
     --surface-inverse: var(--neutral-50);
     --ink: var(--neutral-50);
     --ink-2: var(--neutral-400);
+    --ink-body: var(--ink);
     --ink-3: var(--neutral-600);
     --on-inverse: var(--neutral-950);
     --on-inverse-2: color-mix(in srgb, var(--neutral-950) 60%, transparent);
@@ -126,6 +128,7 @@
   --surface-inverse: var(--neutral-50);
   --ink: var(--neutral-50);
   --ink-2: var(--neutral-400);
+  --ink-body: var(--ink);
   --ink-3: var(--neutral-600);
   --on-inverse: var(--neutral-950);
   --on-inverse-2: color-mix(in srgb, var(--neutral-950) 60%, transparent);
@@ -146,6 +149,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; overscroll-behavior: none; } /* no macOS rubber-band bounce */
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+/* the page colour is a typed property so it can animate: moving to /about (white, via
+   html:has(.resume-wrap) below) fades the page in to white instead of snapping, and back again */
+@property --bg { syntax: '<color>'; inherits: true; initial-value: #fff; }
+@property --bg-edge { syntax: '<color>'; inherits: true; initial-value: #fff; }
+html { transition: --bg .6s ease, --bg-edge .6s ease; }
+@media (prefers-reduced-motion: reduce) { html { transition: none; } }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -158,6 +167,7 @@ body {
 }
 /* no overhang: headings break into even lines, copy never ends on a lone word */
 h1, h2, h3, h4, h5, h6, blockquote { text-wrap: balance; }
+.site--areal :is(h1, h2, h3, h4, h5, h6, blockquote) { text-wrap: wrap; } /* portfolio + case studies: natural wrap, not balanced */
 p, li, figcaption { text-wrap: pretty; }
 a { color: inherit; text-decoration: none; }
 p { margin: 0; }
@@ -200,7 +210,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
   --surface: var(--neutral-0);
   --surface-inverse: var(--neutral-950);
   --ink: var(--neutral-950);
-  --ink-2: var(--neutral-500);
+  --ink-2: #6B6863;
   --ink-3: var(--neutral-400);
   --on-inverse: var(--neutral-50);
   --on-inverse-2: color-mix(in srgb, var(--neutral-50) 60%, transparent);
@@ -280,14 +290,18 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .menu a {
   padding: 8px 16px;
   border-radius: 9999px;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 520;
   color: color-mix(in srgb, var(--ink) 60%, transparent);
   transition: background .2s ease, color .2s ease;
 }
 .menu { overflow: hidden; line-height: 1; }
 .menu a, .menu__crumb { line-height: 1; }
 .menu__set { display: flex; align-items: center; gap: 2px; animation: menu-set-in .45s cubic-bezier(.2,.8,.2,1) both; }
+/* the pill is a fixed 50px (to match the chapter bar and podcast pill): the tabs fill its full
+   inner height, so the inset round them is the same top, bottom and sides */
+.menu__set { align-self: stretch; }
+.menu__set > a { align-self: stretch; display: flex; align-items: center; }
 @keyframes menu-set-in { from { opacity: 0; transform: translateX(-8px); filter: blur(4px); } }
 @media (prefers-reduced-motion: reduce) { .menu__set { animation: none; } }
 /* case study: the whole menu is one round back button, chevron centred (no side padding) */
@@ -306,7 +320,18 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
   box-shadow: 0 1px 2px color-mix(in srgb, var(--neutral-950) 6%, transparent),
               0 8px 28px color-mix(in srgb, var(--neutral-950) 10%, transparent);
 }
-.menu a.active { color: var(--ink); background: color-mix(in srgb, var(--ink) 7%, transparent); box-shadow: none; }
+.menu a.active { color: var(--ink); box-shadow: none; }
+/* the active-tab background: one pill behind the tabs that slides to the active one (Nav.tsx
+   sets its width and x). Tabs sit above it. */
+.menu__set { position: relative; }
+.menu__set > a { z-index: 1; }
+.menu__pill {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 0;
+  border-radius: 9999px; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.menu__pill.is-ready { transition: transform .45s cubic-bezier(.65, 0, .25, 1), width .45s cubic-bezier(.65, 0, .25, 1), opacity .2s ease; }
+@media (prefers-reduced-motion: reduce) { .menu__pill.is-ready { transition: none; } }
 
 .logo {
   justify-self: start;
@@ -354,7 +379,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .podcast__sub { font-size: 11px; color: var(--ink-2); white-space: nowrap; }
 
 /* podcast sits on the lighter, whiter glass */
-.podcast.glass {
+.podcast.glass, .chapterbar.glass, .nav__start .chapterbar.glass {
   background: color-mix(in srgb, var(--neutral-0) 62%, transparent);
   border-color: color-mix(in srgb, var(--neutral-0) 80%, transparent);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--neutral-950) 6%, transparent),
@@ -435,23 +460,23 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .chapterbar__ring circle { fill: none; stroke-width: 3; }
 .chapterbar__track { stroke: var(--line); }
 .chapterbar__fill { stroke: var(--ink); stroke-linecap: round; transition: stroke-dashoffset .15s linear; }
-.chapterbar__meta { display: grid; line-height: 1.2; min-width: 0; width: 200px; }
+.chapterbar__meta { display: grid; align-items: center; line-height: 1.25; min-width: 0; width: 200px; }
 .chapterbar__title {
-  font-size: 12px; font-weight: 600; color: var(--ink);
+  font-size: 13px; font-weight: 500; color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   animation: chapter-swap .3s cubic-bezier(.2, 0, 0, 1) both;
 }
 @keyframes chapter-swap { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } }
-.chapterbar__sub { font-size: 11px; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .chapterbar__btn {
   width: 36px; height: 36px; flex: none; display: grid; place-items: center;
   border-radius: 9999px; background: var(--neutral-50); color: var(--ink);
   box-shadow: inset 0 1px 0 var(--pill-highlight), 0 1px 2px var(--shadow);
 }
 .chapterbar__list {
-  position: absolute; top: calc(100% + 8px); right: 0;
-  min-width: 100%; margin: 0; padding: 6px; list-style: none;
-  border-radius: 24px;
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 100%; margin: 0; padding: 5px; box-sizing: border-box;
+  max-height: calc(100dvh - 120px); overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 18px;
   background: color-mix(in srgb, var(--neutral-0) 82%, transparent);
   box-shadow: 0 8px 28px color-mix(in srgb, var(--neutral-950) 12%, transparent);
   animation: podcast-in .2s ease both;
@@ -459,14 +484,14 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .chapterbar__list button {
   all: unset; box-sizing: border-box; cursor: pointer;
   display: flex; align-items: baseline; gap: 10px; width: 100%;
-  padding: 9px 14px; border-radius: 18px;
-  font-size: 14px; color: var(--ink-2); white-space: nowrap;
+  padding: 6px 12px; border-radius: 12px;
+  font-size: 13px; line-height: 1.35; color: var(--ink-2); white-space: nowrap;
+  transition: color .15s ease, background-color .15s ease;
 }
 .chapterbar__list button:hover { background: color-mix(in srgb, var(--neutral-950) 5%, transparent); color: var(--ink); }
 .chapterbar__list button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.chapterbar__list button.is-on { color: var(--ink); font-weight: 600; }
-.chapterbar__group { min-height: 1px; margin: 6px 0 2px; padding: 8px 14px 4px; border-top: 1px solid var(--line); font-size: 11px; font-weight: 600; color: var(--ink-3); }
-.chapterbar__num { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chapterbar__list button.is-on { color: var(--ink); font-weight: 500; }
+.chapterbar__list ul { margin: 0; padding: 0; list-style: none; }
 @media (prefers-reduced-motion: reduce) {
   .chapterbar, .chapterbar__title, .chapterbar__list { animation: none; }
   .chapterbar__fill { transition: none; }
@@ -494,8 +519,11 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
   letter-spacing: -0.04em;
   margin: 0;
 }
-.lede { font-size: 18px; line-height: 1.5; }
-.lede--strong { font-weight: 700; }
+/* body copy */
+.lede { font-size: 16px; line-height: 1.6; font-weight: 435; color: var(--ink-body); letter-spacing: -0.0275em; }
+.lede--strong { font-weight: 600; }
+/* over a card (video, dark tones) the copy keeps the card's own text colour */
+.gl-slot .lede { color: inherit; }
 .muted { color: var(--ink-2); }
 
 blockquote {
@@ -605,6 +633,9 @@ blockquote {
   --cw: round(down, min((var(--row) - var(--gap)) / 2, (100svh - 2 * var(--clear)) * 3 / 4), 2px);
   /* card height: always 3:4 (portrait), hero and case-study cards alike */
   --ch: round(down, calc(var(--cw) * 4 / 3), 2px);
+  /* the case study's copy column: always half the row. Only the card column
+     (--cw) narrows on short windows; the copy keeps its width */
+  --lw: round(down, calc((var(--row) - var(--gap)) / 2), 2px);
   /* pinned position: card vertically centred in the window */
   --top: round(down, calc((100svh - var(--ch)) / 2), 1px);
   display: grid;
@@ -616,6 +647,21 @@ blockquote {
   padding: 0 0 var(--section-gap);
 }
 .carousel > * { grid-row: 1; }
+/* case study: the copy column keeps its full width; only the card column shrinks */
+.carousel--case { grid-template-columns: var(--lw) var(--cw); }
+/* case copy measurements, shared by the copy column and the full-width panels:
+   --grow: how far the copy column reaches into the left gutter;
+   --text-max: the copy's max width;
+   --copy-inset: where the copy starts inside its column (centred, at least 24px in);
+   --span-w: a full-width panel, from the copy's left edge to the card column's right;
+   --bleed-r: from the card column's right edge to the screen's right edge */
+.carousel {
+  --grow: calc((var(--lw) - 56px) * 0.15);
+  --text-max: 550px;
+  --copy-inset: max(24px, (var(--lw) + var(--grow) - 8px - var(--text-max)) / 2);
+  --span-w: calc(var(--cw) + var(--gap) + var(--lw) + var(--grow) - var(--copy-inset));
+  --bleed-r: calc((100vw - var(--lw) - var(--gap) - var(--cw)) / 2);
+}
 .carousel__rail { grid-column: 1; align-self: stretch; pointer-events: none; }
 .carousel__rail-pin {
   position: sticky;
@@ -644,6 +690,10 @@ blockquote {
   /* one card tall (the rest overflow visibly) so sticky has room to stick */
   height: var(--ch);
   /* position is scrubbed by scroll (no transition) */
+  /* panels butt up edge to edge: when one hands over to the next by travelling (into or
+     out of a split or statement), the outgoing one's foot meets the incoming one's head,
+     with no strip of page between them (useCasePanels reads offsets from layout) */
+  gap: 0;
 }
 .carousel--case .carousel__link { pointer-events: none; }
 /* ...but the case card itself still tracks the pointer for its tilt */
@@ -653,6 +703,12 @@ blockquote {
 .gl-slot--fill { height: 100%; }
 .panel { height: var(--ch); display: grid; gap: 16px; }
 .panel--single { grid-template: 1fr / 1fr; }
+/* one square card, centred in the panel: the room left over sits above and below it
+   (at least 120px each side, so the square shrinks on short screens rather than filling) */
+.panel--square { place-items: center; }
+.panel--square > .gl-slot { width: min(100%, calc(var(--ch) - 240px)); height: auto; aspect-ratio: 1; }
+/* the board in Miro's soft grey (= the Storyboard), so the card reads against the white page */
+.panel--square .vignette.board { background-color: var(--miro-cloud-100); }
 .panel--stack { grid-template: 1fr 1fr / 1fr; }
 .panel--grid { grid-template: 1fr 1fr / 1fr 1fr; }
 /* full width: spans back over the left column (the copy rides on the panel) */
@@ -660,7 +716,7 @@ blockquote {
 .panel--full > .gl-slot {
   position: absolute;
   top: 0; bottom: 0; right: 0;
-  width: calc(200% + var(--gap));
+  width: var(--span-w); /* in line with the chapter copy above */
 }
 .panel--stack .gl-slot, .panel--grid .gl-slot { --radius: 40px; }
 /* ---- Video card (components/VideoEmbed): poster + frosted play, then the player in place */
@@ -715,7 +771,7 @@ blockquote {
 .panel--split { position: relative; }
 .panel--split .panel__stage {
   position: absolute; top: 0; bottom: 0; right: 0;
-  width: calc(200% + var(--gap));
+  width: var(--span-w); /* in line with the chapter copy above */
   /* opaque, so the copy scrolling in the left column doesn't show through */
   background: var(--bg);
 }
@@ -729,23 +785,55 @@ blockquote {
 .split__copy { display: grid; gap: 14px; align-content: start; max-width: var(--text-max); }
 .split__copy--right { padding-top: 38px; } /* level with the first paragraph, past the heading */
 .split__shelf { grid-column: 1 / -1; min-height: 0; }
+/* one paragraph: centred across the whole stage, the shelf full width beneath */
+/* one paragraph: centred on the screen (the stage runs from the copy's edge to the card
+   column's, which isn't symmetric, so nudge by the difference), the shelf full width beneath */
+.split--centred .split__copy {
+  grid-column: 1 / -1; justify-self: center; max-width: 640px; text-align: center;
+  translate: calc(var(--bleed-r) + var(--span-w) / 2 - 50vw) 0;
+}
+/* a placeholder for the section's visual: 16:9, as large as the room under the copy
+   allows, centred on the screen like the copy */
+.split__placeholder {
+  grid-column: 1 / -1; justify-self: center; align-self: start;
+  height: 100%; max-width: 100%; aspect-ratio: 16 / 9;
+  display: grid; place-items: center;
+  border-radius: var(--radius); corner-shape: superellipse(1.6);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-3); font-size: 13px;
+}
+.split--centred .split__placeholder { translate: calc(var(--bleed-r) + var(--span-w) / 2 - 50vw) 0; }
 /* a bare shelf: no panel of its own, flush with the copy */
 .shelf.shelf--bare { --shelf-inset: 0px; padding: 0; background: none; border-radius: 0; } /* .shelf.: outranks the shelf panel rule further down */
 .shelf--bare .shelf__top { justify-content: flex-end; margin-bottom: 16px; }
+/* in a split, the shelf's cards run on past the content edge to the screen's right
+   edge (the page clips the overflow); its controls stay at the content edge */
+.split .shelf--bare { overflow: visible; clip-path: inset(-80px calc(-1 * var(--bleed-r)) -80px 0); }
 
 /* statement: one sentence centred across both columns (components/StatementReveal) */
 /* shorter than a card: just room for the sentence and its cursors (the
    track centres it where a card would sit) */
-.panel--statement { position: relative; height: calc(var(--ch) * 0.55); }
+.panel--statement { position: relative; height: var(--ch); } /* a full card tall: the mission board gets room */
 .panel--statement .panel__stage {
   position: absolute; top: 0; bottom: 0; right: 0;
-  width: calc(200% + var(--gap));
+  width: var(--span-w); /* in line with the chapter copy above */
   display: grid; place-items: center;
 }
-.statement { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.statement { position: relative; width: 100%; height: 100%; display: grid; place-items: center;
+  /* the mission sits on a board: the same white dot-grid card as the case board panel */
+  border-radius: 60px; corner-shape: superellipse(1.6);
+  background: #FFFFFF radial-gradient(circle, #D9D9D9 1.2px, transparent 1.2px) 0 0 / 24px 24px; }
+.panel__board {
+  position: absolute; inset: 0; z-index: 2; overflow: hidden;
+  border-radius: var(--radius); corner-shape: superellipse(1.6);
+}
+.panel__board .statement { border-radius: 0; }
+/* card-sized: the sentence fits a single column's card */
+.panel__board .statement__text { font-size: clamp(26px, 2.5vw, 40px); max-width: 13ch; }
 .statement__text {
   position: relative; margin: 0; max-width: 20ch; text-align: center;
-  font-family: var(--font-display); font-weight: 700;
+  font-family: var(--font-display); font-weight: 600;
   font-size: clamp(36px, 4.4vw, 68px); line-height: 1.08; letter-spacing: -0.03em;
   color: var(--ink);
   /* plain wrapping, not balance: as text is typed, earlier lines must stay put */
@@ -787,7 +875,7 @@ blockquote {
 .pillars {
   position: absolute;
   top: 0; bottom: 0; right: 0;
-  width: calc(200% + var(--gap));
+  width: var(--span-w); /* in line with the chapter copy above */
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
@@ -804,7 +892,7 @@ blockquote {
   margin: auto 0 0;
   font-family: var(--font-display);
   font-size: clamp(28px, 2.6vw, 44px);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -814,6 +902,56 @@ blockquote {
 }
 .panel__copy { margin-top: auto; max-width: 520px; display: grid; gap: 12px; }
 .case-left__section.is-full { min-height: 90svh; }
+/* the mission, assembled on the board (components/MissionBoard, after the prototype's
+   HeroBoard): the dot-grid card; its lines are movable objects set in a stepped lock-up */
+.mission { position: absolute; inset: 0; z-index: 2; }
+/* the board: the storyboard's grey canvas shows through, under its dot grid; clipped to
+   the card's corners (the team's stickers sit outside it, over the edges) */
+.mission__clip {
+  position: absolute; inset: 0; overflow: hidden; user-select: none; touch-action: pan-y;
+  border-radius: var(--radius); corner-shape: superellipse(1.6);
+  background: radial-gradient(circle, rgb(0 0 0 / .14) 1.2px, transparent 1.2px) 0 0 / 24px 24px;
+}
+.mission__ghosts { position: absolute; visibility: hidden; pointer-events: none; display: grid; justify-items: start; }
+.mission__at { position: absolute; left: 0; top: 0; transform-origin: 0 0; cursor: grab; touch-action: none; pointer-events: auto; /* (the storyboard passes the pointer through) */ }
+.mission__at:active { cursor: grabbing; }
+.mission__piece {
+  position: relative; display: block; width: max-content; white-space: pre; /* a block keeps its own line breaks */
+  font-family: var(--font-display); font-weight: 600;
+  font-size: var(--mission-f, 40px); line-height: 1; letter-spacing: -0.035em; color: var(--ink);
+}
+/* Apris lines: the prototype's display serif, a touch larger to sit level with the sans */
+.mission__piece.is-serif { font-family: 'Apris', var(--font-serif); font-weight: 400; font-size: calc(var(--mission-f, 40px) * 1.08); letter-spacing: -0.03em; }
+/* the team's die-cut stickers, slapped round the card and over its edges */
+.mission__team { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.mission__team img {
+  position: absolute; height: auto; max-width: none; filter: drop-shadow(0 8px 14px rgb(0 0 0 / .16));
+  transform: rotate(var(--r)); animation: mission-slap 520ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@keyframes mission-slap { 0% { opacity: 0; transform: scale(.3) rotate(calc(var(--r) - 20deg)); } 70% { opacity: 1; transform: scale(1.06) rotate(var(--r)); } 100% { opacity: 1; transform: rotate(var(--r)); } }
+/* the selection frame, in the holder's colour: an outline and four corner handles */
+.mission__sel { position: absolute; inset: -7px -9px; border: 2px solid currentColor; border-radius: 2px; pointer-events: none; }
+.mission__sel > i { position: absolute; width: 9px; height: 9px; border: 2px solid currentColor; border-radius: 2px; background: #fff; }
+.mission__sel > i:nth-child(1) { top: -5px; left: -5px; }
+.mission__sel > i:nth-child(2) { top: -5px; right: -5px; }
+.mission__sel > i:nth-child(3) { bottom: -5px; left: -5px; }
+.mission__sel > i:nth-child(4) { bottom: -5px; right: -5px; }
+.mission__caret { display: inline-block; width: 3px; height: .85em; margin-left: 2px; vertical-align: -0.08em; border-radius: 2px; animation: st-blink 1s steps(1) infinite; }
+/* the marker ring round the key phrase: sunshine, drawn in behind the pen */
+.mission__ring { position: absolute; overflow: visible; pointer-events: none; z-index: -1; }
+.mission__ring path { fill: none; stroke: var(--miro-sunshine-600, #FFD02F); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+/* reaction stickers stamped on a line's corner, overlapping */
+.mission__stamps { position: absolute; right: -16px; bottom: -14px; display: flex; flex-direction: row-reverse; pointer-events: none; }
+.mission__stamps img { width: 38px; height: 38px; max-width: none; margin-inline-start: -13px; filter: drop-shadow(0 3px 5px rgb(0 0 0 / .18));
+  transform: rotate(var(--r)); animation: mission-pop 480ms cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes mission-pop { 0% { opacity: 0; transform: scale(.3) rotate(calc(var(--r) - 20deg)); } 70% { opacity: 1; transform: scale(1.08) rotate(var(--r)); } 100% { opacity: 1; transform: rotate(var(--r)); } }
+.mission__cursor { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; font: 400 14px/1.4 var(--font); letter-spacing: normal; }
+.mission__emote-at { position: absolute; z-index: 6; pointer-events: none; }
+.mission__emote { position: absolute; width: 44px; height: 44px; max-width: none; animation: st-float 1500ms cubic-bezier(.2,.8,.2,1) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .mission__stamps img, .mission__caret, .mission__team img { animation: none; }
+}
+
 /* the statement needs less scroll than a full panel */
 .case-left__section[data-smooth='statement'] { min-height: 50svh; }
 /* next to a split panel the panels move 1:1 with the copy, so a neighbouring
@@ -833,24 +971,32 @@ blockquote {
   grid-column: 1;
   padding: 48px 8px var(--section-gap) 0;
   min-width: 0;
+  /* the copy column grows into the left gutter (--grow, set on .carousel),
+     keeping its right edge (and the gap to the panels) fixed */
+  margin-left: calc(-1 * var(--grow));
 }
 .case-left__head { display: grid; gap: 12px; margin-bottom: 18svh; }
 /* with a video, the header spans the opening card's height and the video sits at its foot */
 .case-left__head:has(.video-embed) { display: flex; flex-direction: column; min-height: calc(var(--ch) - 48px); }
 .case-left__head .video-embed { margin-top: auto; padding-top: 10px; }
 .case-left__head:has(.video-embed) > :not(.video-embed) + :not(.video-embed) { margin-top: 12px; }
-.case-left__brand { display: block; align-self: flex-start; width: auto; color: var(--ink); margin-bottom: 8px; }
+.case-left__brand { display: block; align-self: flex-start; width: auto; color: var(--ink); margin-bottom: 28px; }
 /* the byline reads like the section copy below (.lede: 18px, ink) */
-.case-left__intro { margin: 8px 0 0; max-width: var(--text-max); font-size: 18px; line-height: 1.5; color: var(--ink); text-wrap: balance; } /* short intro: even lines */
+.case-left__intro { margin: 8px 0 0; max-width: var(--text-max); font-size: 16px; line-height: 1.6; font-weight: 435; color: var(--ink-body); letter-spacing: -0.0275em; text-wrap: wrap; }
+.case-left__intro + .case-left__intro { margin-top: 0.75em; }
 .case-left__title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(36px, 4vw, 56px);
-  line-height: 1.05;
-  letter-spacing: -0.0125em;
+  font-weight: 500;
+  font-size: 36px;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
   max-width: 24ch;
 }
+/* the first intro line is the title's subtitle: same size, weight and line-height, in the secondary colour, no gap */
+.case-left__title + .case-left__intro { margin-top: -12px; font-size: 36px; font-weight: 500; line-height: 1.18; letter-spacing: -0.03em; color: var(--ink-2); max-width: 28ch; text-wrap: balance; }
+.case-left__head:has(.video-embed) > .case-left__title + .case-left__intro { margin-top: -12px; } /* cancels the header's 12px flex gap */
+.case-left__head .lede { font-size: 18px; line-height: 1; font-weight: 500; } /* = home byline */
 .case-left__section {
   display: grid;
   /* text at most --text-max, centred in the column (same rule as the shelf
@@ -863,42 +1009,34 @@ blockquote {
   padding-bottom: 64px; /* the copy runs on continuously; the panels change as it passes the line */
 }
 /* no copy of its own: holds its panel in view */
-.case-left__section:not(:has(> h2)) { min-height: 70svh; }
+.case-left__section:not(:has(> .case-left__h2)) { min-height: 70svh; }
 /* a panel spanning both columns would land on the copy above it: let that copy clear first */
 .case-left__section:has(+ .case-left__section.is-full) { min-height: 70svh; }
-.case-left__section > * { grid-column: 2; } /* titles included: only a chapter with sub-chapters uses the margin */
-/* a chapter with sub-chapters: one run, its title in the margin for the whole run */
+/* a centred panel (timeline) lands with its top half above the waypoint: long copy before it
+   needs that half-card of clearance after its last line, however tall the copy runs */
+.case-left__section:has(+ .case-left__section[data-smooth='timeline']) { padding-bottom: calc(var(--ch) / 2 + 64px); }
+.case-left__section[data-smooth='timeline'] { min-height: 50svh; }
+.case-left__section > * { grid-column: 2; }
+/* a major chapter: one run of sections under its heading */
 .case-left__run { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--text-max)) minmax(0, 1fr); column-gap: 24px; }
 .case-left__run > .case-left__section { grid-column: 1 / -1; }
-.case-left__run-label { grid-column: 1; justify-self: start; padding-top: 24px; }
-/* a tab on the screen's left edge: the label is turned to read upwards (so the box
-   is upside down: its left is the side facing in, its right sits on the edge) */
+/* a major chapter's name: a larger heading in the copy column, above its sections */
 .case-left__chapter {
-  --tab-r: 14px;
-  position: sticky; top: 110px; margin: 0; white-space: nowrap;
-  translate: calc((var(--cw) * 2 + var(--gap) - 100vw) / 2);
-  writing-mode: vertical-rl; transform: rotate(180deg);
-  padding: 18px 8px; border-radius: var(--tab-r) 0 0 var(--tab-r); background: #000;
-  font-size: 13px; font-weight: 500; line-height: 1.4; color: #fff;
-}
-/* the inverse corners, curving away from the tab into the edge */
-.case-left__chapter::before, .case-left__chapter::after {
-  content: ''; position: absolute; right: 0; width: var(--tab-r); height: var(--tab-r);
-}
-.case-left__chapter::before { bottom: 100%; background: radial-gradient(circle at 0 0, transparent calc(var(--tab-r) - .5px), #000 var(--tab-r)); }
-.case-left__chapter::after { top: 100%; background: radial-gradient(circle at 0 100%, transparent calc(var(--tab-r) - .5px), #000 var(--tab-r)); }
-/* superellipse smoothing where supported: a squircle tab, and its inverse for the corners into the edge */
-@supports (corner-shape: squircle) {
-  .case-left__chapter { --tab-r: 18px; corner-shape: squircle; }
-  .case-left__chapter::before, .case-left__chapter::after { background: #000; corner-shape: superellipse(-2); }
-  .case-left__chapter::before { border-top-left-radius: var(--tab-r); }
-  .case-left__chapter::after { border-bottom-left-radius: var(--tab-r); }
+  grid-row: 1; grid-column: 2;
+  margin: 40px 0 4px; /* the section below adds its own waypoint row + gap */
+  font-family: var(--font-display); font-size: 32px; font-weight: 550; line-height: 1.1;
+  /* -0.02em: even spacing at display size (-0.03 crowded ll / ng); the font's own pair kerning on */
+  letter-spacing: -0.02em; font-kerning: normal; font-feature-settings: 'kern', 'calt';
+  text-wrap: balance;
+  color: var(--ink);
 }
 
 /* invisible scroll markers: Carousel reads where they sit to time the
    right-hand panel's transitions, so they keep their box but don't show */
 .waypoint { width: 10px; height: 10px; visibility: hidden; }
-.case-left__h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.0125em; }
+.case-left__h2 { margin: 0 0 8px; font-family: var(--font-display); font-weight: 550; font-size: 18px; line-height: 1.2; letter-spacing: -0.025em; }
+/* the chapter number before each heading: "01 —", quieter than the title */
+.case-left__num { margin-right: 0.4em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 /* ---- Home <-> case transitions. Hero and case copy move by exactly the
    same distance with the same timing, so they travel as one strip: the copy
@@ -924,7 +1062,7 @@ blockquote {
   from { transform: translateX(calc(-1 * var(--shift))); opacity: 0; }
   85% { opacity: 1; }
 }
-.case-left.is-leaving { position: absolute; top: 0; left: 0; width: var(--cw); pointer-events: none; }
+.case-left.is-leaving { position: absolute; top: 0; left: 0; width: var(--lw); pointer-events: none; }
 .case-left.is-leaving .case-left__inner { animation: case-out .85s var(--ease-x) forwards; }
 @keyframes case-out { to { transform: translateX(var(--shift)); } }
 @media (prefers-reduced-motion: reduce) {
@@ -1057,11 +1195,15 @@ blockquote {
 
 /* ---- Resume: one quiet page, main column and a narrow aside */
 /* the resume (About) sits on white */
-html:has(.resume-wrap) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
+html:has(.resume-wrap), html:has(.case-left) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
 /* ABC Areal (Dinamo, licensed): drop the web files into public/fonts under these names */
 @font-face { font-family: 'ABC Areal'; src: url('/fonts/ABCAreal-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'ABC Areal'; src: url('/fonts/ABCAreal-Medium.woff2') format('woff2'); font-weight: 500 700; font-display: swap; }
 .resume, .resume .lede { font-family: 'ABC Areal', var(--font); }
+/* the portfolio + case studies share the home page's face: retarget the font tokens so every
+   component that reads them (body, display headings) follows without per-class overrides */
+:where(h1, h2, h3, h4, h5, h6, b, strong, th) { font-weight: 600; } /* site-wide max weight: 600 */
+.site--areal { --font: 'ABC Areal', 'Inter', system-ui, -apple-system, sans-serif; --font-display: 'ABC Areal', 'Inter', system-ui, sans-serif; font-family: var(--font); }
 .resume, .resume * { font-size: 16px; }
 .resume, .resume * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-weight: 400; line-height: 1.4; letter-spacing: -0.02em; }
 .resume-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 760px) minmax(0, 1fr); column-gap: clamp(120px, 14vw - 60px, 240px); } /* the jump links sit further off the column as the window widens */
@@ -1471,8 +1613,14 @@ div.hero-block { display: block; }
 }
 
 /* ---- Reveal on scroll */
-.reveal { opacity: 0; transform: translateY(16px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1); }
-.reveal.is-in { opacity: 1; transform: none; }
+.reveal { opacity: 0; transform: translateY(16px); filter: blur(8px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1), filter .8s ease; }
+.reveal.is-in { opacity: 1; transform: none; filter: none; }
+/* the case copy (Carousel's useBlurIn): each block fades in out of a blur as it's reached */
+.blur-in { opacity: 0; filter: blur(10px); transition: opacity .7s ease, filter .9s cubic-bezier(.2, .8, .2, 1); }
+.blur-in.is-in { opacity: 1; filter: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .blur-in { filter: none; transform: none; transition: opacity .3s ease; }
+}
 
 @media (max-width: 1199px) {
   :root { --section-gap: 80px; }
@@ -1480,22 +1628,20 @@ div.hero-block { display: block; }
   .card .gl-slot, .row .gl-slot { max-width: 520px; }
   .grid { grid-template-columns: 1fr; }
   .hero { grid-template-columns: 1fr; }
-  .carousel { --cw: min(100%, 560px); grid-template-columns: var(--cw); margin-top: 0; }
+  .carousel, .carousel--case { --cw: min(100%, 560px); --lw: var(--cw); --grow: 0px; --bleed-r: 0px; grid-template-columns: var(--cw); margin-top: 0; }
   .carousel .gl-slot--wide { aspect-ratio: 3 / 4; height: auto; }
   .carousel__sticky { position: static; }
   .carousel > * { grid-row: auto; grid-column: 1; }
   .carousel__rail { display: none; }
   .carousel--case .carousel__track { position: static; height: auto; transform: none !important; }
-  .case-left { padding: 24px 0 40px; }
+  .case-left { padding: 24px 0 40px; margin-left: 0; --grow: 0px; }
   .case-left__section, .case-left__section:last-child { min-height: 0; padding-bottom: 32px; }
   /* no margin to spare: the chapter title goes back above the text */
   .case-left__section { grid-template-columns: minmax(0, 1fr); }
   .case-left__section > * { grid-column: 1; }
   .case-left__run { grid-template-columns: minmax(0, 1fr); }
   .case-left__run > * { grid-column: 1 !important; grid-row: auto !important; }
-  .case-left__run-label { justify-self: start; padding: 0 0 8px; }
-  .case-left__chapter { position: static; translate: none; writing-mode: horizontal-tb; transform: none; padding: 0; border-radius: 0; background: none; color: var(--ink-2); }
-  .case-left__chapter::before, .case-left__chapter::after { content: none; }
+  .case-left__chapter { margin: 24px 0 16px; font-size: 26px; }
   .scroll-marker { display: none; }
 }
 @media (max-width: 600px) {
@@ -1968,6 +2114,54 @@ div.hero-block { display: block; }
   corner-shape: superellipse(1.6);
   font-family: var(--font-sans, inherit);
 }
+/* the Mona Lisa prompt scene on the case study's opening card */
+.case-board > .vg--prompt { background-color: var(--miro-cloud-100); }
+/* an embedded live scene (the decisions vignette): the page fills the board, clipped to its corners */
+.vg--embed { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius); corner-shape: superellipse(1.6); }
+.vg--embed iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+/* the hero's intro: the homepage's Miro AI film over the held scene, then a crossfade into
+   it (the film ends on an empty dotted board, the scene opens on one); the board chrome
+   comes in with the scene, as the film carries its own toolbar */
+.vg__film { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; object-fit: cover; pointer-events: none; transition: opacity .6s ease; }
+.vg--intro:not(.is-intro) .vg__film { opacity: 0; }
+.vg--intro .board-chrome { transition: opacity .6s ease .15s; }
+.vg--intro.is-intro .board-chrome { opacity: 0; transition: none; }
+/* the new board chrome over a scene (components/miro/BoardChrome): fixed like real UI while
+   the board moves under it, scaled down from the full-screen board to sit on a card */
+.board-chrome { --board-chrome-scale: .74; position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+/* the top bars at the toolbar's own zoom (they read as one set of chrome), unless that won't fit across the card */
+.board-chrome__top { position: absolute; top: 20px; display: flex; gap: 8px; zoom: min(calc(var(--board-chrome-scale) * 1.5), var(--board-chrome-fit, 1), var(--board-chrome-top-fit, 1)); }
+.board-chrome__top--left { left: 30px; }
+.board-chrome__top--right { right: 30px; }
+.board-chrome__pill {
+  display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; box-sizing: border-box;
+  border-radius: 12px; color: rgb(25, 24, 18);
+  /* the creation toolbar's glass (.ct), so the chrome reads as one set */
+  border: 1px solid #fff; background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px) saturate(4); -webkit-backdrop-filter: blur(8px) saturate(4);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.01), 0 4px 16px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+}
+/* the wordmark's box includes the i's dot, so its letters sit low: lift them onto the menu icon's middle */
+.board-chrome__logo { display: block; translate: 0 -2px; }
+.board-chrome__pill--name { padding-left: 8px; }
+.board-chrome__pill--icon { width: 44px; padding: 0; justify-content: center; }
+.board-chrome__board-icon {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
+  background: rgb(0 0 0 / .05); font-size: 16px; line-height: 1;
+}
+.board-chrome__avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: -6px; }
+.board-chrome__share { display: inline-grid; place-items: center; height: 32px; padding: 0 12px; margin-right: -6px; border-radius: 8px; background: #4262ff; color: #fff; font-size: 14px; font-weight: 600; }
+/* the toolbar is the star: half as big again as the top bars */
+.board-chrome__bottom { position: absolute; left: 50%; bottom: 0; translate: -50% 0; pointer-events: none; }
+/* the real toolbar's page: its bar (578 × 60) centred, with 25px clear above and below for
+   its shadow, which also sets it ~18px off the card's foot. Scaled with a transform (zoom
+   resizes an iframe's box but not what's drawn in it), to the top bar's zoom */
+.board-chrome .board-chrome__toolbar { /* (over .vg--embed iframe's fill) */
+  display: block; width: 640px; height: 110px; border: 0; background: transparent; color-scheme: light;
+  pointer-events: auto; transform-origin: 50% 100%;
+  transform: scale(min(calc(var(--board-chrome-scale) * 1.5), var(--board-chrome-fit, 1)));
+}
 .vg__at {
   position: absolute;
   z-index: 3;
@@ -2245,7 +2439,7 @@ html[data-bigcursor] [data-own-cursor], html[data-bigcursor] [data-own-cursor] *
 .shelf__head { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .shelf__head .eyebrow { margin: 0; }
 .shelf__title { max-width: 36ch; }
-.shelf__intro { margin: 0; max-width: 60ch; text-wrap: balance; } /* short intro: even lines */
+.shelf__intro { margin: 0; max-width: 60ch; text-wrap: wrap; }
 
 .shelf__strip {
   position: relative; /* offsetParent for the cards, so the padding is the content edge */
@@ -2276,7 +2470,17 @@ html[data-bigcursor] [data-own-cursor], html[data-bigcursor] [data-own-cursor] *
   color: var(--ink);
 }
 .shelf-card__media { position: absolute; inset: 0; }
-.shelf-card__media video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.shelf-card__media :is(video, img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* a live scene (media kind embed): the page fills the card; its own replay control stays clickable */
+.shelf-card__media iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+/* a 16:9 stand-in until the clip exists: tinted, dashed, naming what goes there */
+.shelf-card__placeholder {
+  display: grid; place-items: center; padding: 24px; text-align: center;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper, #fff));
+  outline: 1.5px dashed color-mix(in srgb, var(--ink) 22%, transparent); outline-offset: -12px;
+  color: var(--ink-3); font-size: 14px; letter-spacing: 0.01em;
+}
+.shelf-card__placeholder span::before { content: '16:9 · '; opacity: 0.6; }
 .shelf-card__cue {
   position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
   max-width: 80%; margin: 0; padding: 6px 12px; border-radius: 12px;
@@ -2289,7 +2493,7 @@ html[data-bigcursor] [data-own-cursor], html[data-bigcursor] [data-own-cursor] *
 .shelf-card__head { position: relative; padding: 40px; }
 .shelf-card__title {
   margin: 0; max-width: 16ch;
-  font-family: var(--font-display); font-weight: 700;
+  font-family: var(--font-display); font-weight: 600;
   font-size: clamp(28px, 2.6vw, 40px); line-height: 1.1; letter-spacing: -0.02em;
 }
 .shelf-card__foot { position: absolute; inset-inline: 40px; bottom: 40px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; }
@@ -2306,7 +2510,7 @@ html[data-bigcursor] [data-own-cursor], html[data-bigcursor] [data-own-cursor] *
 }
 .shelf-hl > * { grid-area: 1 / 1; margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .shelf-hl__byline { font-size: 13px; font-weight: 500; line-height: 1.6; }
-.shelf-hl__title { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.35; letter-spacing: -0.0125em; text-wrap: balance; }
+.shelf-hl__title { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.35; letter-spacing: -0.0125em; text-wrap: wrap; }
 /* each line wraps in its own padded box (clone keeps the padding per line) */
 .shelf-hl span > span { padding: 3px 10px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .shelf-hl__ink { filter: url(#shelf-goo); }
@@ -2381,3 +2585,1148 @@ html:has(.request-wrap) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
 .request__error { margin: 0; font-size: 14px; color: #b42318; }
 .request__error a { color: inherit; }
 .request__done { margin: 32px 0 0; padding: 16px 18px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 5%, transparent); font-size: 16px; line-height: 1.5; color: var(--ink); }
+
+/* ---- Timeline (components/Timeline): "How we got here", full width on a board.
+   Earlier years settle muted; the turn draws across; the focus row (IC2) builds in and lights up. */
+.timeline {
+  --step: 420ms; --blue: #3859ff; --blue-bg: #f2f4fc;
+  position: relative; width: 100%; height: 100%;
+  display: flex; flex-direction: column; justify-content: center; gap: 28px;
+  padding: 48px clamp(24px, 4vw, 64px);
+  border-radius: 60px; corner-shape: superellipse(1.6);
+  background: #FFFFFF radial-gradient(circle, #D9D9D9 1.2px, transparent 1.2px) 0 0 / 24px 24px;
+  color: #1A1B1E;
+}
+.timeline__group { position: relative; z-index: 1; display: grid; gap: 14px; }
+.timeline__row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px; position: relative; }
+.timeline__step {
+  position: relative; z-index: 1;
+  display: grid; gap: 8px; align-content: start; min-height: 112px; padding: 18px 20px;
+  border-radius: 16px; background: #fff; border: 1px solid #DEDCD8;
+  opacity: 0; translate: 0 12px;
+  transition: opacity 500ms ease, translate 600ms cubic-bezier(.2,.8,.2,1), border-color 500ms ease, background-color 500ms ease, box-shadow 500ms ease;
+  transition-delay: calc(var(--i) * var(--step));
+}
+.timeline.is-on .timeline__step { opacity: 1; translate: none; }
+.timeline__when { font-size: 13px; line-height: 1.2; color: #8A8781; }
+.timeline__what { font-size: 16px; line-height: 1.3; font-weight: 500; text-wrap: pretty; }
+/* the years before: settled, quieter */
+.timeline__group:not(.is-focus) .timeline__what { color: #5c5a56; }
+/* the IC2 year: blue accent once it's built */
+.timeline.is-on .is-focus .timeline__step { border-color: var(--blue); background: var(--blue-bg); box-shadow: 0 6px 20px -12px rgb(56 89 255 / .45); }
+.timeline.is-on .is-focus .timeline__when { color: var(--blue); }
+.timeline__label {
+  margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--blue);
+  opacity: 0; transition: opacity 500ms ease; transition-delay: calc(var(--i) * var(--step));
+}
+.timeline.is-on .timeline__label { opacity: 1; }
+/* the turn between rows: the model moment */
+.timeline__turn {
+  position: relative; z-index: 2; display: flex; justify-content: center; margin: 4px 0 10px;
+  opacity: 0; transition: opacity 500ms ease; transition-delay: calc(var(--i) * var(--step));
+}
+.timeline.is-on .timeline__turn { opacity: 1; }
+.timeline__turn-label { font-size: 13px; color: #5c5a56; white-space: nowrap; padding: 4px 12px; border-radius: 999px; background: #fff; border: 1px solid #DEDCD8; }
+.timeline__links { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.timeline__link {
+  fill: none; stroke: #A9A6A0; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  /* draws through the beat before its card lands: starts 150ms into it, arrives as the card does */
+  transition: stroke-dashoffset calc(var(--step) - 150ms) cubic-bezier(.4,0,.2,1), stroke 500ms ease;
+  transition-delay: calc((var(--i) - 1) * var(--step) + 150ms), 0ms;
+}
+/* the elbow is the long way round: it gets two beats (the turn's pill shows halfway) */
+.timeline__link.is-elbow {
+  transition-duration: calc(2 * var(--step) - 150ms), 500ms;
+  transition-delay: calc((var(--i) - 2) * var(--step) + 150ms), 0ms;
+}
+.timeline.is-on .timeline__link { stroke-dashoffset: 0; }
+.timeline.is-on .timeline__link.is-focus { stroke: var(--blue); }
+/* the heads appear once their line has landed */
+.timeline__head {
+  fill: none; stroke: #A9A6A0; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  opacity: 0; transition: opacity 200ms ease, stroke 500ms ease;
+  transition-delay: calc(var(--i) * var(--step) - 60ms), 0ms;
+}
+.timeline.is-on .timeline__head { opacity: 1; }
+.timeline.is-on .timeline__head.is-focus { stroke: var(--blue); }
+@media (prefers-reduced-motion: reduce) {
+  .timeline *, .timeline *::before { transition: none !important; }
+}
+
+/* ---- Case intro runs straight into the first chapter, in the same text column.
+   The opening spacer section (it holds the case card in view) takes no room;
+   its waypoint stays so the panels still switch at the first chapter. */
+/* same column as the chapter copy: --text-max wide, centred between two 24px-gapped margins */
+.case-left__head { padding-inline: max(24px, (100% - var(--text-max)) / 2); }
+/* (:has can't nest, so the empty spacer is the section holding only its waypoint) */
+.case-left__head:has(+ .case-left__section > .waypoint:only-child) { margin-bottom: 56px; }
+.case-left__head + .case-left__section:has(> .waypoint:only-child) { min-height: 0; padding-bottom: 0; }
+
+/* ---- Case roll-up metrics: a dark card under the intro (dark in both themes).
+   Its colours come from --m-bg / --m-fg, so it can be flipped light in one place.
+   Two columns: the feature metric (with its line) double height on the left,
+   two stacked on the right, subtle dividers between. The number leads
+   visually; the label (dt) comes first in the markup for screen readers. */
+.case-metrics {
+  --m-bg: var(--neutral-950);
+  --m-fg: var(--neutral-0);
+  --divider: color-mix(in srgb, var(--m-fg) 7%, transparent);
+  margin: 40px 0 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto;
+  background: var(--m-bg);
+  color: var(--m-fg);
+  border-radius: 24px;
+  corner-shape: superellipse(1.6); /* same smoothing as the case cards; plain rounding where unsupported */
+  overflow: hidden;
+  position: relative; isolation: isolate;
+}
+/* film grain, concentrated along the bottom of the card and gone by mid-height;
+   high-contrast specks rather than a light wash; behind the content */
+.case-metrics::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.4 -1.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* drawn at twice the size it's shown, so each speck is a device pixel on retina */
+  background-size: 140px 140px;
+  opacity: .1;
+  -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 55%);
+  mask-image: linear-gradient(to top, #000 10%, transparent 55%);
+}
+.case-metrics__item { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 24px; min-width: 0; }
+.case-metrics__value { order: -1; }
+.case-metrics__item.is-feature { grid-row: span 2; border-right: 1px solid var(--divider); }
+/* the stacked pair: each lifts slightly lighter toward its foot */
+.case-metrics__item:not(.is-feature) { background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--m-fg) 2%, transparent)); }
+/* the second of the stacked pair */
+.case-metrics__item:not(.is-feature) + .case-metrics__item:not(.is-feature) { border-top: 1px solid var(--divider); }
+.case-metrics__value {
+  margin: 0;
+  font-family: var(--font-display); font-weight: 470; font-size: 28px; line-height: 1.1;
+  letter-spacing: -0.02em; color: var(--m-fg); font-variant-numeric: tabular-nums ordinal; white-space: nowrap;
+}
+.case-metrics__label { margin: 0; font-size: 14px; line-height: 1.35; color: color-mix(in srgb, var(--m-fg) 64%, transparent); }
+.case-metrics__chart { margin: auto 0 0; padding-top: 20px; }
+/* the feature's rough line: yellow into Miro lilac (the gradient is in Trend) */
+.trend { position: relative; height: 72px; color: var(--miro-lilac-600); }
+.trend svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* a warm light pooled behind the line, rising toward the latest value */
+.case-metrics__item.is-feature { position: relative; isolation: isolate; }
+.case-metrics__item.is-feature::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 60% at 85% 100%, color-mix(in srgb, var(--miro-lilac-600) 12%, transparent), transparent 70%);
+}
+/* a faint line from the latest value down to the foot, and its label beneath */
+.trend__drop {
+  position: absolute; bottom: 0; width: 1px; margin-left: -.5px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--m-fg) 28%, transparent), color-mix(in srgb, var(--m-fg) 8%, transparent));
+}
+.trend__end {
+  /* right-aligned: it ends at the line's end */
+  position: absolute; top: calc(100% + 8px); translate: -100% 0;
+  font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+  color: color-mix(in srgb, var(--m-fg) 45%, transparent);
+}
+@media (max-width: 479px) {
+  .case-metrics { grid-template-columns: minmax(0, 1fr); }
+  .case-metrics__item.is-feature { grid-row: auto; border-right: 0; border-bottom: 1px solid var(--divider); }
+}
+
+/* ---- Case metrics, simplified light: a plain white card on the page with a hairline edge.
+   No grain, no glow, no gradient lift; colours follow the theme tokens (dark card in dark mode). */
+.case-metrics {
+  --m-bg: transparent; /* the page shows through */
+  --m-fg: var(--ink);
+  --divider: color-mix(in srgb, var(--ink) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.case-metrics::before { content: none; }
+/* the large card: a faint lilac wash pooled in its bottom-right corner */
+.case-metrics__item.is-feature::after {
+  background: radial-gradient(80% 70% at 100% 100%, color-mix(in srgb, var(--miro-lilac-600) 7%, transparent), transparent 70%);
+}
+.trend__fill { display: none; } /* just the line: no wash beneath it */
+.case-metrics__item:not(.is-feature) { background: none; }
+.case-metrics__label { color: var(--ink-2); }
+.case-metrics__arrow { margin: 0 0.12em; }
+/* end label: beside the drop line on its left, right-aligned, its baseline on the line's foot
+   (the -0.2em drops the line box's descender space below the foot) */
+.trend__end { top: auto; bottom: -0.2em; translate: calc(-100% - 8px) 0; text-align: right; }
+
+/* KPI card entrance, once it's in view (.is-in, set by CaseMetrics): one long, soft
+   ease-out throughout. The card settles up out of a slight blur; each figure follows
+   140ms apart, rising a little further than the card so the motion reads as layered;
+   its number counts up meanwhile (in JS), and the feature's line draws left to right,
+   its date label arriving last. */
+@media (prefers-reduced-motion: no-preference) {
+  .case-metrics {
+    --kpi-ease: cubic-bezier(.16, 1, .3, 1);
+    opacity: 0; transform: translateY(14px); filter: blur(6px);
+    transition: opacity .9s var(--kpi-ease), transform 1.1s var(--kpi-ease), filter .9s var(--kpi-ease);
+  }
+  .case-metrics__item > * {
+    opacity: 0; transform: translateY(18px);
+    transition: opacity .8s var(--kpi-ease), transform 1.2s var(--kpi-ease);
+    transition-delay: calc(250ms + var(--i, 0) * 140ms);
+  }
+  /* the label trails its number by a beat */
+  .case-metrics__item > .case-metrics__label { transition-delay: calc(330ms + var(--i, 0) * 140ms); }
+  .case-metrics .trend svg {
+    clip-path: inset(-20% 100% -20% 0);
+    transition: clip-path 1.5s var(--kpi-ease) .35s;
+  }
+  .case-metrics .trend__drop { transform: scaleY(0); transform-origin: top; transition: transform .7s var(--kpi-ease) 1.2s; }
+  .case-metrics .trend__end { opacity: 0; transition: opacity .6s ease 1.35s; }
+
+  .case-metrics.is-in { opacity: 1; transform: none; filter: none; }
+  .case-metrics.is-in .case-metrics__item > * { opacity: 1; transform: none; }
+  .case-metrics.is-in .trend svg { clip-path: inset(-20% 0 -20% 0); }
+  .case-metrics.is-in .trend__drop { transform: none; }
+  .case-metrics.is-in .trend__end { opacity: 1; }
+}
+
+/* ==========================================================================
+   Storyboard (components/Storyboard): one board pinned over the right-hand
+   card through the opening sections; its content clears and is rewritten per
+   chapter, so the space is never blank. Desktop only: below 1200px the panels
+   stack and each keeps its own board.
+   ========================================================================== */
+.storyboard {
+  /* the stretch the board is pinned through: from the top of the case to the last
+     line of the last storied section (Storyboard measures it). Out of the flow, laid
+     over the track, so the panels below don't move */
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+  pointer-events: none;
+}
+.storyboard__pin {
+  /* plain sticky: pinned where the track pins its card, and let go when the run's end
+     (the copy's last line) reaches its foot, then it scrolls away with the copy */
+  position: sticky; top: var(--top);
+  height: var(--ch);
+  /* arrives with the case: once the card's spin has landed (= .case-board) */
+  animation: case-board-in .3s ease .9s both;
+}
+.storyboard__board {
+  position: absolute; inset: 0;
+  border-radius: var(--radius);
+  background-color: var(--miro-cloud-100); /* the Mona Lisa board's colour, kept throughout */
+}
+/* the chapters draw on the shared board: their own board fills give way to it */
+.storyboard__pin .vignette.board, .storyboard__pin .statement { background: none; }
+.storyboard__pin .panel__board { border-radius: 0; }
+
+/* each chapter settles in (its own script then writes its content) … */
+.storyboard__layer {
+  position: absolute; inset: 0;
+  animation: story-in .7s cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes story-in { from { opacity: 0; transform: translateY(10px) scale(.99); filter: blur(4px); } }
+/* … and clears away before the next: a soft lift and fade, the board left bare for a beat */
+.storyboard__layer.is-clearing {
+  opacity: 0; transform: translateY(-12px) scale(.985); filter: blur(4px);
+  transition: opacity .45s ease, transform .5s cubic-bezier(.4, 0, .2, 1), filter .45s ease;
+}
+
+/* investments: bigger, bolder type on the bets; the frame eases in first */
+.vg--investments .vg__note { font-size: clamp(11px, 1vw, 15px); font-weight: 500; padding: 10px; }
+.vg__frame--fade { animation: story-in .6s cubic-bezier(.16, 1, .3, 1) both; }
+
+@media (min-width: 1200px) {
+  /* beneath the Storyboard, the storied panels show just their bare card */
+  .carousel__item.is-storied :is(.case-board, .vignette, .panel__board, .card-stickers) { visibility: hidden; }
+}
+@media (max-width: 1199px) { .storyboard { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .storyboard__pin, .storyboard__layer, .vg__frame--fade { animation: none; }
+  .storyboard__layer.is-clearing { transition: opacity .2s ease; transform: none; filter: none; }
+}
+
+/* ---- Case list: a numbered list in a subtle card, set like the KPI card (white,
+   faint edge, hairline dividers) so the two read as one family */
+.case-list {
+  list-style: none; margin: 24px 0; padding: 0;
+  background: var(--surface);
+  border-radius: 24px; corner-shape: superellipse(1.6);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+.case-list__item {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px;
+  padding: 18px 24px;
+  font-size: 14px; line-height: 1.5; color: var(--ink-2);
+}
+.case-list__item + .case-list__item { border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.case-list__num { font-size: 13px; line-height: 24px; font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+/* title and description both 14px; the weight and colour carry the hierarchy */
+.case-list__title { display: block; font-size: 14px; line-height: 24px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
+
+/* bulleted list in a case chapter (s.bullets): body-copy type, hanging bullets */
+.case-bullets { margin: 0; padding-left: 1.25em; display: grid; gap: 8px; }
+.case-bullets li { padding-left: 2px; }
+.case-bullets li::marker { color: var(--ink-3); }
+
+/* spec story board: vision prototype (a tiny app window) over three spec sheets */
+.vg--spec { --ease: cubic-bezier(.16, 1, .3, 1); }
+.vg__proto {
+  position: absolute; inset: 8%; display: grid;
+  grid-template: 'bar bar' 9% 'canvas side' 1fr / 1fr 28%; gap: 6%;
+  opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .7s var(--ease);
+}
+.vg__proto.is-on { opacity: 1; transform: none; }
+.vg__proto-bar { grid-area: bar; display: flex; gap: 4px; align-items: center; }
+.vg__proto-bar i { width: 7px; height: 7px; border-radius: 50%; background: #d9d9d9; }
+.vg__proto-canvas {
+  grid-area: canvas; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8%; align-content: center;
+  padding: 6% 10%; border-radius: 6px; background: #f6f6f4;
+}
+.vg__proto-canvas i { aspect-ratio: 1; border-radius: 2px; opacity: 0; transform: scale(.5); transition: opacity .25s ease, transform .4s cubic-bezier(.34, 1.22, .64, 1); }
+.vg__proto.is-on .vg__proto-canvas i { opacity: 1; transform: none; }
+.vg__proto-side { grid-area: side; display: flex; flex-direction: column; gap: 8px; padding: 8%; border-radius: 6px; background: #f6f6f4; }
+.vg__proto-side i { height: 7px; border-radius: 99px; background: #e2e2df; }
+.vg__proto-side i:nth-child(2) { width: 70%; align-self: flex-end; background: color-mix(in srgb, var(--miro-lilac-600, #8f7fee) 30%, #fff); }
+.vg__proto-side i:nth-child(3) { width: 85%; }
+.vg__proto-side span { margin-top: auto; height: 16px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); }
+
+.vg__links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.vg__links path { fill: none; stroke: #b9b9b4; stroke-width: 1.25; stroke-dasharray: 3 4; opacity: 0; transition: opacity .5s ease; }
+.vg__links path.is-on { opacity: 1; }
+
+.vg__spec {
+  position: absolute; top: 58%; width: 24%; height: 20%; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 6px; padding: 10px;
+  border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08), 0 6px 18px rgba(0, 0, 0, .08);
+  color: #1a1b1e; font-size: clamp(10px, .8vw, 12px);
+  opacity: 0; transform: translateY(14px) scale(.97); transition: opacity .4s ease, transform .7s var(--ease);
+}
+.vg__spec.is-on { opacity: 1; transform: none; }
+.vg__spec b { font-weight: 500; min-height: 1.25em; line-height: 1.25; white-space: nowrap; overflow: hidden; }
+.vg__spec-shot { flex: 1; min-height: 20px; border-radius: 4px; background: #f6f6f4; }
+.vg__spec > i { height: 5px; border-radius: 99px; background: #ececea; }
+.vg__spec em {
+  position: absolute; right: -8px; top: -9px; padding: 3px 8px; border-radius: 99px;
+  background: var(--miro-coral-200, #ffc6c6); color: #1a1b1e; font-style: normal; font-size: 10px; font-weight: 500;
+  opacity: 0; transform: scale(.7); transition: opacity .25s ease, transform .4s cubic-bezier(.34, 1.22, .64, 1);
+}
+.vg__spec em.is-on { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .vg__proto, .vg__proto-canvas i, .vg__spec, .vg__spec em, .vg__links path { transition: none; }
+}
+
+/* a sub-point's heading (s.sub): a step down from the section heading */
+.case-left__h2.case-left__h2--sub { font-size: 16px; font-weight: 550; letter-spacing: -0.015em; color: var(--ink); }
+/* the line under a major chapter's heading, before its first section */
+.case-left__chapter-lead { grid-row: 2; grid-column: 2; margin: 0 0 8px; }
+/* a small data table in the copy (s.table): hairline rows, in a card like the lists */
+.case-table {
+  width: 100%; border-collapse: separate; border-spacing: 0; margin: 8px 0;
+  font-size: 14px; line-height: 1.45; color: var(--ink-2);
+  background: var(--surface); border-radius: 18px; corner-shape: superellipse(1.6);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); overflow: hidden;
+}
+.case-table th, .case-table td { padding: 12px 16px; text-align: left; vertical-align: top; font-weight: 400; }
+.case-table thead th { font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.case-table tbody th { color: var(--ink); font-weight: 500; }
+.case-table td:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+.case-table tr + tr > *, .case-table tbody tr > * { border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+/* use cases after the copy (s.useCases): label, intro, titled bullets */
+.case-uses { display: grid; gap: 14px; margin-top: 8px; }
+.case-uses > p { margin: 0; }
+.case-uses b { font-weight: 550; color: var(--ink); }
+
+/* band (layout 'band'): a section whose copy runs across both columns in the page's own
+   flow, so it scrolls natively (no panel motion). It starts at the copy's left edge and
+   reaches the card column's right edge (--span-w); heading | paragraph | paragraph,
+   left aligned, the heading's column twice the others; the visual full width beneath */
+.case-left__section.is-band { min-height: 0; padding-top: 40px; padding-bottom: 96px; } /* top: = a chapter heading's lead-in */
+.band { grid-column: 2 / -1; width: var(--span-w); display: grid; gap: 40px; }
+.band__cols { display: grid; grid-template-columns: 2fr 1fr 1fr; column-gap: var(--gap); align-items: start; }
+.band__cols > * { margin: 0; }
+/* = the chapter heading (.case-left__chapter) */
+.band__title {
+  font-family: var(--font-display); font-size: 32px; font-weight: 550; line-height: 1.1;
+  letter-spacing: -0.02em; font-kerning: normal; text-wrap: balance; color: var(--ink);
+}
+.band__visual {
+  aspect-ratio: 16 / 9; display: grid; place-items: center;
+  border-radius: var(--radius); corner-shape: superellipse(1.6);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-3); font-size: 13px;
+}
+/* rows under the band's visual: title (in the heading's column) | paragraph (across the
+   paragraph columns above), then a blocked-out shelf of examples */
+.band__row { display: grid; gap: 28px; margin-top: 120px; } /* + the band's 40px gap: 160px between shelves */
+/* a row with no copy line (the principles under the vision film): tucked up under the visual,
+   just the band's own 40px gap below it */
+.band__row--tight { margin-top: 0; }
+.band__row-title { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 550; line-height: 1.2; letter-spacing: -0.02em; color: var(--ink); text-wrap: balance; }
+/* a row's description sits under its title, in the title's column */
+.band__row .band__cols { row-gap: 12px; }
+.band__row-body { grid-column: 1; margin: 0; max-width: 640px; }
+.band__shelf {
+  height: clamp(280px, 28vw, 440px); display: grid; place-items: center;
+  border-radius: var(--radius); corner-shape: superellipse(1.6);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-3); font-size: 13px;
+}
+/* a row's real shelf: lets the paged reel shrink to the band instead of widening it */
+.band__shelf-reel {
+  min-width: 0;
+  /* the card height normally comes from .shelves / .split; a band row is neither */
+  --shelf-card-h: clamp(280px, 28vw, 440px);
+  --shelf-ease: cubic-bezier(0.65, 0, 0.35, 1);
+}
+@media (max-width: 1199px) { .band__shelf-reel { --shelf-card-h: clamp(200px, 50vw, 320px); } }
+/* the next cards run on past the content edge instead of being cut at it */
+.band__shelf-reel .shelf--bare { overflow: visible; }
+/* an aside row (Simplifying the canvas): the copy on the left, its shelf in the right-hand
+   column, clipped there so the next cards don't run into the copy */
+.band__row--aside { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--gap); align-items: start; }
+.band__aside-copy { display: grid; gap: 16px; align-content: start; max-width: var(--text-max); } /* the storyboard chapters' measure */
+.band__aside-copy > * { margin: 0; }
+.band__aside-media { --shelf-card-h: clamp(240px, 22vw, 360px); overflow: hidden; }
+.band__aside-media .shelf--bare { overflow: hidden; }
+@media (max-width: 1199px) { .band__row--aside { grid-template-columns: minmax(0, 1fr); row-gap: 20px; } }
+/* desktop: lift the shelf so its pager's bottom lines up with the bottom of the row's
+   description (the pager sits right, the copy left, so they share a baseline).
+   Measured, not derived: re-check it if the pager or its margin below changes. */
+@media (min-width: 1200px) {
+  .band__row:has(.band__cols) > .band__shelf-reel { margin-top: -64px; }
+  /* the lifted strip overlaps the copy: let clicks through everywhere but the pager */
+  /* and room under that shared line before the cards start */
+  .band__shelf-reel .shelf--bare .shelf__top { margin-bottom: 32px; }
+  .band__shelf-reel .shelf__top { pointer-events: none; }
+  .band__shelf-reel .shelf-pager { pointer-events: auto; }
+}
+/* a principles row: three looping clips side by side, each over its title and description
+   run together as one inline paragraph (components/PrinciplesRow) */
+.principles-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.principles-row__tile {
+  all: unset; box-sizing: border-box; cursor: zoom-in;
+  position: relative; display: block; width: 100%; overflow: hidden; aspect-ratio: 16 / 9;
+  /* plain round corners: a playing video is clipped round, so a superellipse would show slivers */
+  border-radius: calc(var(--radius) * .4); corner-shape: round;
+  background: #f1f1f1; /* the clips' own board grey, behind any edge */
+  /* the border: a hairline, as on the figure thumbnails, so the white clips hold their edge */
+  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / .04);
+  transition: box-shadow .25s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.principles-row__tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.principles-row__tile:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--line), 0 10px 26px rgb(0 0 0 / .1); }
+.principles-row__tile:hover video { transform: scale(1.03); }
+.principles-row__tile:hover .figures__zoom, .principles-row__tile:focus-visible .figures__zoom { opacity: 1; transform: none; }
+.principles-row__tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.principles-row__tile .figures__zoom { right: 12px; bottom: 12px; }
+.principles-row__text { margin: 16px 0 0; max-width: 42ch; font-size: 16px; line-height: 1.6; font-weight: 435; letter-spacing: -0.0275em; color: var(--ink-body); text-wrap: pretty; }
+.principles-row__text b { font-weight: 600; color: var(--ink); }
+@media (max-width: 1199px) { .principles-row { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+@media (max-width: 1199px) {
+  .band { grid-column: 1; width: auto; gap: 24px; }
+  .band__row { margin-top: 64px; gap: 16px; }
+  .band__row--tight { margin-top: 0; }
+  .band__row-body { grid-column: 1; }
+  .band__shelf { height: 240px; }
+  .band__cols { grid-template-columns: minmax(0, 1fr); row-gap: 14px; }
+}
+
+/* ==========================================================================
+   A chapter on a dark ground (theme: 'dark', e.g. Design approach), desktop.
+   The page flips light-on-dark in a full-bleed panel that reaches 200px past
+   the chapter's copy at each end. It scrolls in like content; as it arrives its
+   rounded corners square off (a scroll-driven animation, run by the browser)
+   until the dark fills the window, and round again as it leaves. Always edge
+   to edge. The fixed header and footer flip with it (.is-head-dark,
+   .is-foot-dark on <html>). The chapter's tokens are the site's dark theme.
+   ========================================================================== */
+@property --flip-r { syntax: '<length>'; inherits: true; initial-value: 0px; }
+@keyframes dark-flip-in { from { --flip-r: 160px; } to { --flip-r: 0px; } }
+@keyframes dark-flip-out { from { --flip-r: 0px; } to { --flip-r: 160px; } }
+@media (max-width: 1199px) { .dark-field { display: none; } }
+@media (min-width: 1200px) {
+  .case-left__run.theme-dark {
+    --bg: var(--neutral-950);
+    --surface: var(--neutral-900);
+    --ink: var(--neutral-50);
+    --ink-body: color-mix(in srgb, var(--neutral-50) 88%, transparent);
+    --ink-2: var(--neutral-400);
+    --ink-3: var(--neutral-500);
+    --line: var(--neutral-800);
+    color-scheme: dark;
+    position: relative;
+    color: var(--ink);
+    margin-block: 240px; /* room for the panel's ends between it and the copy either side */
+    --flip-r: 72px; /* without scroll-driven animation: a fixed soft edge */
+  }
+  @supports (animation-timeline: view()) {
+    .case-left__run.theme-dark {
+      animation: dark-flip-in linear both, dark-flip-out linear forwards;
+      animation-timeline: view(), view();
+      animation-range: entry 0% entry 100%, exit 0% exit 100%;
+    }
+  }
+  /* the ground (components/DarkField): one dot grid, each dot at one of three depths,
+     seen through a lens. Nearer dots are brighter and crisper, further ones fainter
+     and hazier. The middle depth scrolls exactly with the page; the far one drifts
+     slower, the near one faster (parallax). Both drifts are
+     scroll-driven transforms, run by the browser's compositor, so the scroll stays
+     native. Over them, a lens the size of the window stays put while the panel
+     passes (sticky): clear in a round middle, blurring and sinking into the dark
+     towards the rim, like a shallow depth of field. */
+  .dark-field {
+    position: absolute; z-index: -1; pointer-events: none;
+    top: -200px; bottom: -200px;
+    left: calc(-1 * var(--edge-l, 0px)); right: calc(-1 * var(--edge-r, 0px)); /* the window's edges */
+    background-color: var(--neutral-950);
+    /* edge to edge: only the corners round, plainly (circular, not a superellipse) */
+    border-radius: var(--flip-r); corner-shape: round;
+    overflow: clip;
+    isolation: isolate; /* the lens blurs the dots only */
+  }
+  /* one grid, each dot at one depth (DarkField deals them; the tiles are its SVGs).
+     The drifting layers overhang by two tiles (560px), so their grid stays in register */
+  .dark-field__dots { position: absolute; inset: 0; background-repeat: repeat; }
+  .dark-field__dots--far, .dark-field__dots--near { inset: -560px 0; }
+  @supports (animation-timeline: view()) {
+    .dark-field__dots--far, .dark-field__dots--near {
+      will-change: transform;
+      animation: linear both;
+      animation-timeline: view();
+    }
+    .dark-field__dots--far { animation-name: field-far; }
+    .dark-field__dots--near { animation-name: field-near; }
+  }
+  @keyframes field-far { from { transform: translateY(-360px); } to { transform: translateY(360px); } }
+  @keyframes field-near { from { transform: translateY(440px); } to { transform: translateY(-440px); } }
+  /* the lens: spans the panel; its window-sized face is sticky, so it stays centred on screen */
+  .dark-field__lens { position: absolute; inset: 0; }
+  .dark-field__lens > div {
+    position: sticky; top: 0; height: 100vh;
+    /* sinking into the dark towards the rim … */
+    background: radial-gradient(circle at 50% 50%, transparent 0 26vmax, color-mix(in srgb, var(--neutral-950) 35%, transparent) 50vmax, color-mix(in srgb, var(--neutral-950) 85%, transparent) 76vmax);
+    /* … and out of focus: blurred more the further from the middle */
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0 18vmax, #000 44vmax);
+    mask-image: radial-gradient(circle at 50% 50%, transparent 0 18vmax, #000 44vmax);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dark-field__dots--far, .dark-field__dots--near { animation: none; }
+  }
+
+  /* the fixed header and footer, while they sit over the panel */
+  .nav .glass, .chapterbar__btn, .footer { transition: background-color .4s ease, border-color .4s ease, box-shadow .4s ease, color .4s ease; }
+  .is-head-dark .nav {
+    --ink: var(--neutral-50);
+    --ink-2: var(--neutral-400);
+    --ink-3: var(--neutral-500);
+    --line: var(--neutral-700);
+    --pill-highlight: color-mix(in srgb, var(--neutral-0) 14%, transparent);
+    --shadow: color-mix(in srgb, var(--neutral-1000) 40%, transparent);
+    color: var(--ink);
+    color-scheme: dark;
+  }
+  .is-head-dark .nav :is(.menu.glass, .chapterbar.glass, .chapterbar__list.glass) {
+    background: color-mix(in srgb, var(--neutral-900) 72%, transparent);
+    border-color: color-mix(in srgb, var(--neutral-0) 10%, transparent);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--neutral-1000) 30%, transparent),
+                0 8px 28px color-mix(in srgb, var(--neutral-1000) 40%, transparent);
+  }
+  .is-head-dark .chapterbar__btn { background: var(--neutral-800); color: var(--neutral-50); }
+  .is-head-dark .chapterbar__list button:hover { background: color-mix(in srgb, var(--neutral-0) 8%, transparent); }
+  .is-foot-dark .footer { color: var(--neutral-400); }
+  .is-foot-dark .footer a:hover { color: var(--neutral-50); }
+}
+
+/* the case's closing section: a very large title centred on the screen, the keynote video
+   centred below it and laid over its foot (the title runs under the video). It spans the
+   copy's left edge to the card column's right edge (= a band), nudged to the true centre */
+.case-left__section.case-finale { min-height: 0; padding: 120px 0 160px; }
+.case-finale__inner {
+  position: relative;
+  grid-column: 2 / -1; width: var(--span-w);
+  translate: calc(var(--bleed-r) + var(--span-w) / 2 - 50vw) 0;
+  display: grid; justify-items: center; text-align: center;
+}
+.case-finale__title {
+  margin: 0; position: relative; z-index: 0;
+  font-family: var(--font-display); font-weight: 550;
+  font-size: clamp(40px, 9vw, 200px); line-height: .75; letter-spacing: -0.045em;
+  font-kerning: normal; white-space: nowrap; color: var(--ink); /* one line, scaled to the window */
+}
+.case-finale__video {
+  position: relative; z-index: 1;
+  width: min(100%, 960px);
+  margin-top: calc(-0.1 * clamp(40px, 9vw, 200px)); /* at rest, the letters only just run under it */
+}
+/* the keynote in a glass card: clear glass (a whisper of tint), its rim bending and splitting
+   what's behind it (LensGlass: the notes poking out from under it, the title's foot, the glow).
+   Chromium takes the lens filter; other browsers the frosted blur. Edges: a bright inner line
+   and a top-lit specular sheen, like a thick pane catching the light */
+.case-finale .video-embed {
+  max-width: none; padding: 10px 10px 14px; border-radius: 24px; text-align: left;
+  /* a light milky tint over the frost, brighter towards the top, like Apple's Liquid Glass */
+  background: linear-gradient(175deg, rgb(255 255 255 / .42), rgb(255 255 255 / .18) 45%, rgb(255 255 255 / .26));
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: url(#finale-glass) saturate(1.7) brightness(1.06);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / .6),
+    inset 1px 1.5px 0 0 rgb(255 255 255 / .95),
+    inset -1px -1px 0 0 rgb(255 255 255 / .4),
+    inset 0 0 18px 0 rgb(255 255 255 / .35),
+    0 1px 2px rgb(0 0 0 / .06),
+    0 24px 60px rgb(0 0 0 / .14);
+}
+.case-finale .video-embed__frame { border-radius: 14px; box-shadow: 0 0 0 1px rgb(255 255 255 / .5), 0 6px 18px rgb(0 0 0 / .12); }
+/* a soft glow of launch colour behind the card, for the glass to bend */
+.case-finale__video::before {
+  content: ''; position: absolute; inset: 6% -4% -8% -4%; z-index: -1; border-radius: 48px;
+  background:
+    radial-gradient(40% 55% at 18% 40%, color-mix(in srgb, #FFD02F 55%, transparent), transparent 70%),
+    radial-gradient(38% 50% at 82% 35%, color-mix(in srgb, #FF5FA8 45%, transparent), transparent 70%),
+    radial-gradient(45% 55% at 55% 85%, color-mix(in srgb, #8F7FEE 45%, transparent), transparent 70%);
+  filter: blur(40px); opacity: .55;
+}
+/* the card's own nudging cursor stays away here */
+.case-finale .video-embed__cursor { display: none; }
+.case-finale .video-embed__title { color: var(--ink); }
+.case-finale .video-embed__meta { color: var(--ink-2); }
+/* the title rises into place as it's scrolled into: from tucked well under the video to
+   just touching it (a scroll-driven animation, run by the browser) */
+@keyframes finale-rise { from { translate: 0 0.45em; } to { translate: 0 0; } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .case-finale__title { animation: finale-rise linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
+  }
+}
+
+/* notes of praise (components/LaunchCelebration): behind the glass card, poking out from its
+   edges; they slide out from under it when the section comes on screen */
+.cele { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.cele__note {
+  position: absolute; width: clamp(110px, 9vw, 150px); aspect-ratio: 1; box-sizing: border-box;
+  padding: 12px; border-radius: 3px; text-align: left;
+  font-size: clamp(11px, .85vw, 14px); line-height: 1.3; font-weight: 500; color: var(--miro-sticky-text, #1a1b1e);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 8px 20px rgb(0 0 0 / .12);
+  --s: 1;
+  opacity: 0; transform: translate(var(--in-x), var(--in-y)) rotate(calc(var(--r) * .3)) scale(var(--s));
+  transition: opacity .35s ease, transform .9s cubic-bezier(.22, 1.2, .36, 1);
+}
+.cele.is-out .cele__note { opacity: 1; transform: rotate(var(--r)) scale(var(--s)); }
+/* three depths: nearer notes are a touch larger, sharp, and cast a deeper, softer
+   shadow; further ones are smaller, out of focus and slightly hazed, their shadow
+   flatter. Nearer notes stack over further ones */
+.cele__note--z0 {
+  --s: 1.05; z-index: 3;
+  box-shadow: 0 2px 3px rgb(0 0 0 / .08), 0 14px 32px rgb(0 0 0 / .16);
+}
+.cele__note--z1 {
+  --s: .95; z-index: 2;
+  filter: blur(1.1px);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .07), 0 8px 18px rgb(0 0 0 / .1);
+}
+.cele__note--z2 {
+  --s: .86; z-index: 1;
+  filter: blur(2.4px) saturate(.85) brightness(1.04);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .05), 0 4px 10px rgb(0 0 0 / .07);
+}
+/* the speakers' cursors, in front of the glass: glide in from beyond the card, then idle */
+.cele-cursors { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.cele-cursor {
+  position: absolute; /* the arrow's tip at left/top */
+  opacity: 0; translate: var(--from-x) var(--from-y);
+  transition: opacity .4s ease, translate 1.2s cubic-bezier(.16, 1, .3, 1);
+  animation: cele-idle 8s ease-in-out infinite alternate;
+}
+.cele-cursors.is-out .cele-cursor { opacity: 1; translate: 0 0; }
+/* the idle wander is `transform`, separate from the arrival's `translate`, so the two add up */
+@keyframes cele-idle {
+  0% { transform: translate(0, 0); }
+  30% { transform: translate(14px, -8px); }
+  65% { transform: translate(-6px, 10px); }
+  100% { transform: translate(10px, 4px); }
+}
+@media (prefers-reduced-motion: reduce) { .cele-cursor { animation: none; transition: opacity .2s ease; } }
+@media (max-width: 1199px) { .cele, .cele-cursors { display: none; } }
+
+@media (max-width: 1199px) {
+  .case-left__section.case-finale { padding: 64px 0 96px; }
+  .case-finale__inner { grid-column: 1; width: auto; translate: none; }
+}
+
+/* ==========================================================================
+   Figures (components/Figures): thumbnails under a section's copy that open in
+   a lightbox. Two side by side (one alone spans the copy column).
+   ========================================================================== */
+.figures {
+  display: grid; grid-template-columns: repeat(auto-fill, 200px); gap: 20px 16px;
+  margin-top: 28px; max-width: var(--text-max, 550px);
+}
+.figures__thumb {
+  all: unset; box-sizing: border-box; cursor: zoom-in;
+  display: grid; gap: 10px; min-width: 0;
+}
+.figures__frame {
+  position: relative; display: grid; place-items: center;
+  aspect-ratio: 16 / 10; overflow: hidden;
+  border-radius: 14px; background: #fff;
+  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / .04);
+  transition: box-shadow .25s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.figures__frame img { width: 100%; height: 100%; object-fit: contain; padding: 6px; box-sizing: border-box; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.figures__zoom {
+  position: absolute; right: 8px; bottom: 8px;
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: rgb(25 25 24 / .78); color: #fff;
+  opacity: 0; transform: scale(.85); transition: opacity .2s ease, transform .25s ease;
+}
+.figures__caption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; font-size: 13px; line-height: 1.35; }
+.figures__label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.figures__title { font-weight: 600; color: var(--ink); }
+.figures__thumb:hover .figures__frame { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--line), 0 10px 26px rgb(0 0 0 / .1); }
+.figures__thumb:hover .figures__frame img { transform: scale(1.03); }
+.figures__thumb:hover .figures__zoom, .figures__thumb:focus-visible .figures__zoom { opacity: 1; transform: none; }
+.figures__thumb:focus-visible .figures__frame { outline: 2px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 600px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* the lightbox: the figure as large as the window allows, on a dimmed, blurred page */
+.lightbox {
+  /* fills the window; the figure centres in it, and clicks around it close it */
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
+  margin: 0; padding: 72px 88px; box-sizing: border-box; border: 0;
+  background: transparent; color: #fff; overflow: hidden;
+}
+.lightbox[open] { display: grid; place-items: center; animation: lightbox-in .35s ease both; }
+.lightbox::backdrop {
+  background: rgb(14 14 13 / .72);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  animation: lightbox-in .35s ease both;
+}
+.lightbox__figure {
+  margin: 0; display: grid; gap: 14px; justify-items: center;
+  max-width: 100%; max-height: 100%; min-height: 0;
+  animation: lightbox-figure-in .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+.lightbox__figure :is(img, video) {
+  display: block; max-width: min(100%, 1400px); max-height: calc(100dvh - 72px * 2 - 40px);
+  width: auto; height: auto; border-radius: 24px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / .45);
+}
+.lightbox__figure figcaption { font-size: 14px; color: #fff; display: flex; align-items: baseline; gap: 10px; }
+.lightbox__label { font-size: 13px; font-weight: 500; color: rgb(255 255 255 / .6); }
+.lightbox__count { color: rgb(255 255 255 / .5); font-variant-numeric: tabular-nums; }
+.lightbox__btn {
+  all: unset; position: absolute; display: grid; place-items: center; cursor: pointer;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgb(255 255 255 / .12); color: #fff;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16);
+  transition: background-color .2s ease;
+}
+.lightbox__btn:hover { background: rgb(255 255 255 / .22); }
+.lightbox__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.lightbox__close { top: 20px; right: 20px; }
+.lightbox__prev, .lightbox__next { top: 50%; margin-top: -22px; }
+.lightbox__prev { left: 20px; }
+.lightbox__next { right: 20px; }
+@keyframes lightbox-in { from { opacity: 0; } }
+@keyframes lightbox-figure-in { from { opacity: 0; filter: blur(12px); transform: scale(.97); } }
+/* the page behind stays put while it's open */
+html:has(.lightbox[open]) { overflow: hidden; }
+@media (max-width: 700px) {
+  .lightbox { padding: 64px 12px; }
+  .lightbox__figure :is(img, video) { max-height: calc(100dvh - 64px * 2 - 40px); border-radius: 14px; }
+  .lightbox__prev, .lightbox__next { top: auto; bottom: 14px; margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lightbox[open], .lightbox::backdrop, .lightbox__figure { animation: none; }
+  .figures__frame, .figures__frame img { transition: none; }
+}
+
+/* ==========================================================================
+   Case loader (components/CaseLoader): over the page while its pictures, fonts
+   and 3D cards get ready; only shown if that takes more than a moment. Lifts
+   away out of a blur.
+   ========================================================================== */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 0; }
+.case-loader {
+  position: fixed; inset: 0; z-index: 200;
+  display: grid; place-content: center; justify-items: center; gap: 14px;
+  background: var(--bg);
+  animation: lightbox-in .25s ease both;
+  transition: opacity .3s ease .25s, --p .2s linear; /* the ground goes after the ring; progress eases */
+  /* the ring and its square of dots tilt together as one plate: the tilt's high point
+     follows the ring's sweep round, growing towards halfway and settling flat at 100% */
+  --sweep: calc(var(--p) * 3.6deg);
+  --tilt: perspective(360px) rotate3d(calc(cos(var(--sweep)) * -1), calc(sin(var(--sweep)) * -1), 0, calc(sin(var(--p) * 1.8deg) * 26deg));
+}
+.case-loader.is-out { opacity: 0; pointer-events: none; }
+/* the spinner goes first (the ground stays until the ring has faded) */
+.case-loader.is-out .case-loader__ring { opacity: 0; scale: .6; filter: blur(3px); transition: opacity .3s ease, scale .3s ease, filter .3s ease; }
+/* the case page waits, hidden, until the loader has gone; then fades in (opacity only: a
+   filter on a column this tall can't be drawn; its blocks blur in on their own, .blur-in) */
+.carousel--case :is(.case-left, .carousel__track-wrap) { transition: opacity .7s ease; }
+.carousel.is-case-loading :is(.case-left, .carousel__track-wrap) { opacity: 0; transition: none; }
+/* behind the ring, a small square of board dots (8 × 8, so the ring's centre falls between them) */
+.case-loader::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 112px; height: 112px; translate: -50% -50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ink) 22%, transparent) 1.1px, transparent 1.6px) 0 0 / 14px 14px;
+  transform: var(--tilt);
+  transition: opacity .3s ease, scale .3s ease;
+}
+.case-loader.is-out::before { opacity: 0; scale: .9; }
+.case-loader__ring { position: relative; transform: var(--tilt); }
+.case-loader__ring {
+  width: 17px; height: 17px; border-radius: 50%;
+  /* progress round the ring (2px thick), eased between updates */
+  background: conic-gradient(var(--ink) calc(var(--p) * 1%), color-mix(in srgb, var(--ink) 12%, transparent) 0);
+  -webkit-mask: radial-gradient(circle, transparent 6.25px, #000 6.75px);
+  mask: radial-gradient(circle, transparent 6.25px, #000 6.75px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .case-loader { animation: none; transition: opacity .3s ease; }
+  .case-loader.is-out .case-loader__ring { scale: none; filter: none; }
+  .case-loader::before, .case-loader__ring { transform: none; }
+  .carousel--case :is(.case-left, .carousel__track-wrap) { transition: opacity .3s ease; }
+  .case-loader.is-out::before { scale: none; }
+}
+
+/* contents jumps land a chapter's heading clear of the fixed header */
+.case-left__run, .case-left__section { scroll-margin-top: 120px; }
+
+/* ==========================================================================
+   Film tile (components/FilmTile): a 16:9 film under a band's copy. At rest a
+   silent loop behind a light veil, its title and one big play button; playing,
+   the veil and title fade and native controls appear.
+   ========================================================================== */
+.film {
+  position: relative; isolation: isolate; overflow: hidden;
+  aspect-ratio: 16 / 9;
+  /* plain round corners: a playing video is clipped round, so a superellipse would show slivers */
+  border-radius: var(--radius); corner-shape: round;
+  background: #f1f1f1; /* the film's own board grey, behind any edge */
+}
+.film__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* a light veil: the loop reads as a soft, whitened backdrop for the title */
+.film__veil {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: rgb(255 255 255 / .72);
+  transition: opacity .6s cubic-bezier(.16, 1, .3, 1);
+}
+.film__title {
+  position: absolute; z-index: 2; left: 50%; top: calc(50% - clamp(72px, 7vw, 112px) / 2 - 28px);
+  translate: -50% -100%; margin: 0; width: max-content; max-width: min(18ch, 90%);
+  text-align: center; text-wrap: balance; pointer-events: none;
+  font-family: var(--font-display); font-weight: 550;
+  font-size: clamp(28px, 3.4vw, 56px); line-height: 1.02; letter-spacing: -0.03em;
+  color: var(--neutral-950);
+  transition: opacity .5s cubic-bezier(.16, 1, .3, 1);
+}
+/* the play button: a big ink disc, a white triangle, a soft lift on hover */
+.film__play {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  position: absolute; z-index: 2; left: 50%; top: 50%; translate: -50% -50%;
+  display: grid; place-items: center;
+  width: clamp(72px, 7vw, 112px); aspect-ratio: 1; border-radius: 50%;
+  background: var(--neutral-950); color: #fff;
+  box-shadow: 0 24px 60px -18px rgb(0 0 0 / .35);
+  transition: scale .3s cubic-bezier(.16, 1, .3, 1);
+}
+.film__play:hover { scale: 1.08; }
+.film__play:focus-visible { outline: 3px solid var(--neutral-950); outline-offset: 4px; }
+/* a triangle's visual centre is a third in from its flat side: nudge it right */
+.film__play svg { width: 36%; height: 36%; translate: 8% 0; }
+.film.is-playing .film__veil, .film.is-playing .film__title { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .film__veil, .film__title, .film__play { transition: none; }
+}
+/* ambient film (the Vision sizzle): just the loop, and a sound toggle top right, styled like
+   the scenes' replay control: a ghost icon button, ink on the light footage, a soft wash on hover */
+.film__sound {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  position: absolute; z-index: 2; top: 16px; right: 16px;
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+  color: var(--neutral-950);
+  transition: background-color .2s ease, scale .2s cubic-bezier(.16, 1, .3, 1);
+}
+.film__sound:hover { background: rgb(0 0 0 / .06); }
+.film__sound:active { scale: .92; }
+.film__sound:focus-visible { outline: 2px solid var(--neutral-950); outline-offset: 2px; }
+.film__sound svg { width: 24px; height: 24px; }
+
+/* a case that opens straight into a band (Simplifying the canvas): its opening card needs
+   room to rest whole before the band arrives and walks it off the top */
+@media (min-width: 1200px) {
+  .case-left__head + .case-left__section:has(> .waypoint:only-child):has(+ .is-band) { min-height: 55vh; }
+}
+
+/* ==========================================================================
+   Link card (a section's `linkCard`): one column, in the copy's column. A little
+   scene on a board (the soundscape: cursors arriving, a reaction, sound rippling
+   out), then the copy.
+   ========================================================================== */
+.link-card {
+  display: grid; margin-top: 8px; max-width: var(--text-max, 550px);
+  border-radius: 24px; overflow: hidden; text-decoration: none; color: var(--ink);
+  background: var(--surface, #fff);
+  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / .04);
+  transition: box-shadow .3s ease, translate .4s cubic-bezier(.2, .8, .2, 1);
+}
+.link-card:hover { translate: 0 -3px; box-shadow: 0 0 0 1px var(--line), 0 18px 44px rgb(0 0 0 / .1); }
+.link-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.link-card__copy { display: grid; gap: 10px; padding: 24px 28px 28px; }
+.link-card__eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--ink-3); }
+.link-card__title { font-family: var(--font-display); font-weight: 550; font-size: 22px; line-height: 1.2; letter-spacing: -0.02em; text-wrap: balance; }
+.link-card__body { font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+.link-card__cta { margin-top: 4px; font-size: 14px; font-weight: 600; }
+.link-card__cta span { display: inline-block; transition: translate .3s cubic-bezier(.2, .8, .2, 1); }
+.link-card:hover .link-card__cta span { translate: 4px 0; }
+
+/* the scene */
+.link-card__visual {
+  position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden;
+  background:
+    radial-gradient(60% 70% at 50% 55%, rgb(255 208 47 / .22), transparent 70%),
+    radial-gradient(circle, color-mix(in srgb, var(--ink) 14%, transparent) 1.1px, transparent 1.6px) 0 0 / 20px 20px,
+    var(--miro-cloud-100, #f5f4f2);
+}
+/* sound as waves in the board's own dots: the same grid, darker and larger, shown only in
+   a ring that spreads out from the stickies (the ring's radius animates, the dots stay put) */
+@property --lc-r { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.lc-ripple {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ink) 32%, transparent) 1.5px, transparent 2px) 0 0 / 20px 20px;
+  --lc-mask: radial-gradient(circle at 50% 52%, transparent calc(var(--lc-r) - 26px), #000 calc(var(--lc-r) - 8px), #000 var(--lc-r), transparent calc(var(--lc-r) + 18px));
+  -webkit-mask: var(--lc-mask); mask: var(--lc-mask);
+  animation: lc-wave 7.2s cubic-bezier(.25, .6, .35, 1) infinite;
+}
+.lc-ripple:nth-child(2) { animation-delay: 2.4s; }
+.lc-ripple:nth-child(3) { animation-delay: 4.8s; }
+@keyframes lc-wave { from { --lc-r: 40px; opacity: 1; } to { --lc-r: 340px; opacity: 0; } }
+/* a little cluster of stickies, the source of the sound */
+.lc-stickies { position: absolute; left: 50%; top: 52%; width: 0; height: 0; animation: lc-bob 7.2s ease-in-out infinite; }
+.lc-sticky {
+  position: absolute; width: 74px; height: 74px; padding: 8px; box-sizing: border-box;
+  font-size: 11px; font-weight: 600; line-height: 1.25; color: #1a1b1e;
+  box-shadow: 0 2px 3px rgb(0 0 0 / .08), 0 8px 18px rgb(0 0 0 / .1);
+}
+.lc-sticky--a { left: -66px; top: -44px; rotate: -6deg; background: var(--miro-sunshine-sticky-background, #FFF59C); }
+.lc-sticky--b { left: -14px; top: -34px; rotate: 4deg; background: var(--miro-pink-sticky-background, #FFC6E8); }
+.lc-sticky--c { left: -40px; top: 18px; rotate: -2deg; background: var(--miro-cyan-sticky-background, #BEE9FF); }
+@keyframes lc-bob { 0%, 100% { translate: 0 0; } 8% { translate: 0 -4px; } 16% { translate: 0 0; } }
+.lc-cursor { position: absolute; display: flex; align-items: flex-start; gap: 2px; font-size: 11px; }
+.lc-cursor svg { width: 14px; height: 14px; }
+.lc-cursor b { margin-top: 10px; padding: 3px 8px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+.lc-cursor--ana { left: 14%; top: 18%; animation: lc-ana 7s ease-in-out infinite; }
+.lc-cursor--ana svg { fill: #FFC6C6; stroke: #E0444F; }
+.lc-cursor--ana b { background: #FFC6C6; color: #6b1b20; box-shadow: inset 0 0 0 1px #E0444F; }
+.lc-cursor--agent { right: 12%; bottom: 16%; animation: lc-agent 7s ease-in-out infinite; }
+.lc-cursor--agent svg { fill: #DED9FF; stroke: #5B4BE0; transform: scaleX(-1); }
+.lc-cursor--agent b { background: #DED9FF; color: #2c2370; box-shadow: inset 0 0 0 1px #5B4BE0; }
+@keyframes lc-ana { 0%, 100% { translate: 0 0; } 50% { translate: 26px 14px; } }
+@keyframes lc-agent { 0%, 100% { translate: 0 0; } 50% { translate: -20px -10px; } }
+.lc-react { position: absolute; left: 63%; top: 22%; font-size: 26px; animation: lc-pop 3.6s ease-out infinite; }
+@keyframes lc-pop { 0%, 30% { scale: 0; opacity: 0; } 40% { scale: 1.2; opacity: 1; } 50%, 85% { scale: 1; opacity: 1; translate: 0 -6px; } 100% { opacity: 0; translate: 0 -16px; } }
+.lc-note { position: absolute; font-size: 20px; color: var(--ink); opacity: 0; animation: lc-note 4.2s ease-out infinite; }
+.lc-note--1 { left: 40%; top: 40%; }
+.lc-note--2 { left: 57%; top: 36%; animation-delay: 1.4s; }
+.lc-note--3 { left: 47%; top: 30%; animation-delay: 2.8s; }
+@keyframes lc-note { 0% { opacity: 0; translate: 0 10px; } 20% { opacity: .8; } 100% { opacity: 0; translate: 8px -46px; } }
+@media (prefers-reduced-motion: reduce) {
+  .link-card__visual *, .link-card__visual { animation: none !important; }
+  .lc-ripple { --lc-r: 120px; }
+  .lc-ripple:nth-child(2) { --lc-r: 200px; opacity: .5; }
+  .lc-ripple:nth-child(3) { --lc-r: 280px; opacity: .25; }
+}
+
+/* a band whose title is set large (the case's Vision): more room above, a display-size title */
+.case-left__section.is-band.is-xl { padding-top: clamp(140px, 14vw, 240px); }
+.is-xl .band__title { font-size: clamp(48px, 5.4vw, 88px); line-height: .95; letter-spacing: -0.04em; font-weight: 550; }
+
+/* a list's last items set apart (`listApart`): a plus, then their own card */
+.case-list:has(+ .case-list__plus) { margin-bottom: 0; }
+.case-list__plus {
+  display: grid; place-items: center; width: 32px; height: 32px; margin: 12px auto;
+  border-radius: 50%; background: var(--surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 20px; font-weight: 400; line-height: 1; color: var(--ink-2);
+}
+.case-list--apart { margin-top: 0; }
+
+/* a row's link card sits under its paragraph, in the paragraph's columns */
+.band__row-card { grid-column: 2 / -1; margin-top: 8px; }
+.band__row-card .link-card { max-width: 100%; }
+@media (max-width: 1199px) { .band__row-card { grid-column: 1; } }
+
+/* a link card with a picture: a soft scrim keeps its big title and foot readable over it */
+.shelf-card--link .shelf-card__media::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / .55), rgb(0 0 0 / .05) 45%, rgb(0 0 0 / .55));
+}
+.shelf-card--link .shelf-card__head, .shelf-card--link .shelf-card__foot { position: relative; z-index: 1; }
+
+/* a shelf's cards stacked down the column (a row's `stack`), not paged */
+.shelf-stack { display: grid; gap: 32px; }
+.shelf-stack__card { position: relative; width: 100%; }
+.shelf-stack__card > .shelf-card, .shelf-stack__card > a { height: 100%; }
+.shelf-stack__item { margin: 0; display: grid; gap: 14px; }
+.shelf-stack .shelf-hl { display: none; } /* the caption sits beneath instead */
+.shelf-stack__caption { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); letter-spacing: -0.0275em; }
+.shelf-stack__caption b { font-weight: 600; color: var(--ink); }
+/* a stacked row: its copy stays put while the visuals scroll past */
+@media (min-width: 1200px) {
+  .band__row--stack .band__aside-copy { position: sticky; top: 120px; }
+}
+
+/* ---- the productecture (Vignettes: stack): Fig. 2 built on the board, marker arrows */
+.vg__fig { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(92%, calc(92cqh * 760 / 758)); }
+.vg--stack { container-type: size; }
+.vg__fig svg { display: block; width: 100%; height: 100%; overflow: visible; font-family: 'ABC Areal', 'Inter', system-ui, sans-serif; }
+.vg__fig rect { fill: #fff; stroke-width: 1.4; }
+.vg__fig text { fill: #191918; }
+/* Miro's selection frame on a piece being dragged: blue outline, white handles */
+.vg__fig .vg__sel rect, .vg__fig .vg__sel circle { fill: none; stroke: #4262ff; stroke-width: 1.5; }
+.vg__fig .vg__sel circle, .vg__fig .vg__sel .vg__sel-bar { fill: #fff; }
+.vg__fig-ink {
+  fill: none; stroke: #4c4b44; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .46s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.vg__fig-ink.is-on { stroke-dashoffset: 0; }
+.vg__fig-ink--pen { stroke: var(--miro-blue-600); stroke-width: 2.2; transition-duration: .9s !important; }
+.vg__fig-pen { font-family: 'Caveat', 'Bradley Hand', cursive; font-weight: 600; font-size: 24px; opacity: 0; transition: opacity .5s ease .5s; }
+.vg__fig .vg__fig-pen { fill: var(--miro-blue-600); }
+.vg__fig .vg__fig-pen--red { fill: var(--miro-red-600); }
+.vg__fig-pen.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .vg__fig-ink, .vg__fig-pen { transition: none !important; } }
+
+/* /admin: the approval list (pages/Admin), built on the request form's styles */
+.approvals { width: min(640px, 100%); }
+.approvals__signin { justify-self: start; }
+.approvals__tabs { display: flex; gap: 6px; margin-top: 24px; }
+.approvals__tabs button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; }
+.approvals__tabs button span { color: color-mix(in srgb, var(--ink) 40%, transparent); margin-left: 2px; }
+.approvals__tabs button.is-on { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); }
+.approvals__list { list-style: none; margin: 16px 0 0; padding: 0; border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.approvals__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.approvals__who { display: grid; gap: 2px; min-width: 0; }
+.approvals__who a { color: var(--ink); text-decoration: none; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approvals__who span { font-size: 13px; color: var(--ink-2); }
+.approvals__status { font-weight: 500; }
+.approvals__status--pending { color: #b54708; }
+.approvals__status--approved { color: #067647; }
+.approvals__revoke, .approvals__retry { font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent); background: transparent; color: var(--ink-2); cursor: pointer; }
+.approvals__retry { padding: 2px 10px; }
+.approvals__revoke:hover { color: #b42318; border-color: color-mix(in srgb, #b42318 40%, transparent); }
+.request__lede + .request__error { margin-top: 12px; }
+
+/* a business's wordmark in place of a case study title on its card (components/Wordmark):
+   sits on the title's line, in its colour */
+.title__logo { display: block; width: auto; }
+.wordmark--file { display: inline-flex; align-items: center; }
+.wordmark--file svg { height: 100%; width: auto; display: block; }
+.wordmark--file svg [fill]:not([fill="none"]) { fill: currentColor; }
+.wordmark--file svg [stroke]:not([stroke="none"]) { stroke: currentColor; }
+
+/* ---- the email gate (components/RequestAccess): one big field. Inline on a locked page, or a
+   <dialog> over the carousel when a card is selected */
+.request--gate { width: min(880px, 100%); }
+.gate { display: grid; gap: 0; font-family: 'ABC Areal', var(--font); }
+.gate * { letter-spacing: -0.02em; }
+.gate__eyebrow { margin: 0 0 14px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.gate__title { margin: 0; font-size: clamp(30px, 4.4vw, 52px); font-weight: 500; line-height: 1.05; letter-spacing: -0.035em; color: var(--ink); text-wrap: balance; }
+.gate__lede { margin: 18px 0 0; font-size: 18px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+.gate__lede b { color: var(--ink); font-weight: 500; }
+.gate__field { display: flex; align-items: center; gap: 16px; margin-top: clamp(28px, 5vw, 48px); border-bottom: 2px solid color-mix(in srgb, var(--ink) 18%, transparent); transition: border-color .2s ease; }
+.gate__field:focus-within { border-color: var(--ink); }
+.gate__field input {
+  flex: 1; min-width: 0; padding: 10px 0 14px; border: 0; background: transparent; outline: none;
+  font: inherit; font-size: clamp(28px, 5vw, 60px); font-weight: 400; line-height: 1.1; letter-spacing: -0.035em; color: var(--ink);
+}
+.gate__field input::placeholder { color: color-mix(in srgb, var(--ink) 22%, transparent); }
+.gate__send {
+  flex: none; display: grid; place-items: center; width: clamp(48px, 6vw, 64px); aspect-ratio: 1; margin-bottom: 8px;
+  border: 0; border-radius: 50%; background: var(--ink); color: var(--neutral-0); cursor: pointer;
+  font: inherit; font-size: clamp(20px, 2.4vw, 26px); transition: transform .2s ease, opacity .2s ease;
+}
+.gate__send:hover { transform: translateX(3px); }
+.gate__send:disabled { opacity: .6; cursor: progress; transform: none; }
+.gate__spinner { width: 40%; aspect-ratio: 1; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: gate-spin .7s linear infinite; }
+@keyframes gate-spin { to { transform: rotate(1turn); } }
+.gate__hint { margin: 14px 0 0; font-size: 14px; color: var(--ink-2); }
+.gate__error { margin: 14px 0 0; font-size: 15px; color: #b42318; }
+.gate__error a { color: inherit; }
+.gate__title + .gate__error { margin-top: 18px; }
+.gate__again { justify-self: start; margin-top: 28px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.gate__again:hover { color: var(--ink); }
+
+.gate-dialog { width: min(920px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 28px; background: var(--neutral-0); color: var(--ink); box-shadow: 0 30px 80px rgba(0,0,0,.18); }
+.gate-dialog::backdrop { background: color-mix(in srgb, var(--neutral-0) 55%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.gate-dialog[open] { animation: gate-in .35s cubic-bezier(.2,.8,.2,1); }
+.gate-dialog[open]::backdrop { animation: gate-fade .35s ease; }
+@keyframes gate-in { from { opacity: 0; transform: translateY(16px) scale(.98); } }
+@keyframes gate-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gate-dialog[open], .gate-dialog[open]::backdrop { animation: none; } }
+.gate-dialog__panel { position: relative; padding: clamp(32px, 6vw, 72px) clamp(20px, 6vw, 72px) clamp(32px, 5vw, 56px); }
+.gate-dialog__close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--ink-2); font-size: 26px; line-height: 1; cursor: pointer; }
+.gate-dialog__close:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); }
+
+/* ---- /admin: the review screen (pages/Admin). People on the left, the open person on the right */
+html:has(.review) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
+.review { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 0; min-height: calc(100dvh - 120px); margin: 96px auto var(--section-gap); max-width: 1200px; padding: 0 16px; font-family: 'ABC Areal', var(--font); }
+.review * { letter-spacing: -0.02em; }
+.review__list { padding-right: 24px; border-right: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.review__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.review__head h1 { margin: 0; font-size: 24px; font-weight: 500; color: var(--ink); }
+.review__new, .review__back { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent); background: transparent; color: var(--ink); cursor: pointer; }
+.review__new:hover, .review__back:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.review__people { list-style: none; margin: 12px 0 0; padding: 0; }
+.review__person { display: grid; gap: 3px; width: 100%; padding: 12px 12px; border: 0; border-radius: 12px; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.review__person:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.review__person.is-on { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.review__who { font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review__meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.review__meta b { margin-left: auto; }
+.review__dot { width: 8px; height: 8px; border-radius: 50%; background: #2e6bff; flex: none; }
+.review__empty { margin: 24px 0 0; font-size: 15px; color: var(--ink-2); }
+.review__empty--detail { margin: 120px auto 0; text-align: center; }
+.review__detail { padding-left: 32px; min-width: 0; }
+.review__flash { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; font-size: 15px; }
+.review__flash--ok { background: color-mix(in srgb, #067647 8%, transparent); color: #05603a; }
+.review__flash--err { background: color-mix(in srgb, #b42318 8%, transparent); color: #b42318; }
+.review__flash button { border: 0; background: none; font-size: 20px; color: inherit; cursor: pointer; }
+.review__card { display: grid; gap: 20px; }
+.review__card-head { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.review__card-who { flex: 1; min-width: 0; }
+.review__card-who h2 { margin: 0; font-size: 22px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+.review__card-who p { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
+.review__back { display: none; }
+.review__thread { display: grid; gap: 12px; }
+.msg { max-width: 78%; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.msg--out { justify-self: end; background: color-mix(in srgb, #2e6bff 8%, transparent); }
+.msg header { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--ink-2); }
+.msg header b { font-weight: 500; color: var(--ink); }
+.msg__subject { margin: 6px 0 0; font-size: 14px; font-weight: 500; color: var(--ink); }
+.msg__body { margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-body, var(--ink)); white-space: pre-wrap; overflow-wrap: anywhere; }
+.composer { display: grid; gap: 10px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.composer--new { border-top: 0; padding-top: 0; max-width: 640px; }
+.composer__title { margin: 0 0 6px; font-size: 22px; font-weight: 500; color: var(--ink); }
+.composer__foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+@media (max-width: 760px) {
+  .review { grid-template-columns: 1fr; margin-top: 80px; }
+  .review__list { padding-right: 0; border-right: 0; }
+  .review__detail { padding-left: 0; }
+  .review.has-detail .review__list { display: none; }
+  .review:not(.has-detail) .review__detail { display: none; }
+  .review__back { display: inline-block; }
+  .msg { max-width: 92%; }
+}
+.review .approvals__tabs { flex-wrap: wrap; }
+.review .approvals__tabs button { white-space: nowrap; }
+@media (max-width: 760px) {
+  .review__card-head { flex-wrap: wrap; }
+  .review__card-who h2 { font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+}
+
+/* Focus rings for keyboard only: a mouse click or a programmatic focus (dialogs, route changes)
+   never draws the browser's default outline, while Tab still shows each component's :focus-visible ring. */
+:focus:not(:focus-visible) { outline: none; }

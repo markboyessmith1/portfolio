@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1168 424" width="1168" height="424" role="img" aria-label="AI adoption across Miro’s customers, from holdouts to frontier teams" font-family="'ABC Areal','Inter',system-ui,sans-serif">
+<title>AI adoption across Miro’s customers, from holdouts to frontier teams</title>
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="12" cy="12" r="1.2" fill="#D9D9D9"/></pattern>
+<rect width="1168" height="424" rx="40" fill="#FFFFFF"/><rect width="1168" height="424" rx="40" fill="url(#dots)"/>
+<defs><linearGradient id="ramp" gradientUnits="userSpaceOnUse" x1="56" x2="1112" y1="0" y2="0"><stop offset="0" stop-color="#CFCBC4"/><stop offset="1" stop-color="#3859ff"/></linearGradient><marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="#3859ff"/></marker></defs>
+<line x1="56" y1="74" x2="1108" y2="74" stroke="url(#ramp)" stroke-width="2" marker-end="url(#tip)"/>
+<text x="56" y="62" font-size="12" font-weight="500" fill="#8A8781" text-anchor="start"><tspan x="56" dy="0">Less ready for AI</tspan></text>
+<text x="1112" y="62" font-size="12" font-weight="600" fill="#3859ff" text-anchor="end"><tspan x="1112" dy="0">AI-first</tspan></text>
+<rect x="56" y="114" width="252" height="254" rx="16" fill="#F7F6F4" stroke="#DEDCD8"/>
+<text x="76" y="152" font-size="18" font-weight="650" fill="#191918" text-anchor="start"><tspan x="76" dy="0">Holdouts</tspan></text>
+<text x="76" y="178" font-size="13" font-weight="400" fill="#191918" text-anchor="start"><tspan x="76" dy="0">Yet to enable a single agentic</tspan><tspan x="76" dy="17.6">tool, often by policy.</tspan></text>
+<line x1="76" y1="239.1" x2="288" y2="239.1" stroke="#191918" stroke-opacity=".14"/>
+<text x="76" y="265.1" font-size="11" font-weight="600" fill="#8A8781" text-anchor="start"><tspan x="76" dy="0">What they needed</tspan></text>
+<text x="76" y="285.1" font-size="13" font-weight="500" fill="#191918" text-anchor="start"><tspan x="76" dy="0">A canvas that works as it</tspan><tspan x="76" dy="17.6">always has, and admin controls</tspan><tspan x="76" dy="17.6">that keep AI off until they’re</tspan><tspan x="76" dy="17.6">ready.</tspan></text>
+<rect x="324" y="114" width="252" height="254" rx="16" fill="#F2F4FC" stroke="#C9D2FB"/>
+<text x="344" y="152" font-size="18" font-weight="650" fill="#191918" text-anchor="start"><tspan x="344" dy="0">Cautious adopters</tspan></text>
+<text x="344" y="178" font-size="13" font-weight="400" fill="#191918" text-anchor="start"><tspan x="344" dy="0">Trying AI where it’s switched</tspan><tspan x="344" dy="17.6">on, wary of what it does to</tspan><tspan x="344" dy="17.6">shared work.</tspan></text>
+<line x1="344" y1="239.1" x2="556" y2="239.1" stroke="#191918" stroke-opacity=".14"/>
+<text x="344" y="265.1" font-size="11" font-weight="600" fill="#8A8781" text-anchor="start"><tspan x="344" dy="0">What they needed</tspan></text>
+<text x="344" y="285.1" font-size="13" font-weight="500" fill="#191918" text-anchor="start"><tspan x="344" dy="0">AI that’s visible and</tspan><tspan x="344" dy="17.6">attributed, with guardrails on</tspan><tspan x="344" dy="17.6">sensitive boards.</tspan></text>
+<rect x="592" y="114" width="252" height="254" rx="16" fill="#E3E8FF" stroke="#A9B7FA"/>
+<text x="612" y="152" font-size="18" font-weight="650" fill="#191918" text-anchor="start"><tspan x="612" dy="0">Active adopters</tspan></text>
+<text x="612" y="178" font-size="13" font-weight="400" fill="#191918" text-anchor="start"><tspan x="612" dy="0">Using AI in the canvas week to</tspan><tspan x="612" dy="17.6">week, for drafts, summaries</tspan><tspan x="612" dy="17.6">and plans.</tspan></text>
+<line x1="612" y1="239.1" x2="824" y2="239.1" stroke="#191918" stroke-opacity=".14"/>
+<text x="612" y="265.1" font-size="11" font-weight="600" fill="#5B5A57" text-anchor="start"><tspan x="612" dy="0">What they needed</tspan></text>
+<text x="612" y="285.1" font-size="13" font-weight="500" fill="#191918" text-anchor="start"><tspan x="612" dy="0">Sidekicks and skills inside</tspan><tspan x="612" dy="17.6">the canvas, and output worth</tspan><tspan x="612" dy="17.6">keeping.</tspan></text>
+<rect x="860" y="114" width="252" height="254" rx="16" fill="#3859ff" stroke="#3859ff"/>
+<text x="880" y="152" font-size="18" font-weight="650" fill="#ffffff" text-anchor="start"><tspan x="880" dy="0">Frontier teams</tspan></text>
+<text x="880" y="178" font-size="13" font-weight="400" fill="#ffffff" text-anchor="start"><tspan x="880" dy="0">AI-first, working through</tspan><tspan x="880" dy="17.6">Claude, Cursor and other</tspan><tspan x="880" dy="17.6">agents.</tspan></text>
+<line x1="880" y1="239.1" x2="1092" y2="239.1" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="880" y="265.1" font-size="11" font-weight="600" fill="#DCE2FF" text-anchor="start"><tspan x="880" dy="0">What they needed</tspan></text>
+<text x="880" y="285.1" font-size="13" font-weight="500" fill="#ffffff" text-anchor="start"><tspan x="880" dy="0">MCP, so their own agents can</tspan><tspan x="880" dy="17.6">read and write the board</tspan><tspan x="880" dy="17.6">directly.</tspan></text>
+</svg>

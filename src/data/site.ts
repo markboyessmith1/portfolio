@@ -1,10 +1,13 @@
 import type { VignetteKey } from '../components/miro/Vignettes'
 import type { ShelfData } from '../components/shelf/PagedShelf'
 import type { StatementScript } from '../components/StatementReveal'
+import type { MissionScript } from '../components/MissionBoard'
 import type { VideoRef } from '../components/VideoEmbed'
 import type { MediaItem } from '../components/MediaCarousel'
 import type { FieldVariant } from '../components/PrincipleField'
-import { AI_SHELVES, VISION_SHELF } from './aiShelves'
+import type { Principle } from '../components/PrinciplesRow'
+import { AGENTS_SHELF, AI_SHELVES, GENERATIVE_SHELF, REALTIME_SHELF, VISION_LABS_SHELF } from './aiShelves'
+import { SIMPLIFY_CANVAS_SHELF } from './simplifyShelves'
 
 export type WorkItem = {
   label: string
@@ -18,10 +21,15 @@ export type WorkItem = {
   headline?: string
   /** short paragraph under the case study title, on the first screen */
   intro?: string
-  /** a video card under the intro, on the first screen (components/VideoEmbed) */
+  /** the keynote video, shown by a 'finale' section: centred under its very large title */
   video?: VideoRef
+  /** roll-up metrics in a card under the intro: the headline number, then what it measures */
+  metrics?: { value: string; label: string; /** a rough line to draw under it (makes it the double-height feature) */ trend?: number[]; /** a label under the line's latest value */ trendEnd?: string }[]
   /** show the brand's wordmark above the title instead of the "Case study" label */
   brand?: 'miro'
+  /** the business's wordmark, shown on the carousel card in place of the title (components/Wordmark:
+      'miro', or the name of an SVG in src/assets/wordmarks). The text title shows until the file exists. */
+  logo?: string
   /** case study opens on the live headline board (dot grid, draggable words) */
   heroBoard?: boolean
   /** custom stickers slapped around the case study's opening card (components/miro/CardStickers) */
@@ -51,20 +59,69 @@ export type CaseSection = {
   more?: SceneKey[]
   /** board scenes laid over the panel's cards, in card order */
   vignettes?: VignetteKey[]
+  /** a Storyboard (components/Storyboard): each run of consecutive sections with a
+      `storyboard` shares one pinned board on desktop, its content rewritten per chapter
+      (a vignette, or 'mission': the section's `mission` assembled on the board) */
+  storyboard?: VignetteKey | 'mission'
+  /** how many of `list`'s last items sit on a card of their own, below, joined by a plus */
+  listApart?: number
+  /** a numbered list in a card, set after the first paragraph of `body` */
+  list?: { title: string; text: string }[]
+  /** a bulleted list, set after the whole of `body` (an item may lead with a bold title) */
+  bullets?: (string | { title: string; text: string })[]
+  /** a sub-point of the section before it: a smaller heading (h4), same flow */
+  sub?: boolean
+  /** the major chapter's ground (set on its first section): 'dark' flips it light-on-dark, in a
+      rounded panel the copy scrolls into (desktop) */
+  theme?: 'dark'
+  /** a line under the major chapter's heading, before its first section (set on that section) */
+  chapterLead?: string
+  /** paragraphs after the table */
+  after?: string[]
+  /** figures after the copy (diagrams, tables): thumbnails that open in a lightbox
+      (components/Figures). `src` is under public/ */
+  figures?: { src: string; alt: string; caption: string }[]
+  /** a small data table after the copy */
+  table?: { head: string[]; rows: string[][] }
+  /** use cases after the copy: a bold label, an intro line, then titled bullets */
+  useCases?: { label: string; intro: string; items: { title: string; text: string }[] }
   /** 'columns' layout: one card per column, title overlaid; they animate in
       one by one when the section is reached */
   columns?: { title: string; scene: SceneKey }[]
   /** 'statement' layout: one sentence centred across both columns, written
       live by the room, turn by turn (components/StatementReveal) */
   statement?: StatementScript
+  /** storyboard 'mission': the mission assembled on the board (components/MissionBoard) */
+  mission?: MissionScript
   /** 'split' layout: a paged shelf under the copy (components/shelf/PagedShelf) */
   shelf?: ShelfData
+  /** 'band' layout: a film under the copy, in a 16:9 tile (components/FilmTile): a silent
+      loop at rest, played with sound on demand. `src` / `poster` are under public/.
+      `ambient`: no veil, title or play button, just the loop and a sound toggle top right */
+  film?: { src: string; poster?: string; title: string; ambient?: boolean }
+  /** 'band' layout: 'xl' sets the band's title at display size, with more room above it */
+  titleSize?: 'xl'
+  /** 'band' layout: a wide card linking to a page of its own on this site (e.g. the soundscape) */
+  linkCard?: { href: string; eyebrow: string; title: string; body: string; label: string }
+  /** 'split' / 'band' layout: a placeholder block under the copy, while its visual is made */
+  placeholder?: '16:9'
+  /** 'band' layout: rows under the visual, each a title (left) and paragraph (right) over a
+      shelf of examples (a blocked-out space until the shelves are made). A row with
+      `principles` shows them as three looping clips side by side (components/PrinciplesRow) instead.
+      No title (and no body): the row drops its copy line and tucks up under the visual above */
+  rows?: { title?: string; body?: string | string[]; /** copy on the left, the shelf beside it on the right (not beneath) */ aside?: boolean; shelf?: ShelfData; /** the shelf's cards stacked one under another, not paged */ stack?: boolean; principles?: Principle[]; /** a card out to a page of its own, under the paragraph */ linkCard?: CaseSection['linkCard'] }[]
+  /** 'timeline' layout: a full-width, two-row timeline that builds in when reached
+      (components/Timeline); `focus` rows are highlighted under `focusLabel` */
+  timeline?: TimelineData
 }
+
+export type TimelineStep = { when: string; what: string }
+export type TimelineData = { rows: TimelineStep[][]; turn?: string; focus: number; focusLabel: string }
 
 /** 'full', 'columns', 'statement' and 'split' span both columns (the copy column gives way).
     'split': the copy across both columns (heading and first paragraph left, the
     rest right), with the section's `shelf` below it. */
-export type PanelLayout = 'single' | 'stack' | 'grid' | 'full' | 'columns' | 'statement' | 'split'
+export type PanelLayout = 'single' | 'square' | 'stack' | 'grid' | 'full' | 'columns' | 'statement' | 'split' | 'timeline' | 'band' | 'finale'
 
 /** Placeholder sections: replace with the real case-study story. */
 function placeholderSections(own: SceneKey, rest: SceneKey[]): CaseSection[] {
@@ -117,310 +174,318 @@ export const site = {
       label: 'Miro AI',
       title: 'Miro AI',
       brand: 'miro',
-      description: 'Intelligence that meets you where you are',
+      description: 'Launching an intelligent canvas.',
       href: '/work/miro-ai',
+      logo: 'miro',
       scene: 'miroAi',
       headline: 'Journey to the Intelligent Canvas',
-      intro: 'In 2026, we took Miro on a transformational journey to bring the latest frontier capabilities to our 100 million users. In October 2026, six months after starting this journey, we launched the Intelligent Canvas 2.0 to our 100 million users around the world.',
+      intro: 'Bringing frontier AI capabilities to Miro’s 100 million users\n\nIn 2026, we set out to reimagine Miro as an agentic collaboration platform. By October, six months after setting out, we launched the Intelligent Canvas 2.0 to the world, alongside Miro’s $1.4bn acquisition by Bending Spoons. Throughout this time, I was responsible for leading the end-to-end product experience strategy and operationalisation.',
       video: {
         id: 'qM-KxCr4I5I',
         start: 1537,
         title: 'Canvas 26: Miro Keynote',
         cursor: { name: 'Sidekick', hue: 'ocean', say: 'Watch Mark at the launch keynote' },
       },
-      vignette: 'prompt',
+      // week one of full rollout (Oct 2026), from notes/ic2-story-builder.html and the narrative
+      // the first (with a trend) is the feature: double height, with its line
+      metrics: [
+        // trend: illustrative only (the real series isn't in the notes), 18% rising to 37%
+        { value: '18% → 37%', label: 'MCP board-editing week-zero retention', trend: [18, 18.6, 19.8, 21.6, 24, 26.8, 29.8, 32.6, 35, 37], trendEnd: 'Oct 26' },
+        { value: '73%', label: 'CSAT on the new engine' },
+        { value: '+35%', label: 'Tool calls per user (8.8 → 11.9)' },
+      ],
+      // opens on the prototype's live "Big decisions, made together" scene (was the 'prompt' board)
+      vignette: 'decisions',
       sections: [
-        { heading: '', body: [], panel: 'blob', layout: 'single' },
+        { heading: '', body: [], panel: 'blob', layout: 'single', storyboard: 'decisions' },
         {
-          heading: 'Our mission',
-          body: [],
-          panel: 'blob',
-          layout: 'statement',
-          // already largely written: Ana sharpens the opening (Turn → Make, cuts "into"), then Sidekick finishes it;
-          // each comments after their edit
-          statement: {
-            start: 'Turn the canvas into the best shared, visual space for human-to-human and',
-            by: 'Ben',
-            steps: [
-              { who: 'Ana', replace: 'Turn', with: 'Make' },
-              // "Make the canvas into…" no longer reads: she cuts "into" too
-              { who: 'Ana', replace: 'into ', with: '', say: 'Punchier' },
-              { who: 'Sidekick', append: ' human-to-agent collaboration.', say: 'Finished it off' },
-            ],
-          },
-        },
-        {
-          heading: 'A threat and an opportunity',
+          heading: 'An existential moment',
           group: 'The challenge',
           body: [
-            'AI presented a unique threat to Miro. Teams were jumping right to building, and chatting with their agents for early, open-ended work. Collaboration and alignment were shifting later in the process, and smaller teams meant fewer seats.',
-            'But the same shift made a shared canvas more relevant: to visualise and understand high volumes of agent work, untangle the emerging process bottlenecks, coordinate teams of humans and agents, and codify and spread the AI workflows that work in an organisation.',
+            'AI presented a unique situation to Miro. As individuals could do more on their own, people turned to their agents for early, open-ended work, and team engagement in early ideation declined across the industry. Teams were jumping right to building, and collaboration and alignment were shifting later in the process. Left unaddressed, this could have resulted in lower team usage at the stage where Miro adds the most value.',
+            'At the same time, the conversations we were having with our agents became more complex. Context became multi-modal, and connected to the other tools where we work. The chat-based experiences were struggling to visualise how pieces of the puzzle came together.',
+            'When teams did need to come together, the work was difficult to adopt, and the process behind it was hard to trace, so it was difficult to build on. We often refer to the analogy of a clay pot. When we can get our hands on the clay and help mould the pot, we build a sense of ownership and understanding for how it’s constructed. When we hand somebody a finished, glazed pot, the only thing they can do to change it is break it apart.',
+            'The shift changed how we thought about the canvas’s value: not just as a surface for early ideation, but also one to visualise and understand high volumes of agent work, untangle the emerging process bottlenecks, coordinate teams of humans and agents, and codify and spread the AI workflows that work in an organisation.',
           ],
           panel: 'blank',
           layout: 'single',
+          // the hero board carries on here (was the Mona Lisa 'prompt' board)
+          storyboard: 'decisions',
         },
-        {
-          heading: 'Why the canvas is hard',
-          group: 'The challenge',
-          body: [
-            'The challenge was not to add a chatbot to Miro. It was to make AI a collaborator that could understand, create and edit work on a live, visual canvas. People could see a canvas full of content and reasonably expected AI to see it too, and to use the same tools they used.',
-            'The nature of the canvas made that hard: 2D, unstructured, visual information; deep formats and a broad toolbox; and real-time collaboration. Together they made standard solutions and patterns difficult to use.',
-          ],
-          panel: 'blank',
-          layout: 'single',
-        },
+        // TEMPORARILY REMOVED: the 'How we got here' timeline (flowchart). Uncomment to restore.
+        /*
         {
           heading: 'How we got here',
           group: 'The challenge',
+          body: [],
+          panel: 'blank',
+          layout: 'timeline',
+          // from the stream overview deck: the years before, the model moment, then the IC2 year
+          timeline: {
+            rows: [
+              [
+                { when: '2022–23', what: 'Chatbots' },
+                { when: '2024', what: 'First canvas editing tools and action shortcuts' },
+                { when: 'Early 2025', what: 'Flows and format agents' },
+                { when: 'Late 2025', what: 'Sidekicks and the Intelligent Canvas launch at Canvas ’25' },
+              ],
+              [
+                { when: 'Jan–Feb', what: 'Revamped UX vision' },
+                { when: 'Feb–May', what: 'Engine and harness rebuild, canvas quality code red' },
+                { when: 'June', what: 'BoardGen V2 and the new edit tools' },
+                { when: 'October', what: 'A product we’re confident in' },
+              ],
+            ],
+            turn: 'Opus 4.5, Claude Code, Codex',
+            focus: 1,
+            focusLabel: 'Intelligent Canvas 2.0 · 2026',
+          },
+        },
+        */
+        {
+          heading: 'A shared mission',
+          group: 'Our mission',
           body: [
-            'Miro’s AI had moved from chatbots in 2022–23, to the first canvas editing tools and action shortcuts in 2024, to Flows and format agents in early 2025, and Sidekicks and the Intelligent Canvas launch at Canvas ’25.',
-            'Those one-shot format agents weren’t agentic. They didn’t see the canvas by default, couldn’t iterate and had a limited toolset. So in 2026 we worked towards a sharper goal: agents as equal collaborators that show their work, able to reason, plan and check that work, read and navigate the board, and edit and iterate seamlessly.',
+            'Nearly 100 engineers, product owners and designers contributed, across 7 teams with many complex sub-goals. To keep us focused, we set everyone out on a very simple, shared mission.',
+            // what success would look like (was its own section)
+            'We would later call this the Intelligent Canvas, and outlined the signals we would expect to see if we achieved the mission:',
+          ],
+          bullets: [
+            'Prove relevance and value as a tool for third-party agents, which we would see through MCP growth and retention.',
+            'Drive stickiness for our core AI experience, which we would see through share of WAU and stickiness.',
+            'Create high-quality, editable, collaborative artifacts, which we would see through an increase in content survival and board share rates.',
           ],
           panel: 'blank',
           layout: 'single',
+          storyboard: 'mission',
+          // the mission, assembled on the right-hand card like the prototype's /portfolio
+          // hero: its lines lie scattered on the board and the room carries them into a
+          // stepped lock-up; Monika then sharpens the opening, Josh rings the key phrase
+          mission: {
+            // the opening three lines are one text block, dragged in whole
+            lines: ['Make the canvas\nthe best shared\nvisual space for', 'human-to-human', 'and human-to-agent', 'collaboration.'],
+            retype: { line: 0, from: 'Turn the canvas into\nthe best shared\nvisual space for', who: 'Monika', say: 'Punchier' },
+            ring: 2,
+            ringBy: 'Josh',
+            stamps: { 0: ['like'], 2: ['fire', 'love'], 3: ['celebrate'] },
+            serif: [1, 3], // in Apris; the others in the display sans
+          },
         },
         {
-          heading: 'Start with the vision',
-          group: 'How we designed',
+          heading: 'Key investments',
+          group: 'Our approach',
           body: [
-            'We defined the experience we wanted first: people and agents working together on the canvas. Those bets gave the team something to aim at while the technology moved underneath us.',
+            'To achieve the Intelligent Canvas, we made five major investments, across both technology and experience:',
+            'This was an incredibly complex program of work with many constraints and opportunities. We ran these investments in parallel and created forums for air-traffic control on the interdependencies among teams.',
           ],
-          panel: 'stack',
-          layout: 'split',
-          shelf: VISION_SHELF,
+          panel: 'blank',
+          layout: 'single',
+          // the board holds the mission through here (two chapters are enough; the
+          // five are told by the numbered card instead)
+          storyboard: 'mission',
+          listApart: 1, // the fifth (strip out complexity) on a card of its own, after a plus
+          // the five, as a numbered card after the opening line (titles match the board's stickies)
+          list: [
+            { title: 'Engine and infrastructure', text: 'Critical upgrades to our core agentic infrastructure and engine, unlocking performance and scale, and letting us tap into the latest technology as it continued to evolve.' },
+            { title: 'Context and tooling', text: 'We taught the engine how to use Miro to create canvas experiences, using all the tools in Miro’s toolkit and within the context of the team’s work.' },
+            { title: 'New interaction paradigms', text: 'The interface between humans and agents, whether they were working in the canvas or through MCP.' },
+            { title: 'Trust and audit', text: 'Capabilities for enterprises to safeguard data.' },
+            { title: 'Strip out complexity', text: 'Removing the complexity built up in the tool over the years, so that teams could better see and access the new capabilities we were bringing.' },
+          ],
         },
         {
-          heading: 'Experiment forward',
-          group: 'How we designed',
+          heading: 'Vision',
+          titleSize: 'xl', // a display-size title, with more room above
+          // a section of its own (not part of 'Design approach'): its heading is set at chapter size
+          // (was 'Starting with the vision' + 'Experiment forward' + 'Unexplored paths')
           body: [
-            'From there we used labs explorations to test what that vision could feel like. Chat offered a familiar starting point, while experiments brought interaction closer to the work itself.',
-            'Not all of these shipped, and they were never meant to. They told us where the experience could go, and what to build next.',
+            // was its own 'Unexplored paths' section (the 'Vision' chapter)
+            'To build a canvas where humans and agents collaborate, we had to think beyond the chatbot. Intelligence belonged in the canvas itself: an agent that could understand, create and edit live work, and a welcome for your own agents wherever they run. People expected AI to see what they saw and use the same tools. Working with an agent on an infinite canvas was wide open, with no patterns to borrow.',
+            'We built the vision like production software: one experience covering the end state and boundary concepts for all five investments. It became our All Hands story, Show and Tell playground, customer testing ground and engineering spec. Labs explorations then took every bet through many coded iterations, ready for new models the moment they landed, like the decision models behind real-time canvas iteration and voice.',
           ],
-          panel: 'stack',
-          layout: 'split',
-          shelf: AI_SHELVES[2],
+          // a band: ordinary page content across both columns (scrolls natively, no panel
+          // motion): heading | paragraph | paragraph, then the visual full width beneath
+          panel: 'blank',
+          layout: 'band',
+          shelf: VISION_LABS_SHELF, // its reel (hidden until it's placed)
+          // the vision film: the RKO26 sizzle, looping silently with a sound toggle top right
+          film: { src: '/media/vision-sizzle-rko26.mp4', poster: '/media/vision-sizzle-rko26.jpg', title: 'The vision sizzle', ambient: true },
+          // DRAFT copy, from the matching vision bets: replace with the real paragraphs
+          rows: [
+            {
+              // the three principles the vision was built on, titled like the shelves below
+              // (DRAFT descriptions: replace with the real lines)
+              title: 'Principles',
+              principles: [
+                { title: 'Humanity', body: 'Made by people, for people. Collaboration stays front and centre, and every detail, from the brand to the smallest interaction, is crafted so the work feels human.', video: '/media/principles/humanity.mp4', poster: '/media/principles/humanity.jpg' },
+                { title: 'Forward momentum', body: 'Every moment moves the work on. Agents prepare, suggest and follow through, so the team goes from a first idea to a decision without losing pace.', video: '/media/principles/momentum.mp4', poster: '/media/principles/momentum.jpg' },
+                { title: 'Radical simplicity', body: 'Strip back years of accrued complexity. Fewer tools, less chrome and one prompt to make anything, so there is more room for the work itself.', video: '/media/principles/simplicity.mp4', poster: '/media/principles/simplicity.jpg' },
+              ],
+            },
+            {
+              // the first investment, straight after the principles: copy left, its examples right
+              title: 'Simplifying the canvas',
+              aside: true,
+              body: [
+                'As a 15-year-old product, Miro had accumulated an incredible amount of capabilities. Unfortunately, with that, it also accumulated a significant amount of experiential debt, made more challenging to resolve as teams were incentivised to own their own activation and adoption metrics.',
+                'The business had not found ways of centrally incentivising teams to create the simplest and most natural product experience. Our initial investment as we tracked towards the Intelligent Canvas was in stripping back the home, organisational and canvas experience, so that we put the best opportunities in front of the user at the right point in time, regardless of activation of our most loved features.',
+              ],
+              shelf: SIMPLIFY_CANVAS_SHELF,
+              stack: true,
+            },
+            {
+              title: 'Agents that work where you work',
+              body: 'Your own agents, wherever they run, could read, create and edit work on the canvas. Through MCP, outside agents like Claude became first-class collaborators, doing real work on the board alongside the team.',
+              shelf: AGENTS_SHELF, // placeholder cards until the clips are cut
+            },
+            {
+              title: 'Generative experiences',
+              body: 'Capable generation that made hitting a 9/10 feel effortless: describe what you need and the board builds it, as editable diagrams, docs and tables rather than a static image, ready for the team to pick up.',
+              shelf: GENERATIVE_SHELF, // placeholder cards until the clips are cut
+            },
+            {
+              title: 'Real-time agentic collaboration',
+              body: 'AI that works in the room with everyone: people and agents shaping the same canvas together, in real time, through voice, cursors and chat.',
+              shelf: REALTIME_SHELF, // placeholder cards until the clips are cut
+            },
+          ],
+        },
+        // Notable design challenges (from the case-study doc): three numbered challenges.
+        // A Storyboard of its own: one vignette per challenge
+        {
+          heading: '1. Building for every level of AI adoption',
+          group: 'Notable design challenges',
+          chapterLead: 'Three challenges shaped the work.',
+          body: [
+            'Miro’s customers ranged from AI-first organisations to teams that hadn’t switched on a single agentic tool. We had to build the platform Miro needed for the agentic era without unsettling the reliable canvas that teams had built their workflows around, many with no interest in agents at all.',
+          ],
+          bullets: [
+            { title: 'Two ways in, one foundation', text: 'Sidekicks inside the canvas and MCP for people working through external agents, both on the same core tools, so every improvement reached both.' },
+            { title: 'AI you can see working', text: 'agent cursors, planning mode and skills, with AI writing straight to the board and finding its own context.' },
+            { title: 'Trust built in', text: 'admin controls, content guardrails and AI attribution, so customers could get AI through security and compliance review.' },
+          ],
+          panel: 'blank',
+          layout: 'single',
+          figures: [
+            {
+              src: '/diagrams/ai-cohorts.svg',
+              caption: 'Customer cohorts',
+              alt: 'Four customer cohorts on a scale from less ready for AI to AI-first. Holdouts: yet to enable a single agentic tool; they needed a canvas that works as it always has and admin controls that keep AI off. Cautious adopters: trying AI where it is switched on; they needed visible, attributed AI with guardrails on sensitive boards. Active adopters: using AI in the canvas week to week; they needed Sidekicks and skills in the canvas and output worth keeping. Frontier teams: AI-first, working through external agents; they needed MCP so their agents can read and write the board.',
+            },
+            {
+              src: '/diagrams/ai-stack.svg',
+              caption: 'Productecture',
+              alt: 'Miro’s AI stack. First party, in Miro: Flows run through an orchestrator into the AI engine, alongside Sidekicks; the engine talks to a model gateway. Third party, via MCP: agents such as Claude and ChatGPT reach the MCP server. Both feed the same layers: context (board understanding, user preferences, connectors), behaviour (system, Miro and custom skills, starter prompts), the AI infra and trust layer (prompt blocking, admin controls, credit consumption, consent), and the tools registry (canvas read, write and update in SVG, HTML, Mermaid and Markdown, plus other tools), over the Board and Miro APIs.',
+            },
+          ],
+          storyboard: 'stack',
+          vignettes: ['stack'], // phones: the same scene on this section's own card
+          shelf: AI_SHELVES[0], // the reel of use cases for this (hidden until it's placed)
+        },
+        {
+          heading: '2. Hitting the quality bar for AI-generated content',
+          group: 'Notable design challenges',
+          body: [
+            'Ahead of the Canvas ’26 launch, Sidekicks satisfaction was low and what AI put on the board wasn’t good enough. Rather than send more people into a weak experience, we made the new board-generation engine, BoardGen V2, the priority, and held the launch back a few weeks until it was ready, despite a fixed event date. It was the right call, and a major contributor to the rise in CSAT over launch month.',
+            'The new tools let agents work in formats they reason well in, such as SVG, Markdown, Mermaid, HTML and CSV, and turn that work into editable canvas content.',
+          ],
+          table: {
+            head: ['Measure', 'Before', 'After (new tools)'],
+            rows: [
+              ['MCP content retention', '65% (older tools and Sidekicks)', '79%'],
+              ['MCP board-editing week-zero retention', 'about 18%', '37%'],
+            ],
+          },
+          after: [
+            'Sidekicks moved to the new tools later, so its results are still coming in. With quality in place, the focus moved to activation: helping people find valuable uses and reach first value faster.',
+          ],
+          panel: 'blank',
+          layout: 'single',
+          figures: [
+            {
+              src: '/diagrams/ic-comparison.svg',
+              caption: 'IC 1.0 vs IC 2.0',
+              alt: 'A comparison of twelve capabilities. IC 1.0, non-agentic: one artifact per turn, staged for manual application, brittle editing, no planning mode, models hard-coded per format, up to 20 messages of memory, board-internal tools only, explicit selection, no agent presence, no skills, text only, limited connectors. IC 2.0, agentic: multi-artifact generation written directly to the canvas, high-precision editing, a planning mode that asks questions, one model for agent and artifacts, the full context window, tools beyond boards, implicit board understanding, agent cursors and avatars, 20+ managed skills, text, dictation and voice, and full connector access.',
+            },
+          ],
+          storyboard: 'stack', // the challenge 1 board stays up through the block
+        },
+        {
+          heading: '3. Keeping pace with the technology',
+          group: 'Notable design challenges',
+          body: [
+            'Agentic tooling moved faster than anything we’d worked with, with new models, harnesses and methods almost every week. Our focus shifted several times over the six months, and some real-time multiplayer concepts that shone in demos never made it to production.',
+            'The pace opened doors too. Within a couple of months, models were good enough for us to prototype directly in the production codebase, and later in the year, decision models gave us a way to revisit earlier ideas for real-time voice and canvas manipulation.',
+            // [Reel to add: the real-time voice mode and autopilot experiences we designed but couldn't ship]
+          ],
+          panel: 'blank',
+          layout: 'single',
+          storyboard: 'stack',
+          shelf: AI_SHELVES[1], // the reel of use cases for this (hidden until it's placed)
+        },
+        /* Design approach (Craft first, hands-on · From vision to spec · Work in code): commented out for now.
+        {
+          heading: 'Craft first, hands-on',
+          theme: 'dark', // the whole Design approach chapter sits on a dark ground (desktop)
+          group: 'Design approach',
+          body: [
+            'With any complex, long-running project, it’s important to start with the end in mind: not only to give teams a destination and bearing, but also to challenge long-held beliefs about what we think is possible with our technology. This was a key opportunity for design to take the lead.',
+            'The design team flexed over time but was usually five people, and I kept it that size deliberately. The team was deeply engaged with AI, understood the market and was willing to play with throwaway ideas. I’m hands-on and bring my fair share of #bad-versions to the table, so we built an environment where rough ideas were welcome. Keeping the team lean gave each designer real ownership of an investment, and kept the balance between play and progress deliberately uncomfortable.',
+            'Of the 7 teams in the AI stream, 3 needed dedicated design attention: AI surfaces, board generation (our creative capability) and MCP (our off-platform experience). The rest needed a strong vision to align with, and design review and consultation throughout.',
+          ],
+          panel: 'blank',
+          layout: 'single',
+          figures: [
+            {
+              src: '/diagrams/stream-structure.svg',
+              caption: 'Team structure',
+              alt: 'The AI stream’s seven domains and their scope. Five formal teams: Surface (the experiences that make AI a first-class citizen of the canvas), Behaviour (how agents behave and how customers customise it), Context (AI’s understanding of the board and its own memory), Harness (foundations every other domain builds on) and AI Trust (making admins comfortable turning AI on). Two virtual teams: Board Gen (the canvas as a lossless read/write surface for AI) and Evals Infra (a shared way to know AI is working).',
+            },
+          ],
+          // Design approach is a Storyboard of its own, after the vision: the vision
+          // prototype and its spec sheets, then Work in code
+          storyboard: 'spec',
+        },
+        {
+          heading: 'From vision to spec',
+          group: 'Design approach',
+          body: [
+            'As we progressed, we got better at moving between the vision and the operational detail of the work. That mattered, because much of our work was either imagining what came next or breaking it down into the detail teams needed to build it.',
+            'Designers were so used to pouring ideas into a single prototype that it became hard to tell when something was a vision and when it had become a spec for development. After a few attempts, and some trust-building with engineering, the team settled on spec sheets that sat alongside the vision prototype and added the detail engineers needed. For especially complex flows, such as agent prompt planning, designers spun off separate branches of the prototype to go deeper.',
+            'As the relationship changed, engineers started to rely on designers to get into the production codebase and get hands-on with the materials they were producing. The result was more polished work that felt like the designer had been in the room. We stopped having review sessions where designers and engineers saw the build together for the first time. A cultural hurdle that had existed since the beginning of my career all but disappeared.',
+          ],
+          panel: 'blank',
+          layout: 'single',
+          storyboard: 'spec',
+          vignettes: ['spec'], // phones: the same scene on this section's own card
         },
         {
           heading: 'Work in code',
-          group: 'How we designed',
+          group: 'Design approach',
           body: [
-            'We used high-fidelity, interactive prototypes to explore agent presence, voice and faster canvas editing as working experiences rather than static concepts. You can’t judge how an agent feels from a static frame.',
-            'The team’s Vibe Lab also made interactive prototypes easier to share and build on.',
+            'Code let us share fragments of ideas, combine them easily, and move them into our main codebase for faster deployment to testing.',
+            'As the models matured, we got more hands-on with the logic of our production codebase, which meant our designers could, for the first time, build capabilities end-to-end with their agents. Engineering assembled the pipelines and gates to deploy these contributions safely and in line with our coding standards. Several design engineers emerged from the design team, including me. Some of them created a prototype sharing capability named Vibe Lab, which let internal teams share concepts outside production, protected by VPN.',
+            'We also trained teams on best practices for contributing production code. For some designers it was an uphill climb: an entirely new skill set, built on principles they had never worked with. Since June, designers have merged more than 700 pull requests into production.',
           ],
-          panel: 'blob',
-          layout: 'stack',
-          more: ['stack'],
-          vignettes: ['voice', 'point'],
-        },
-        {
-          heading: 'Two entry points, one foundation',
-          group: 'Strategy and execution',
-          body: [
-            'If people began their work in external agents, what distinctive role should Miro play? We pursued two paths: Sidekicks as an approachable experience inside the canvas, and MCP for people already working through external agents.',
-            'They served different workflows, but drew on the same core read, write and update tools, so improvements to the most fundamental capabilities could benefit both.',
-          ],
-          panel: 'stack',
-          layout: 'stack',
-          more: ['blob'],
-          vignettes: ['plan', 'prompt'],
-        },
-        {
-          heading: 'Turning strategy into a program',
-          group: 'Strategy and execution',
-          body: [
-            'We connected five formal teams (Surface, Behavior, Context, Harness and AI Trust) and two cross-functional efforts, BoardGen and evaluation infrastructure.',
-            'Co-leading the program meant treating those pieces as one experience. A more capable agent wouldn’t help if people couldn’t tell what it was doing. A clearer UI wouldn’t help if the content it made was poor. And neither would reach some enterprise customers without the controls to enable AI confidently.',
-          ],
-          panel: 'blob',
-          layout: 'single',
-          vignettes: ['together'],
-        },
-        {
-          heading: 'The quality pivot',
-          body: [
-            'Preparing for the Canvas ’26 launch, we recognised a serious gap: poor Sidekicks satisfaction, and canvas output that didn’t meet the bar. Before asking more people to try the product, we had to make the output worth keeping, so BoardGen V2 became a priority.',
-            'New tools let agents work through formats they could reason about, such as SVG, Markdown, Mermaid, HTML and CSV, and translate that work into editable canvas content.',
-            'At the review, MCP content retention was 79% on the new tools, versus 65% for the older tools and Sidekicks. MCP board-editing week-zero retention had risen from roughly 18% to 37%. Sidekicks had only recently moved to the new tools, so its longer-term results were still being assessed.',
-          ],
-          panel: 'blob',
-          layout: 'single',
-          vignettes: ['prompt'],
-        },
-        {
-          heading: 'Making agents legible',
-          body: [
-            'We reworked the experience so AI felt connected to the canvas. Agent cursors moved where agents were actually reading and writing. Planning mode showed progress through longer tasks, and skills offered starting points for common uses.',
-            'Compared with the first Intelligent Canvas, AI now wrote directly to the board instead of staging output for you to apply, and could make several artifacts in a turn rather than one. It found context on the board without being told what to select, and took voice and dictation as well as text.',
-          ],
-          panel: 'stack',
-          layout: 'split',
-          shelf: AI_SHELVES[0],
-        },
-        {
-          heading: 'Earning trust',
-          body: [
-            'Admin controls could govern AI access by team and feature. Content-sensitive guardrails could keep AI and MCP away from boards with particular classifications, and AI attribution reached general availability. These capabilities helped customers get AI through security and compliance review.',
-          ],
+          // the Design approach Storyboard's last chapter (phones: the square vignette instead)
           panel: 'blank',
-          layout: 'single',
+          layout: 'square',
+          vignettes: ['voice'],
+          storyboard: 'voice',
         },
-        {
-          heading: 'What came next',
-          body: [
-            'With quality improving, the focus shifted to activation: helping people discover valuable uses and reducing friction to first value. We had deliberately not pushed activation before the quality work, to avoid sending more people into an experience that wasn’t yet strong enough.',
-            'Beyond that, we were exploring more proactive and multiplayer ways for agents to work alongside people. These were directions under exploration, not all shipped capabilities.',
-          ],
-          panel: 'stack',
-          layout: 'split',
-          shelf: AI_SHELVES[1],
-        },
+        */
+        // the launch moment: a very large centred title, the keynote video over its foot
+        { heading: 'Launch Moment', body: [], panel: 'blank', layout: 'finale' },
         {
           heading: 'Reflection',
           body: [
             'In six months, a vision-led, code-first design practice turned an ambitious direction into a more capable canvas experience, and real product signals told us what to improve next.',
             'The product advanced when we treated AI as a collaborator in the workspace, and designed its capabilities, interactions, measurement and trust controls as one connected system.',
           ],
-          panel: 'video',
-          layout: 'full',
+          // in the page's flow (a band), so the closing launch moment can follow it
+          panel: 'blank',
+          layout: 'band',
         },
-        {
-          heading: 'The Opportunity',
-          group: 'Archived',
-          body: [
-            'This was a business-critical journey for Miro. As more and more businesses looked to agentic technologies to evolve their practices, we knew we had to deliver a collaboration experience that served humans and agents alike.',
-            'Every week for six months, new technologies came to market, bringing new opportunities and new challenges. The moving goalposts meant we had to be on the front foot: playing with technologies as they came, and being brave enough to change direction based on what we saw.',
-            'We also had to consider the diverse needs of our users. The AI adoption curve was an acute challenge. We wanted to bring the most advanced technologies without alienating the late majority who were just starting their journey with AI, so the experience had to progressively disclose capabilities as people engaged further.',
-          ],
-          panel: 'blob',
-          layout: 'stack',
-          more: ['stack'],
-          vignettes: ['together', 'catchup'],
-        },
-        {
-          heading: 'The vision',
-          group: 'Archived',
-          body: [
-            'Our North Star was a platform built on familiar, intelligent capabilities: one that could create engaging canvas experiences for even the most complex use cases, and bring people and agents together to collaborate in real time, right in the canvas.',
-            'A central part of that vision was using AI to extend what the canvas could do and how people could interact with it. Through custom-generated experiences and new ways to interact using voice and touch, the canvas could meet users where they were and adapt to how they wanted to work.',
-          ],
-          panel: 'stack',
-          layout: 'stack',
-          more: ['blob'],
-          vignettes: ['together', 'voice'],
-        },
-        {
-          heading: 'Meeting customers where they are',
-          group: 'Archived',
-          body: [
-            'We created many exciting lab concepts along the way, notably real-time voice and engaging with AI purely through the canvas: pointing and clicking, or even joining a huddle with your agents.',
-            'As we rolled out early concepts, we realised most of our users were still getting to grips with AI, or weren’t yet thinking about using it in a collaborative setting. So we held some of the new mechanisms back from the first release. Changing how the industry sees Miro would take longer, and early adoption of the most advanced capabilities was likely to be low.',
-            'We also had to navigate formats that already existed but were better generated or served by AI, such as prototypes on the canvas versus MCP, an iframe, or a Claude artifact. The market had already moved, and our capability let us seize that opportunity.',
-          ],
-          panel: 'stack',
-          layout: 'stack',
-          more: ['blob'],
-          vignettes: ['point', 'sort'],
-        },
-        {
-          heading: 'Ownable moments',
-          group: 'Archived',
-          body: [
-            'The role of experience was to strike the right balance between confidence, inspiration and approachability. I coached the team to discern, in every opportunity, whether we were creating a familiar moment or signalling something novel. We call these ownable moments.',
-            'I’m proud of the moments of delight, particularly where you see the agent think or interact with you on the canvas: the cursor flies in, reads your content, then sketches alongside you or reacts to something you’ve added.',
-            'I also changed my mind on single-player versus multiplayer. Tools like Granola showed the value of an agent that asks the questions you don’t want to ask the group, so the single-player experience mattered just as much as the multiplayer one we were gunning for.',
-          ],
-          panel: 'blob',
-          layout: 'stack',
-          more: ['stack'],
-          vignettes: ['together', 'plan'],
-        },
-        {
-          heading: 'Warmth, character, purpose',
-          group: 'Archived',
-          body: [],
-          panel: 'blob',
-          layout: 'columns',
-          columns: [
-            { title: 'Know when to guide', scene: 'blob' },
-            { title: 'When to advise', scene: 'stack' },
-            { title: 'When to follow', scene: 'knot' },
-          ],
-        },
-        {
-          heading: 'Generating new board content',
-          group: 'Archived',
-          body: [
-            'The challenge was designing a system that could reliably produce high-quality results at speed. It needed to follow our house style, respect users’ customisation choices, and accurately reproduce the intended exercise.',
-            'We were constrained by how much we could fit in the model’s context, and by our evolving understanding of prompt engineering as a design practice. Rigid expectations about how the model should render its output were limiting us, so we shifted towards flexible guidelines, working with what the model could reliably deliver.',
-            'Sometimes accepting a limitation led to a stronger result. The model’s foundational training shaped its output, and pushing too hard against those tendencies made the results less reliable.',
-          ],
-          panel: 'blob',
-          layout: 'single',
-          vignettes: ['prompt'],
-        },
-        {
-          heading: 'Designing multiplayer agentic experiences',
-          group: 'Archived',
-          body: [
-            'People’s expectations of AI were largely shaped by single-player interactions. We saw value in supporting that individual experience, while also enabling teams to work alongside agents on a shared canvas.',
-            'The difficult part was making that distinction clear. We needed ways to communicate when an interaction was personal and when it was shared, so people understood who they were collaborating with and how an agent’s actions would affect the team.',
-          ],
-          panel: 'blob',
-          layout: 'stack',
-          more: ['stack'],
-          vignettes: ['together', 'catchup'],
-        },
-        {
-          heading: 'Launch and rollout',
-          group: 'Archived',
-          body: [
-            'The Intelligent Canvas 2.0 reimagined Home, Spaces, search and, of course, the agentic canvas experience. At this scale you won’t get it right first time, so we rolled out early to a small cohort and watched to understand the effect of the transformation.',
-            'After a few early adjustments across the experience, we scaled into a private beta with a portion of our self-serve and enterprise customers, and rolled out to our entire user base from there.',
-          ],
-          panel: 'stack',
-          layout: 'single',
-        },
-        {
-          heading: 'What’s next',
-          group: 'Archived',
-          body: [
-            'Every business I speak to is going through some sort of agentic transformation. For technology platforms, it’s an end-to-end journey that starts with the bones of the platform and runs all the way to pricing and packaging.',
-            'What stood out on Miro’s journey was how hard it is to gauge customer readiness. Even with the most proactive organisations, the best way to create adoption for agentic experiences is to remove the hurdle itself: a proactive system where intelligence is simply there in the background, always working to help you meet your goals.',
-          ],
-          panel: 'video',
-          layout: 'full',
-        },
-      ],
-    },
-    {
-      label: 'Miro',
-      title: 'Miro',
-      brand: 'miro',
-      description: 'Case study coming soon',
-      href: '/work/miro',
-      scene: 'knot',
-      headline: 'Reimagining Miro for the Agentic Era',
-      intro: 'In just six months, we reimagined the entire Miro experience for the second time, stripping back years of accrued complexity into a simple, coherent experience that allowed 100 million users around the world and their teams to access the latest intelligence capabilities.',
-      heroBoard: true,
-      stickers: true,
-      // layout showcase: single, stacked pair, 2x2 grid, full width
-      sections: [
-        // no copy: just holds the opening panel (the headline board) in view
-        { heading: '', body: [], panel: 'knot', layout: 'single' },
-        { heading: 'The problem', body: ['Placeholder copy. Replace with the real story for this project.', 'What was broken or missing, and why it mattered.'], panel: 'blob', layout: 'stack', more: ['video'] },
-        { heading: 'Approach', body: ['Placeholder copy. Replace with the real story for this project.', 'How the team explored, decided and built.'], panel: 'stack', layout: 'grid', more: ['video', 'knot', 'blob'] },
-        {
-          heading: 'Principles',
-          body: [],
-          panel: 'blob',
-          layout: 'columns',
-          columns: [
-            { title: 'Radical Simplicity', scene: 'blob' },
-            { title: 'Forward Momentum', scene: 'stack' },
-            { title: 'Humanity', scene: 'knot' },
-          ],
-        },
-        { heading: 'Outcome', body: ['Placeholder copy. Replace with the real story for this project.', 'What shipped, what changed, and what you learned.'], panel: 'video', layout: 'full' },
       ],
     },
     {
@@ -428,24 +493,18 @@ export const site = {
       title: 'Hyperexponential',
       description: 'Case study coming soon',
       href: '/work/hyperexponential',
+      logo: 'hyperexponential',
       scene: 'video',
       sections: placeholderSections('video', ['stack', 'knot', 'blob']),
     },
     {
-      label: 'Glitter',
-      title: 'Glitter',
+      label: 'Glitterball.dev',
+      title: 'Glitterball.dev',
       description: 'Case study coming soon',
       href: '/work/glitter',
+      logo: 'glitterball',
       scene: 'blob',
       sections: placeholderSections('blob', ['knot', 'video', 'stack']),
-    },
-    {
-      label: 'InVision',
-      title: 'InVision',
-      description: 'Case study coming soon',
-      href: '/work/invision',
-      scene: 'stack',
-      sections: placeholderSections('stack', ['video', 'blob', 'knot']),
     },
   ] satisfies WorkItem[],
   thoughts: [

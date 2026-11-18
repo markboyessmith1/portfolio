@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 772 802" width="772" height="802" role="img" aria-label="Miro&#x27;s AI stack: first- and third-party journeys" font-family="'ABC Areal','Inter',system-ui,sans-serif">
+<title>Miro&#x27;s AI stack: first- and third-party journeys</title>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#8A8781"/></marker>
+<marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#8A8781"/></marker>
+</defs>
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="12" cy="12" r="1.2" fill="#D9D9D9"/></pattern>
+<rect width="772" height="802" rx="40" fill="#FFFFFF"/><rect width="772" height="802" rx="40" fill="url(#dots)"/>
+<rect x="186" y="56" width="270" height="230" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="321.0" y="77" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="321.0" dy="0.0">First party (in Miro)</tspan></text>
+<rect x="476" y="56" width="240" height="190" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="596.0" y="77" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="596.0" dy="0.0">Third party (via MCP)</tspan></text>
+<rect x="204" y="96" width="112" height="44" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="260.0" y="122.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="260.0" dy="0.0">Flows</tspan></text>
+<rect x="326" y="96" width="112" height="44" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="382.0" y="122.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="382.0" dy="0.0">Sidekicks</tspan></text>
+<rect x="204" y="158" width="112" height="44" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="260.0" y="184.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="260.0" dy="0.0">Orchestrator</tspan></text>
+<rect x="204" y="220" width="234" height="44" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="321.0" y="246.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="321.0" dy="0.0">AI Engine</tspan></text>
+<rect x="56" y="222" width="110" height="40" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="111.0" y="245.8" font-size="11" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="111.0" dy="0.0">Model gateway</tspan></text>
+<rect x="494" y="96" width="204" height="70" rx="12" fill="#ffffff" stroke="#DEDCD8" stroke-dasharray="3 3"/>
+<text x="596.0" y="116" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="596.0" dy="0.0">3p agents</tspan></text>
+<rect x="504" y="124" width="58" height="32" rx="12" fill="#ffffff" stroke="#DEDCD8" stroke-dasharray="3 3"/>
+<text x="533.0" y="143.8" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="533.0" dy="0.0">Claude</tspan></text>
+<rect x="568" y="124" width="58" height="32" rx="12" fill="#ffffff" stroke="#DEDCD8" stroke-dasharray="3 3"/>
+<text x="597.0" y="143.8" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="597.0" dy="0.0">ChatGPT</tspan></text>
+<rect x="632" y="124" width="58" height="32" rx="12" fill="#ffffff" stroke="#DEDCD8" stroke-dasharray="3 3"/>
+<text x="661.0" y="143.8" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="661.0" dy="0.0">etc</tspan></text>
+<rect x="494" y="184" width="204" height="44" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="596.0" y="210.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="596.0" dy="0.0">MCP server</tspan></text>
+<rect x="186" y="306" width="530" height="68" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="451.0" y="327" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="451.0" dy="0.0">Context</tspan></text>
+<rect x="196" y="334" width="128" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="260.0" y="352.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="260.0" dy="0.0">Board understanding</tspan></text>
+<rect x="332" y="334" width="128" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="396.0" y="352.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="396.0" dy="0.0">User preferences</tspan></text>
+<rect x="468" y="334" width="128" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="532.0" y="352.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="532.0" dy="0.0">Connectors</tspan></text>
+<rect x="186" y="388" width="530" height="68" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="451.0" y="409" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="451.0" dy="0.0">Behavior</tspan></text>
+<rect x="196" y="416" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="257.0" y="434.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="257.0" dy="0.0">System skills</tspan></text>
+<rect x="326" y="416" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="387.0" y="434.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="387.0" dy="0.0">Miro Skills</tspan></text>
+<rect x="456" y="416" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="517.0" y="434.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="517.0" dy="0.0">Custom skills</tspan></text>
+<rect x="586" y="416" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="647.0" y="434.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="647.0" dy="0.0">Starter prompts</tspan></text>
+<rect x="186" y="470" width="530" height="68" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="451.0" y="491" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="451.0" dy="0.0">AI infra + trust layer</tspan></text>
+<rect x="196" y="498" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="257.0" y="516.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="257.0" dy="0.0">Prompt blocking</tspan></text>
+<rect x="326" y="498" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="387.0" y="516.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="387.0" dy="0.0">Admin controls</tspan></text>
+<rect x="456" y="498" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="517.0" y="516.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="517.0" dy="0.0">Credit consumption</tspan></text>
+<rect x="586" y="498" width="122" height="30" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="647.0" y="516.9" font-size="11" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="647.0" dy="0.0">Consent</tspan></text>
+<rect x="186" y="552" width="530" height="112" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="451.0" y="573" font-size="13" font-weight="600" fill="#191918" text-anchor="middle"><tspan x="451.0" dy="0.0">Tools registry</tspan></text>
+<rect x="198" y="580" width="250" height="72" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="323.0" y="599" font-size="11" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="323.0" dy="0.0">Canvas read / write / update</tspan></text>
+<rect x="216" y="604" width="100" height="18" rx="9" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="266.0" y="616.5" font-size="10" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="266.0" dy="0.0">svg</tspan></text>
+<rect x="324" y="604" width="100" height="18" rx="9" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="374.0" y="616.5" font-size="10" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="374.0" dy="0.0">html</tspan></text>
+<rect x="216" y="626" width="100" height="18" rx="9" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="266.0" y="638.5" font-size="10" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="266.0" dy="0.0">mermaid</tspan></text>
+<rect x="324" y="626" width="100" height="18" rx="9" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="374.0" y="638.5" font-size="10" font-weight="400" fill="#191918" text-anchor="middle"><tspan x="374.0" dy="0.0">markdown</tspan></text>
+<rect x="456" y="580" width="248" height="72" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="580.0" y="599" font-size="11" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="580.0" dy="0.0">Other tools</tspan></text>
+<rect x="198" y="696" width="250" height="50" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="323.0" y="725.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="323.0" dy="0.0">Board APIs</tspan></text>
+<rect x="456" y="696" width="248" height="50" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="580.0" y="725.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="580.0" dy="0.0">Miro APIs</tspan></text>
+<path d="M260,140 L260,158" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M260,202 L260,220" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M382,140 L382,220" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M166,242 C166,242.0 204,242.0 204,242" fill="none" stroke="#8A8781" stroke-width="1.25" marker-start="url(#ah-s)" marker-end="url(#ah)"/>
+<path d="M596,166 L596,184" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M321,264 L321,306" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M596,228 L596,306" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M451,374 L451,388" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M451,456 L451,470" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M451,538 L451,552" fill="none" stroke="#8A8781" stroke-width="1.25" marker-end="url(#ah)"/>
+<path d="M323,652 L323,696" fill="none" stroke="#8A8781" stroke-width="1.25" marker-start="url(#ah-s)" marker-end="url(#ah)"/>
+<path d="M580,652 L580,696" fill="none" stroke="#8A8781" stroke-width="1.25" marker-start="url(#ah-s)" marker-end="url(#ah)"/>
+</svg>

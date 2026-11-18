@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { WorkItem } from '../data/site'
 
 /* Case-study chapter bar (top right, in the podcast's place): a ring that
-   fills with your progress down the page, the chapter you're reading (it
-   swaps as you scroll), and a list of every chapter to jump to. Chapters
-   are the case's titled sections, then its shelves, grouped as "Use cases"
-   (they revisit the same story beats, so they share titles). */
+   fills with your progress down the page, the section you're reading (one
+   line; it swaps as you scroll), and a short list of the key
+   chapters to jump to: each major chapter (a `group`), and each section outside
+   one. The case's shelves follow as "Use cases" (only when on the page). */
 
-/** `sub`: the section's sub-chapter (e.g. "How we design"), shown as a heading in the list */
-type Chapter = { title: string; group: 'Chapter' | 'Use cases'; sub?: string; target: () => HTMLElement | null }
+/** `group`: the major chapter it sits in (none: a top-level section of its own) */
+type Chapter = { title: string; group?: string; target: () => HTMLElement | null }
 
 /** a chapter is current once its top passes this share of the viewport */
 const LINE = 0.2
@@ -18,14 +18,24 @@ const RING_C = 2 * Math.PI * RING_R
 function chaptersOf(item: WorkItem): Chapter[] {
   return [
     ...item.sections.flatMap((s, i) =>
-      s.heading ? [{ title: s.heading, group: 'Chapter' as const, sub: s.group, target: () => document.querySelector<HTMLElement>(`.case-left [data-panel="${i}"]`) }] : [],
+      s.heading ? [{ title: s.heading, group: s.group, target: () => document.querySelector<HTMLElement>(`.case-left [data-panel="${i}"]`) }] : [],
     ),
-    ...(item.shelves ?? []).map((s) => ({ title: s.title, group: 'Use cases' as const, target: () => document.getElementById(s.id) })),
+    ...(item.shelves ?? []).map((s) => ({ title: s.title, group: 'Use cases', target: () => document.getElementById(s.id) })),
   ]
 }
 
-/** the list heading a chapter falls under ('' for plain chapters) */
-const label = (c: Chapter) => c.sub ?? (c.group === 'Use cases' ? 'Use cases' : '')
+/** the contents: just the key chapters, in order. A major chapter (a `group`) spans its
+    sections; a section outside any chapter is a chapter of its own */
+type Key = { title: string; from: number; to: number }
+function keysOf(chapters: Chapter[]): Key[] {
+  const out: Key[] = []
+  chapters.forEach((c, i) => {
+    const last = out[out.length - 1]
+    if (c.group && last && last.title === c.group && last.to === i - 1) last.to = i
+    else out.push({ title: c.group ?? c.title, from: i, to: i })
+  })
+  return out
+}
 
 export default function ChapterBar({ item }: { item: WorkItem }) {
   const [chapters] = useState(() => chaptersOf(item))
@@ -75,16 +85,15 @@ export default function ChapterBar({ item }: { item: WorkItem }) {
     }
   }, [open])
 
-  const go = (i: number) => {
-    chapters[i].target()?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const current = active >= 0 ? chapters[active].title : item.headline ?? item.title
+  // only chapters on the page (hidden shelves have no target), worked out as it opens
+  const keys = open ? keysOf(chapters).filter((k) => chapters[k.from].target()) : []
+  // a key chapter's link lands on its heading (the chapter's run), or its section
+  const goKey = (k: Key) => {
+    const el = chapters[k.from].target()
+    ;(el?.closest<HTMLElement>('.case-left__run') ?? el)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     setOpen(false)
   }
-
-  const current = active >= 0 ? chapters[active].title : item.headline ?? item.title
-  // "Chapter 2" / "Use case 1": numbered within its group; before the first, the introduction
-  const sub = active < 0
-    ? 'Introduction'
-    : `${chapters[active].group === 'Chapter' ? 'Chapter' : 'Use case'} ${chapters.slice(0, active + 1).filter((c) => c.group === chapters[active].group).length}`
 
   return (
     <div className="chapterbar-wrap" ref={root}>
@@ -96,25 +105,26 @@ export default function ChapterBar({ item }: { item: WorkItem }) {
         <span className="chapterbar__meta">
           {/* the title swaps in place as the chapter changes */}
           <span className="chapterbar__title" key={current} aria-live="polite">{current}</span>
-          <span className="chapterbar__sub">{sub}</span>
         </span>
         <span className="chapterbar__btn" aria-hidden>
           <svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </span>
       </button>
       {open && (
-        <ol className="chapterbar__list glass" id="chapter-list">
-          {chapters.map((c, i) => (
-            <li key={i}>
-              {/* a heading where a sub-chapter (or the use cases) starts; a bare divider where one ends */}
-              {i > 0 && label(c) !== label(chapters[i - 1]) && <p className="chapterbar__group">{label(c)}</p>}
-              <button type="button" className={i === active ? 'is-on' : i < active ? 'is-read' : undefined} aria-current={i === active ? 'true' : undefined} onClick={() => go(i)}>
-                <span className="chapterbar__num">{String(i + 1).padStart(2, '0')}</span>
-                {c.title}
-              </button>
-            </li>
-          ))}
-        </ol>
+        <nav className="chapterbar__list glass" id="chapter-list" aria-label="Contents">
+          <ul>
+            {keys.map((k) => {
+              const on = active >= k.from && active <= k.to
+              return (
+                <li key={k.from}>
+                  <button type="button" className={on ? 'is-on' : active > k.to ? 'is-read' : undefined} aria-current={on ? 'true' : undefined} onClick={() => goKey(k)}>
+                    {k.title}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
       )}
     </div>
   )

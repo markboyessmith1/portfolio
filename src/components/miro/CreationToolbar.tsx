@@ -12,7 +12,8 @@ import './palette.css'
      (chips row + avatars + "Create with everyone");
    - voice: the tool row unfolds again and the composer shrinks into the
      listening pill. Ending voice returns to compose; ✕ returns to rest.
-   The voice control opens Voice / Autopilot / Dictate:
+   The voice control opens Voice / Autopilot / Dictate (or, with voiceMenu={false},
+   goes straight into Voice):
    - Voice / Autopilot swap the field for the listening pill (yellow / blue),
      its bars driven by the live mic (or a gentle idle pulse without one);
      click the pill to end;
@@ -135,6 +136,7 @@ export default function CreationToolbar({
   defaultTool = 'pointer',
   onSend,
   skills,
+  voiceMenu = true,
 }: {
   placeholder?: string
   composePlaceholder?: string
@@ -142,6 +144,8 @@ export default function CreationToolbar({
   onSend?: (text: string) => void
   /** skill chips shown while composing (in place of the defaults); picking one starts the prompt with it */
   skills?: string[]
+  /** false: the voice control goes straight into voice mode (no Voice / Autopilot / Dictate menu, no caret) */
+  voiceMenu?: boolean
 }) {
   const [tool, setTool] = useState<ToolId>(defaultTool)
   const [text, setText] = useState('')
@@ -263,17 +267,23 @@ export default function CreationToolbar({
                 <ArrowUp />
               </button>
             ) : (
-              <button
-                className="ct__voice"
-                aria-label="Choose voice mode"
-                aria-haspopup="menu"
-                aria-expanded={menu}
-                title="Voice mode"
-                onClick={() => { setMode('compose'); setMenu((m) => !m) }}
-              >
-                <VoiceBlob />
-                <span className="ct__caret"><Chevron /></span>
-              </button>
+              voiceMenu ? (
+                <button
+                  className="ct__voice"
+                  aria-label="Choose voice mode"
+                  aria-haspopup="menu"
+                  aria-expanded={menu}
+                  title="Voice mode"
+                  onClick={() => { setMode('compose'); setMenu((m) => !m) }}
+                >
+                  <VoiceBlob />
+                  <span className="ct__caret"><Chevron /></span>
+                </button>
+              ) : (
+                <button className="ct__voice" aria-label="Start voice chat" title="Voice mode" onClick={() => startVoice('conversation')}>
+                  <VoiceBlob />
+                </button>
+              )
             )}
           </div>
         </div>

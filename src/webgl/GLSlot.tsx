@@ -34,6 +34,17 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
   const [tiltPos] = useState(() => ({ x: 0, y: 0 }))
   const [pose] = useState(() => ({ yaw: 0, pitch: 0, scale: 1, card: 600 }))
   const content = useRef<HTMLDivElement>(null)
+  // on screen (or about to be)? Off screen, the card does no per-frame work at all:
+  // no render to its texture, no pose or fade mirroring (it still renders once at
+  // the start, so its shaders compile up front rather than mid-scroll)
+  const [visible] = useState(() => ({ current: true }))
+  useEffect(() => {
+    const node = el.current
+    if (!node) return
+    const io = new IntersectionObserver(([e]) => { visible.current = e.isIntersecting }, { rootMargin: '30% 0px' })
+    io.observe(node)
+    return () => io.disconnect()
+  }, [visible])
   // mirror the card's 3D pose (tilt + spin + bounce) on the overlay so the
   // text sits on the card face; it hides once the card turns past edge-on
   useEffect(() => {
@@ -41,7 +52,7 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
     let raf = 0
     const tick = () => {
       const c = content.current
-      if (c) {
+      if (c && visible.current) {
         const still = Math.abs(pose.yaw % (Math.PI * 2)) < 1e-4 && Math.abs(pose.pitch) < 1e-4 && Math.abs(pose.scale - 1) < 1e-4
         c.style.transform = still ? ''
           : `perspective(${(pose.card / 2) * 4}px) rotateY(${pose.yaw}rad) rotateX(${-pose.pitch}rad) scale(${pose.scale})`
@@ -50,7 +61,7 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [tilt, spin, pose])
+  }, [tilt, spin, pose, visible])
   useEffect(() => {
     const node = el.current
     if (!tilt || !node || window.matchMedia('(prefers-reduced-motion: reduce), (hover: none)').matches) return
@@ -72,16 +83,17 @@ export function GLSlot({ variant, scene: Scene, className = '', children, blur, 
     if (!fadeEls.length) return
     let raf = 0
     const tick = () => {
-      opacity.current = fadeEls.reduce((o, f) => o * (parseFloat(getComputedStyle(f).opacity) || 0), 1)
+      // (reading computed styles costs a style pass: only while the card can be seen)
+      if (visible.current) opacity.current = fadeEls.reduce((o, f) => o * (parseFloat(getComputedStyle(f).opacity) || 0), 1)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [opacity])
+  }, [opacity, visible])
   return (
     <div ref={el} className={`gl-slot gl-slot--${variant}${tilt ? ' has-tilt' : ''} ${className}`}>
       <View className="gl-view" index={2}>
-        <GlassEdge strength={flat ? 0 : undefined} blur={blur} accent={accent} spin={spin} back={back} opacity={opacity} tilt={tilt ? tiltPos : undefined} pose={pose} shadowStrength={/is-dark|is-media/.test(className) ? 1 : 0.45}>
+        <GlassEdge strength={flat ? 0 : undefined} visible={visible} blur={blur} accent={accent} spin={spin} back={back} opacity={opacity} tilt={tilt ? tiltPos : undefined} pose={pose} shadowStrength={/is-dark|is-media/.test(className) ? 1 : 0.45}>
           {/* per-card boundary: a loading video never blanks the other cards */}
           <Suspense fallback={null}>
             <Scene />

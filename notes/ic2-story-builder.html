@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IC 2.0 Story Builder</title>
+<style>
+  :root {
+    --bg: #FAF9F7; --surface: #FFFFFF; --ink: #191918; --ink-2: #6B6863; --ink-3: #A9A6A0;
+    --line: #E8E6E2; --hl: #ffdd33; --ok: #067429; --ok-bg: #C9F2D6; --warn: #8a5a00; --warn-bg: #FFF1BD;
+    --radius: 20px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #191918; --surface: #222120; --ink: #F2F0ED; --ink-2: #A9A6A0; --ink-3: #6B6863;
+      --line: #33322F; --ok: #7fdc9b; --ok-bg: #1f3a28; --warn: #ffd76a; --warn-bg: #3a3014;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 Inter, system-ui, -apple-system, sans-serif; letter-spacing: -0.01em;
+  }
+  h1, h2, h3 { text-wrap: balance; letter-spacing: -0.02em; }
+  p, li { text-wrap: pretty; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 16px 120px; display: grid; grid-template-columns: 220px 1fr; gap: 48px; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; gap: 24px; } nav.toc { position: static !important; } }
+
+  nav.toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  nav.toc a { color: var(--ink-2); text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 10px; display: flex; gap: 8px; align-items: baseline; }
+  nav.toc a:hover { background: var(--surface); color: var(--ink); }
+  nav.toc a .n { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  nav.toc a.done::after { content: "●"; margin-left: auto; color: var(--ok); font-size: 9px; }
+  .progress { margin: 12px 10px 0; font-size: 12px; color: var(--ink-3); }
+
+  header.top { margin-bottom: 32px; }
+  .eyebrow { font-size: 13px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px; }
+  header.top h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.05; margin: 0 0 12px; }
+  header.top p { color: var(--ink-2); max-width: 62ch; margin: 0 0 8px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  button {
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink);
+  }
+  button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid #4262FF; outline-offset: 2px; }
+
+  .note { background: var(--warn-bg); color: var(--warn); border-radius: 14px; padding: 12px 16px; font-size: 14px; margin-top: 20px; }
+
+  section.ch { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; scroll-margin-top: 24px; }
+  section.ch h2 { margin: 4px 0 6px; font-size: 26px; line-height: 1.15; }
+  section.ch .goal { color: var(--ink-2); margin: 0 0 20px; max-width: 64ch; }
+  .k { font-size: 12px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; margin: 20px 0 8px; }
+
+  .evidence { display: grid; gap: 8px; }
+  .ev { border-left: 3px solid var(--hl); padding: 6px 0 6px 14px; font-size: 15px; }
+  .ev cite { display: block; font-style: normal; font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .stat { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.1; color: var(--ok); }
+  .stat span { font-size: 13px; color: var(--ink-2); }
+  .stat.warn b { color: var(--warn); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  td:first-child { color: var(--ink-2); white-space: nowrap; }
+
+  ul.prompts { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+  ul.prompts li::marker { color: var(--ink-3); }
+  .assets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .asset { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); color: var(--ink-2); }
+
+  textarea {
+    width: 100%; min-height: 140px; resize: vertical; margin-top: 4px;
+    font: inherit; font-size: 15px; line-height: 1.55; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px;
+  }
+  .saved { font-size: 12px; color: var(--ink-3); margin-top: 6px; min-height: 1em; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="toc" aria-label="Chapters" id="toc"></nav>
+  <main>
+    <header class="top">
+      <p class="eyebrow">Case study · story builder</p>
+      <h1>Miro AI — Intelligent Canvas 2.0</h1>
+      <p>Evidence pulled from the <a href="https://miro.com/app/board/uXjVEZX1UFQ=/" target="_blank" rel="noopener">EPD-107 IC 2.0 Launch board</a>, arranged as a story arc. For each chapter: read the evidence, answer the prompts in your own voice, and note which assets to show. Drafts save in this browser as you type.</p>
+      <p>The board tells the <em>product</em> story (what shipped, for whom, with what results). The design story — your role, the calls you made, the craft — is what the prompts are for.</p>
+      <div class="toolbar">
+        <button class="primary" id="copy">Copy all as Markdown</button>
+        <button id="download">Download .md</button>
+        <button id="clear">Clear drafts</button>
+      </div>
+      <div class="note"><strong>Before publishing:</strong> the metrics, cohort sizes, plan gating and credit details are internal launch data (week one, Oct 2026). Check what's cleared to share publicly; the portfolio may need relative figures ("+11 pts") rather than absolutes.</div>
+    </header>
+    <div id="chapters"></div>
+  </main>
+</div>
+
+<script>
+const CHAPTERS = [
+  {
+    id: 'context', title: 'Context: AI is moving fast',
+    goal: 'Set the scene in two or three sentences. Where were Miro and its users before IC 2.0?',
+    evidence: [
+      ['IC 1.5 ("Agentic Canvas") was the stepping stone: “Driving our agentic foundation to maturity and into customers’ hands as fast as we can — setting the stage for Intelligent Canvas 2.0.”', 'Initial Vision of the IC 2.0'],
+      ['IC 1.0 was a non-agentic architecture: one artifact per turn, staged output that had to be applied manually, models hard-coded per format, 20-message memory, text-only input.', 'IC 1.0 vs IC 2.0 Comparison'],
+    ],
+    prompts: ['What was the moment you knew the old Sidekick model had hit its ceiling?', 'What did users (and Mironeers) complain about most?', 'What was your role and team shape going in?'],
+    assets: ['Portfolio opening: “Intelligence that meets you where you are”'],
+  },
+  {
+    id: 'problem', title: 'The problem',
+    goal: 'Name the tension the design had to resolve. One clear sentence is better than a list.',
+    evidence: [
+      ['IC 1.0: “Staged: Requires manual application to the canvas” · “Very brittle and error prone, limited format support” · “Users have to explicitly select artefacts.”', 'Comparison table'],
+      ['“AI credits are a static metric and don’t evolve as models become cheaper or more capable.”', 'Credit Consumption'],
+    ],
+    prompts: ['What was the core user problem, in the user’s words?', 'Why was this a design problem and not only an engineering one?', 'What would failure have looked like?'],
+    assets: [],
+  },
+  {
+    id: 'vision', title: 'The vision',
+    goal: 'The north star and the bets underneath it.',
+    evidence: [
+      ['“Ship the Intelligent Canvas 2.0 from Mironeer to GA. Miro, reintroduced: the 9/10 AI-native canvas where teams and agents create, collaborate, and decide together.”', 'Initial Vision of the IC 2.0'],
+      ['Next Level Board Gen — “capable generation and agentic behaviour that make hitting a 9/10 feel effortless.”', 'Vision bets'],
+      ['3p Agents on the Canvas — “Outside agents like Claude as first-class collaborators.”', 'Vision bets'],
+      ['Multiplayer AI — “AI that works in the room with everyone — people and agents shaping the same canvas together, in real time.”', 'Vision bets'],
+      ['Custom AI Solutions — “custom widgets, Miro Build and solutions on the canvas.” Plus New Home, Nav & Sidebar.', 'Vision bets'],
+    ],
+    prompts: ['How did “9/10” get defined, and who held the bar?', 'Which of the four bets was most yours?', 'What did you say no to?'],
+    assets: ['Shelf 01 · New ways to work together', 'Statement: “Know when to guide, when to advise, when to follow”'],
+  },
+  {
+    id: 'built', title: 'What we built: IC 1.0 → IC 2.0',
+    goal: 'Show the leap. Pick the 4–5 rows that a design audience will feel, not all 13.',
+    table: [
+      ['Output', 'One artifact per turn', 'Agentic multi-artifact generation'],
+      ['Writing to the canvas', 'Staged, applied by hand', 'Written directly to the canvas'],
+      ['Editing', 'Brittle, limited formats', 'High-quality, high-precision editing'],
+      ['Planning', 'None', 'Planning mode that proactively asks questions'],
+      ['Board understanding', 'Explicit selection', 'Implicit, via board search'],
+      ['Agent presence', 'None', 'Agent cursors and avatars'],
+      ['Skills', 'None', '20+ managed skills'],
+      ['Input', 'Text only', 'Text, dictation, voice'],
+      ['Connectors', 'Limited', 'Full access (Slack, Jira, GitHub, Notion…)'],
+      ['Memory', 'Up to 20 messages', 'Full model context window'],
+    ],
+    evidence: [['Walkthrough: “Miro’s New Intelligent Canvas: You, Your Team, Your Agents” (YouTube, Oct 20) — chapters cover Sidekick one-pagers, MCP, HTML prototypes, Mermaid, slides, skills, and Claude/ChatGPT/Copilot via MCP.', 'IC 2.0 Announcement Walkthrough']],
+    prompts: ['Which change was hardest to design, and why?', 'Agent cursors and avatars: what did presence need to communicate?', 'Planning mode: how did you decide when the agent should ask vs act?'],
+    assets: ['Shelf 02 · From intention to momentum', 'Clips: Start faster, Just tell me, Let me see ya work', 'YouTube walkthrough'],
+  },
+  {
+    id: 'decisions', title: 'Hard calls and trade-offs',
+    goal: 'The most persuasive part of a case study. Show judgment, not just output.',
+    evidence: [
+      ['One engine for everything broke per-format admin blocks: “IC 2.0 routes all generation through one engine, so a per-capability off switch (e.g. slide gen) cannot be honored yet. Rolling out would silently re-enable something an admin turned off.” (~1,000 orgs held back.)', 'Public beta exclusions'],
+      ['“Suppressing specific formats like diagrams, prototypes, or slides is no longer effective, as AI models can create them regardless.”', 'Admin settings'],
+      ['AI provider settings “made sense in a world where every single artefact type had a dedicated model… the feature needs to be fully redesigned.”', 'Admin settings'],
+      ['Per-widget billing dropped: stickies and text “not charged — any per widget billing will no longer happen.”', 'Credit Consumption'],
+      ['Ship bar: get IC 2.0 to customers “once we’d validated that it was at least as good as Sidekick 2.0.”', 'Rollout Plan'],
+    ],
+    prompts: ['Which trade-off did you personally push for or against?', 'How did you keep trust with admins while the controls caught up?', 'What did you cut to ship, and do you still agree?'],
+    assets: [],
+  },
+  {
+    id: 'craft', title: 'Design craft: warmth, character, purpose',
+    goal: 'Where your hand shows. Principles, details, and the prototypes that proved them.',
+    evidence: [
+      ['Multiplayer AI: people and agents on the same canvas in real time; agent cursors and avatars give the agent presence.', 'Vision · Comparison'],
+      ['Input modalities expanded to dictation and voice.', 'Comparison table'],
+    ],
+    prompts: ['What were the design principles, and where did one change a decision?', 'Which detail are you proudest of (motion, presence, tone of voice)?', 'Which prototype changed minds?'],
+    assets: ['Shelf 03 · Exploring what comes next (decision models, voice + hands, point and talk)', 'Cursor identity clip', 'Multiplayer AI in cursor chat clip'],
+  },
+  {
+    id: 'launch', title: 'Launch and rollout',
+    goal: 'How it reached people. Keep it short unless the rollout itself was a design problem.',
+    evidence: [
+      ['Self-serve GA Oct 15; Enterprise public beta Oct 20.', 'Early results'],
+      ['Excluded from public beta: Enterprise Specific, No-Beta, AI-provider and BYOAI private betas (~40–50), orgs with disabled format types (~1,000), EKM & Guard (~200).', 'Who is excluded'],
+      ['Already supported for enterprise: audit logs, roles and permissions, license checks, AI on/off, all regions, security reviews, localization, accessibility.', 'Outstanding for Enterprise GA'],
+    ],
+    prompts: ['What did design own in the rollout?', 'What did the beta teach you that changed the GA product?'],
+    assets: ['Rollout timeline (IC2 Rollout Timelines.html on the board)'],
+  },
+  {
+    id: 'results', title: 'Results',
+    goal: 'Lead with quality (the premise held), then be honest that adoption is the next frontier.',
+    stats: [
+      ['67% → 78%', 'Thumbs up on results (+11 pts)'],
+      ['67% → 75%', 'Content kept after 24h (+8 pts)'],
+      ['73%', 'CSAT, new engine (11 responses, Free/Starter)'],
+      ['8.8 → 11.9', 'Tool calls per user (+35%)'],
+      ['2.4 → 2.7', 'Messages per chat'],
+      ['2.5%', 'Weekly adoption of 1.75M enabled users', true],
+    ],
+    evidence: [['“Quality is up as hoped. Adoption is the next frontier.” Week one of full rollout; thumbs up and retention are partial-week reads (Oct 18–21).', 'Early results']],
+    prompts: ['Which number best proves the design worked?', 'What does “adoption is next” mean for design?', 'Any qualitative signal: a quote, a customer moment?'],
+    assets: [],
+  },
+  {
+    id: 'next', title: 'Reflection and what’s next',
+    goal: 'End with what you learned and where it goes. This is where readers judge seniority.',
+    evidence: [
+      ['Opportunities named: granular tool-call settings for admins; a board-understanding off switch; token-based pricing longer term; BYOAI rebuilt for IC 2.0.', 'Admin settings · Credits'],
+    ],
+    prompts: ['What would you do differently?', 'What did this teach you about designing for agents?', 'One line to close the story.'],
+    assets: [],
+  },
+];
+
+const KEY = 'ic2-story-drafts';
+let drafts = {};
+try { drafts = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(drafts)); } catch {} };
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const toc = document.getElementById('toc');
+const root = document.getElementById('chapters');
+
+CHAPTERS.forEach((c, i) => {
+  const n = String(i + 1).padStart(2, '0');
+  toc.insertAdjacentHTML('beforeend', `<a href="#${c.id}" data-id="${c.id}"><span class="n">${n}</span>${esc(c.title)}</a>`);
+  let html = `<section class="ch" id="${c.id}"><p class="eyebrow">Chapter ${i + 1}</p><h2>${esc(c.title)}</h2><p class="goal">${esc(c.goal)}</p>`;
+  if (c.stats) html += `<p class="k">Numbers</p><div class="stats">${c.stats.map(([b, s, w]) => `<div class="stat${w ? ' warn' : ''}"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join('')}</div>`;
+  if (c.table) html += `<p class="k">Before / after</p><table><thead><tr><th>Capability</th><th>IC 1.0</th><th>IC 2.0</th></tr></thead><tbody>${c.table.map((r) => `<tr>${r.map((x) => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  if (c.evidence.length) html += `<p class="k">From the board</p><div class="evidence">${c.evidence.map(([t, src]) => `<div class="ev">${esc(t)}<cite>${esc(src)}</cite></div>`).join('')}</div>`;
+  html += `<p class="k">Answer in your voice</p><ul class="prompts">${c.prompts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>`;
+  if (c.assets.length) html += `<p class="k">Assets to show</p><div class="assets">${c.assets.map((a) => `<span class="asset">${esc(a)}</span>`).join('')}</div>`;
+  html += `<p class="k"><label for="t-${c.id}">Your draft</label></p><textarea id="t-${c.id}" data-id="${c.id}" placeholder="Write the chapter here…">${esc(drafts[c.id] || '')}</textarea><div class="saved" id="s-${c.id}"></div></section>`;
+  root.insertAdjacentHTML('beforeend', html);
+});
+
+const progress = document.createElement('p');
+progress.className = 'progress';
+toc.appendChild(progress);
+const mark = () => {
+  let done = 0;
+  CHAPTERS.forEach((c) => {
+    const has = (drafts[c.id] || '').trim().length > 0;
+    if (has) done++;
+    toc.querySelector(`[data-id="${c.id}"]`).classList.toggle('done', has);
+  });
+  progress.textContent = `${done} of ${CHAPTERS.length} drafted`;
+};
+mark();
+
+let timer = 0;
+root.addEventListener('input', (e) => {
+  const t = e.target.closest('textarea');
+  if (!t) return;
+  drafts[t.dataset.id] = t.value;
+  clearTimeout(timer);
+  timer = setTimeout(() => { save(); mark(); document.getElementById('s-' + t.dataset.id).textContent = 'Saved'; }, 300);
+});
+
+const markdown = () => ['# Miro AI — Intelligent Canvas 2.0', '',
+  ...CHAPTERS.flatMap((c, i) => [`## ${i + 1}. ${c.title}`, '', (drafts[c.id] || '').trim() || '_Not drafted yet._', ''])].join('\n');
+
+document.getElementById('copy').addEventListener('click', async (e) => {
+  try { await navigator.clipboard.writeText(markdown()); e.target.textContent = 'Copied'; }
+  catch { e.target.textContent = 'Copy failed'; }
+  setTimeout(() => (e.target.textContent = 'Copy all as Markdown'), 1500);
+});
+document.getElementById('download').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' }));
+  a.download = 'ic2-case-study.md';
+  a.click();
+});
+document.getElementById('clear').addEventListener('click', () => {
+  if (!confirm('Clear all drafts?')) return;
+  drafts = {}; save();
+  root.querySelectorAll('textarea').forEach((t) => (t.value = ''));
+  mark();
+});
+</script>
+</body>
+</html>
