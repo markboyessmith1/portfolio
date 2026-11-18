@@ -13,6 +13,7 @@ import ResumePrint from './pages/ResumePrint'
 import PortfolioRequest from './pages/PortfolioRequest'
 import Soundscape from './pages/Soundscape'
 import Admin from './pages/Admin'
+import HomeScan from './pages/HomeScan'
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -32,13 +33,15 @@ export default function App() {
   if (pathname === '/about/print') return <ResumePrint />
 
   return (
-    <div ref={stageRef} className={pathname === '/' || pathname.startsWith('/work') ? 'site site--areal' : 'site'}>
+    <div ref={stageRef} className={pathname === '/' || pathname === '/scan' || pathname.startsWith('/work') ? 'site site--areal' : 'site'}>
       <ScrollToTop />
       <Nav />
       <main className="container">
         <Routes>
           {/* home is the portfolio (the work carousel); the CV is /about */}
           <Route path="/" element={<Home />} />
+          {/* trial: the home page with the face-scan hero (not linked yet) */}
+          <Route path="/scan" element={<HomeScan />} />
           <Route path="/about" element={<Resume />} />
           <Route path="/resume" element={<Navigate to="/about" replace />} />
           <Route path="/work" element={<Navigate to="/" replace />} />
