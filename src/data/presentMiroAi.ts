@@ -521,14 +521,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'Spec sheets sat beside the vision prototype. We stopped having reviews where designers and engineers saw the build together for the first time.',
     },
     {
-      chapter: 'How AI changed the work',
-      layout: 'live',
-      eyebrow: 'Live',
-      title: 'Prototype 2: where we ended up.',
-      body: ['Switch to the later prototype.'],
-      todo: ['Which prototype, and its link open in a tab', 'What changed since prototype 1, and why'],
-    },
-    {
       chapter: 'Outcomes',
       layout: 'metrics',
       eyebrow: 'Week one of full rollout, October 2026',
