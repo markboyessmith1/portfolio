@@ -39,6 +39,11 @@ const HUE: Record<string, string> = {
   Appendix: '#a9a6a0',
 }
 const hueOf = (chapter: string) => HUE[chapter] ?? '#a9a6a0'
+/** words between underscores in a title are set in Apris, Miro's display serif (as in the case study's mission) */
+const plain = (t: string) => t.replace(/_/g, '')
+function Title({ text }: { text: string }) {
+  return <>{text.split(/_(.+?)_/).map((p, i) => (i % 2 ? <em key={i} className="ps-serif">{p}</em> : p))}</>
+}
 const RING_R = 15
 const RING_C = 2 * Math.PI * RING_R
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -90,8 +95,17 @@ function Presentation() {
   }, [])
   const step = useCallback((d: number) => {
     const h = heading.current
-    const from = h && performance.now() - h.t < 700 ? h.i : at.current
-    go(from + d)
+    const moving = !!h && performance.now() - h.t < 700
+    // a shelf of cards that runs off the slide: next / previous page through it first
+    const sh = !moving && track.current?.querySelector<HTMLElement>(`[data-i="${at.current}"] .ps-shelf--scroll`)
+    if (sh) {
+      const max = sh.scrollWidth - sh.clientWidth
+      if (max > 4 && (d > 0 ? sh.scrollLeft < max - 4 : sh.scrollLeft > 4)) {
+        sh.scrollBy({ left: d * sh.clientWidth * 0.8, behavior: reduced() ? 'auto' : 'smooth' })
+        return
+      }
+    }
+    go((moving ? h!.i : at.current) + d)
   }, [go])
 
   // open on the hash's slide, without the scroll showing
@@ -137,6 +151,12 @@ function Presentation() {
   }, [fine, go])
 
   useEffect(() => { history.replaceState(null, '', `#${index + 1}`) }, [index])
+  // shelves on the slides you've left go back to their first card
+  useEffect(() => {
+    track.current?.querySelectorAll<HTMLElement>('.ps-shelf--scroll').forEach((sh) => {
+      if (!sh.closest(`[data-i="${index}"]`)) sh.scrollLeft = 0
+    })
+  }, [index])
   useEffect(() => {
     const onHash = () => go(fromHash())
     addEventListener('hashchange', onHash)
@@ -215,10 +235,10 @@ function Presentation() {
             className={`ps ps--${s.layout}${i === index ? ' is-on' : ''}${seen.has(i) ? ' is-seen' : ''}`}
             style={{ '--hue': hueOf(s.chapter) } as CSSProperties}
             aria-roledescription="slide"
-            aria-label={`${i + 1} of ${N}: ${s.title}`}
+            aria-label={`${i + 1} of ${N}: ${plain(s.title)}`}
             aria-hidden={i !== index}
           >
-            <SlideBody slide={s} active={i === index} near={Math.abs(i - index) <= 2} />
+            <SlideBody slide={s} active={i === index} near={Math.abs(i - index) <= 2} close={Math.abs(i - index) <= 1} />
           </section>
         ))}
       </div>
@@ -275,9 +295,9 @@ function Presentation() {
                     key={i}
                     type="button"
                     className={`scrub__tick${i === index ? ' is-on' : i < index ? ' is-past' : ''}`}
-                    aria-label={`Slide ${i + 1}: ${s.title}`}
+                    aria-label={`Slide ${i + 1}: ${plain(s.title)}`}
                     aria-current={i === index ? 'step' : undefined}
-                    title={`${i + 1} · ${s.title}`}
+                    title={`${i + 1} · ${plain(s.title)}`}
                     onClick={() => go(i)}
                   />
                 )
@@ -301,7 +321,7 @@ function Presentation() {
           <p className="pres__notes-head">Notes · {index + 1}</p>
           {slide.criteria?.length ? <p className="pres__notes-crit">Proves: {slide.criteria.join(', ')}</p> : null}
           <p>{slide.notes ?? 'No notes for this slide.'}</p>
-          {slides[index + 1] && <p className="pres__notes-next">Next: {slides[index + 1].title}</p>}
+          {slides[index + 1] && <p className="pres__notes-next">Next: {plain(slides[index + 1].title)}</p>}
         </aside>
       )}
     </div>
@@ -361,7 +381,7 @@ function Head({ slide: s, as: H = 'h2' }: { slide: DeckSlide; as?: 'h1' | 'h2' }
   return (
     <div className="ps-head ps-anim">
       {s.eyebrow && <p className="ps-eyebrow"><span className="pres-dot" aria-hidden />{s.eyebrow}</p>}
-      <H className="ps-title">{s.title}</H>
+      <H className="ps-title"><Title text={s.title} /></H>
     </div>
   )
 }
@@ -381,7 +401,7 @@ function Copy({ slide: s, across = false }: { slide: DeckSlide; across?: boolean
   )
 }
 
-function SlideBody({ slide: s, active, near }: { slide: DeckSlide; active: boolean; near: boolean }) {
+function SlideBody({ slide: s, active, near, close }: { slide: DeckSlide; active: boolean; near: boolean; close: boolean }) {
   const media = (cls = '') =>
     s.media && (
       <div className={`ps-media ps-media--${s.media.length} ps-anim ${cls}`}>
@@ -488,6 +508,63 @@ function SlideBody({ slide: s, active, near }: { slide: DeckSlide; active: boole
         </div>
       )
 
+    // the case study's shelves: title and paragraph over a row of cards, live scenes and clips
+    case 'shelf': {
+      const cards = s.media ?? []
+      return (
+        <div className="ps-inner">
+          <div className="ps-top">
+            <Head slide={s} />
+            {(s.body || s.todo) && <div className="ps-top__copy"><Copy slide={s} /></div>}
+          </div>
+          <ul className={`ps-shelf ps-anim${cards.length > 3 ? ' ps-shelf--scroll' : ''}`} style={{ '--n': cards.length } as CSSProperties}>
+            {cards.map((m, i) => <ShelfCard key={i} media={m} active={active} near={near} close={close} />)}
+          </ul>
+        </div>
+      )
+    }
+
+    // the case study's vision band: heading | paragraph | paragraph, the film full width beneath
+    case 'band':
+      return (
+        <div className="ps-inner">
+          <div className="ps-band">
+            <Head slide={s} />
+            {s.body?.map((p, i) => <p key={i} className="ps-body ps-anim">{p}</p>)}
+          </div>
+          {s.media && <div className="ps-media ps-media--band ps-anim"><Figure media={s.media[0]} active={active} near={near} bleed /></div>}
+        </div>
+      )
+
+    // the case study's numbered card; the last `listApart` items on a card of their own, after a plus
+    case 'numbered': {
+      const L = s.bullets ?? []
+      const cut = L.length - (s.listApart ?? 0)
+      const item = (x: { title?: string; text: string }, n: number) => (
+        <li key={n} className="ps-list__item">
+          <span className="ps-list__num" aria-hidden>{String(n + 1).padStart(2, '0')}</span>
+          <span className="ps-list__body"><b className="ps-list__title">{x.title}</b><span className="ps-list__text">{x.text}</span></span>
+        </li>
+      )
+      return (
+        <div className="ps-inner">
+          <div className="ps-text">
+            <Head slide={s} />
+            <Copy slide={{ ...s, bullets: undefined }} />
+          </div>
+          <div className="ps-numbered ps-anim">
+            <ol className="ps-list">{L.slice(0, cut).map((x, n) => item(x, n))}</ol>
+            {cut < L.length && (
+              <>
+                <span className="ps-plus" aria-hidden>+</span>
+                <ol className="ps-list" start={cut + 1}>{L.slice(cut).map((x, n) => item(x, cut + n))}</ol>
+              </>
+            )}
+          </div>
+        </div>
+      )
+    }
+
     case 'full':
     case 'grid':
       return (
@@ -519,6 +596,32 @@ function SlideBody({ slide: s, active, near }: { slide: DeckSlide; active: boole
         </div>
       )
   }
+}
+
+/** a shelf card: the media at its own shape, then eyebrow, title and line (the case study's PagedShelf).
+    Live scenes mount only on this slide and its neighbours, so a few play at once, not dozens. */
+function ShelfCard({ media: m, active, near, close }: { media: DeckMedia; active: boolean; near: boolean; close: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    if (active) { v.currentTime = 0; v.play().catch(() => {}) } else v.pause()
+  }, [active, near])
+  return (
+    <li className="ps-shelf__card" style={{ '--r': m.ratio ?? 16 / 9 } as CSSProperties}>
+      <div className={`ps-shelf__media${m.kind === 'todo' ? ' is-todo' : ''}`}>
+        {m.kind === 'video' && (near
+          ? <video ref={ref} src={m.src} poster={m.poster} muted loop playsInline preload="auto" />
+          : m.poster ? <img src={m.poster} alt="" /> : null)}
+        {m.kind === 'image' && <img src={m.src} alt={m.alt} loading="lazy" />}
+        {m.kind === 'embed' && close && <iframe src={m.src} title={m.title ?? m.caption ?? 'Prototype scene'} tabIndex={-1} />}
+        {m.kind === 'todo' && <span>{m.caption}</span>}
+      </div>
+      {m.eyebrow && <p className="ps-shelf__eyebrow">{m.eyebrow}</p>}
+      {m.title && <h3 className="ps-shelf__title">{m.title}</h3>}
+      {m.body && <p className="ps-shelf__body">{m.body}</p>}
+    </li>
+  )
 }
 
 function Metric({ value, label, bare }: { value: string; label: string; bare?: boolean }) {
