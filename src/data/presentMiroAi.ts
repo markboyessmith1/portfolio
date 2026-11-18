@@ -104,9 +104,8 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       bullets: [
         { title: 'Project logistics', text: 'Short time frame\nComplexity of our current platform experience\nLegacy technology blocking the latest tech' },
         { title: 'Industry maturity', text: 'Fast-moving technology\nNo agreement on the future of work\nDiversity in customer needs' },
-        { title: 'Strategic direction', text: 'Pricing strategy\nPlatform packaging and value\nRealization' },
+        { title: 'Strategic direction', text: 'Pricing strategy\nPlatform packaging and value\nProduct roadmap' },
       ],
-      todo: ['“Realization”: finish this one (realization of what?)'],
     },
     {
       chapter: 'No clear direction',
