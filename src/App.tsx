@@ -11,12 +11,14 @@ import Storybook from './pages/Storybook'
 import Resume from './pages/Resume'
 import ResumePrint from './pages/ResumePrint'
 import PortfolioRequest from './pages/PortfolioRequest'
+import Soundscape from './pages/Soundscape'
+import Admin from './pages/Admin'
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
     // the portfolio <-> case-study routes handle their own scroll (seamless)
-    if (!hash && !pathname.startsWith('/work')) window.scrollTo(0, 0)
+    if (!hash && pathname !== '/' && !pathname.startsWith('/work')) window.scrollTo(0, 0)
   }, [pathname, hash])
   return null
 }
@@ -30,23 +32,25 @@ export default function App() {
   if (pathname === '/about/print') return <ResumePrint />
 
   return (
-    <div ref={stageRef} className="site">
+    <div ref={stageRef} className={pathname === '/' || pathname.startsWith('/work') ? 'site site--areal' : 'site'}>
       <ScrollToTop />
       <Nav />
       <main className="container">
         <Routes>
-          {/* for now the CV is the home page; the old addresses land there */}
-          <Route path="/" element={<Resume />} />
-          <Route path="/about" element={<Navigate to="/" replace />} />
-          <Route path="/resume" element={<Navigate to="/" replace />} />
-          {/* the portfolio is shared on request: /portfolio is the form; the portfolio itself and
-              its case studies stay at /work, unlisted, for direct links */}
+          {/* home is the portfolio (the work carousel); the CV is /about */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<Resume />} />
+          <Route path="/resume" element={<Navigate to="/about" replace />} />
+          <Route path="/work" element={<Navigate to="/" replace />} />
+          {/* /portfolio asks for access to all case studies; each /work/:slug is gated too
+              (one approval opens them all); /admin is the approval list */}
           <Route path="/portfolio" element={<PortfolioRequest />} />
-          <Route path="/work" element={<Home />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/work/:slug" element={<Home />} />
           <Route path="/thoughts" element={<Thoughts />} />
           <Route path="/product-videos" element={<Work />} />
           <Route path="/storybook" element={<Storybook />} />
+          <Route path="/soundscape" element={<Soundscape />} />
         </Routes>
       </main>
       <Footer />

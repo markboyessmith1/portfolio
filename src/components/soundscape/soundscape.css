@@ -1,0 +1,704 @@
+/* Soundscape (/soundscape) — ported from the c26 prototype's stitches styles.
+   Design-system tokens are resolved to the values the prototype renders with
+   (Miro "new light" theme): spacing in px, the type scale, cursor hues,
+   elevations. Everything is scoped under `ss-`. */
+
+@font-face {
+  font-family: 'ss-noto';
+  src: url('../../assets/soundscape/fonts/NotoSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ss-noto';
+  src: url('../../assets/soundscape/fonts/NotoSans-SemiBold.woff2') format('woff2');
+  font-weight: 500 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ss-noto';
+  src: url('../../assets/soundscape/fonts/NotoSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+/* Scribble glyphs for the ring's ghost-text stickies. */
+@font-face {
+  font-family: 'ss-redacted';
+  src: url('../../assets/soundscape/fonts/redacted-script-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ————— page ————— */
+
+.ss-page {
+  /* the prototype's portfolio tokens */
+  --ss-gutter: clamp(24px, 6vw, 108px);
+  --ss-statement: clamp(32px, 4.6vw, 68px);
+  --ss-display: clamp(48px, 6vw, 104px);
+  --ss-lead: clamp(22px, 2.1vw, 30px);
+  --ss-inset: clamp(16px, 3vw, 44px);
+  --ss-radius: clamp(44px, 5.6vw, 88px);
+  /* $heading is Roobert PRO (used when installed); Inter stands in otherwise */
+  --ss-heading: 'Roobert PRO', Roobert, 'Inter', system-ui, sans-serif;
+  --ss-body: 'ss-noto', 'Noto Sans', system-ui, sans-serif;
+  --ss-ink: #191812;
+  --ss-ink-2: #42413a;
+  --ss-black: #0d0c07;
+  --ss-elev-100: 0 2px 4px 0 #22242814;
+  --ss-elev-200: 0 2px 8px 0 #2224281f, 0 0 12px 0 #2224280a;
+  --ss-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* full-bleed out of the site's centred container, and up under the fixed
+     nav (cancelling main's 100px top padding) so the banner sits one inset
+     from the top, as in the prototype */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: -100px;
+  padding-top: var(--ss-inset);
+
+  font-family: var(--ss-body);
+  font-size: 16px;
+  line-height: normal;
+  letter-spacing: normal;
+  background-color: #fff;
+  color: var(--ss-ink);
+  /* The 360° vignette turns the lights off: CursorStory flips `data-dark`
+     and the page inverts — black ground, white type — through the board. */
+  transition: background-color 700ms cubic-bezier(0.37, 0, 0.63, 1), color 700ms cubic-bezier(0.37, 0, 0.63, 1);
+}
+.ss-page[data-dark='true'] {
+  background-color: var(--ss-black);
+  color: #fff;
+}
+.ss-page h1,
+.ss-page h2,
+.ss-page p {
+  text-wrap: balance;
+}
+.ss-end {
+  height: 0;
+  scroll-snap-align: start;
+}
+
+/* A full-bleed host for a LivingTexture canvas. */
+.ss-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.ss-texture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The hand-off into the board, in the scene headings' voice. */
+.ss-bridge {
+  scroll-snap-align: start;
+  margin: 0 auto;
+  max-width: 22ch;
+  padding: 120px var(--ss-gutter);
+  text-align: center;
+  font-family: var(--ss-heading);
+  font-size: var(--ss-statement);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: inherit;
+  transition: color 900ms cubic-bezier(0.37, 0, 0.63, 1);
+}
+
+/* ————— shared controls ————— */
+
+/* The design system's secondary IconButton, as a squircle capsule. */
+.ss-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  corner-shape: squircle;
+  background-color: #eeeeeb;
+  color: var(--ss-ink);
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.ss-icon-btn:hover {
+  background-color: #e7e7e5;
+}
+.ss-icon-btn:active {
+  background-color: #deddda;
+}
+.ss-icon-btn:focus-visible {
+  outline: 2px solid #3859ff;
+  outline-offset: 2px;
+}
+
+/* A native select dressed as the design system's medium Select trigger. */
+.ss-select {
+  position: relative;
+  display: inline-flex;
+  height: 32px;
+  color: var(--ss-ink);
+}
+.ss-select select {
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 24px 0 8px;
+  border: 1px solid #dededc;
+  border-radius: 12px;
+  background-color: #fff;
+  color: inherit;
+  font: 400 14px/19.6px var(--ss-body);
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.ss-select select:hover {
+  border-color: #c7c7c4;
+}
+.ss-select select:focus-visible {
+  outline: 2px solid #3859ff;
+  outline-offset: 1px;
+}
+.ss-select svg {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ————— cursors ————— */
+
+/* Plain wrappers: the frame loops write their transform every frame. */
+.ss-cursor-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate(-200px, -200px);
+}
+.ss-cursor-pill {
+  position: absolute;
+  top: 16px;
+  left: 14px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-family: var(--ss-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.ss-sidekick {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.ss-sidekick__wedge {
+  display: block;
+  transform: translate(-3px, -3px);
+}
+.ss-sidekick__pill {
+  position: absolute;
+  left: 12.173px;
+  top: 11.673px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px 2px 4px;
+  border: 1px solid #ba8a12;
+  border-radius: 999px;
+  background-color: #fff09a;
+  color: var(--ss-ink);
+  font-family: var(--ss-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.ss-sidekick__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background-color: #ffd02f;
+}
+.ss-sidekick__avatar svg {
+  display: block;
+}
+.ss-sidekick__label {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ————— banner ————— */
+
+@keyframes ss-rise {
+  0% { opacity: 0; transform: translateY(36px); }
+  100% { opacity: 1; transform: none; }
+}
+.ss-banner {
+  scroll-snap-align: start;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  margin: 0 var(--ss-inset);
+  padding: 64px var(--ss-gutter);
+  height: calc(max(100vh, 720px) - var(--ss-inset) - var(--ss-inset));
+  border-radius: var(--ss-radius);
+  corner-shape: superellipse(1.25);
+  background-color: var(--ss-black);
+  color: #fff;
+}
+.ss-banner__display {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  text-align: center;
+  font-family: 'Apris', Georgia, 'Times New Roman', serif;
+  font-size: var(--ss-display);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  animation: ss-rise 900ms var(--ss-ease) both;
+}
+.ss-banner__lede {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 36ch;
+  text-align: center;
+  font-family: var(--ss-heading);
+  font-size: var(--ss-lead);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  opacity: 0.78;
+  animation: ss-rise 900ms var(--ss-ease) 150ms both;
+}
+
+/* ————— the cursor story (pinned scene) ————— */
+
+@keyframes ss-story-settle {
+  0% { opacity: 0; scale: 0.6; }
+  100% { opacity: 1; scale: 1; }
+}
+/* Hovering a piece: it pops up and settles back (retriggered per hover). */
+@keyframes ss-story-bounce {
+  0% { scale: 1; translate: 0 0; }
+  35% { scale: 1.22; translate: 0 -10px; }
+  100% { scale: 1; translate: 0 0; }
+}
+@keyframes ss-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 6px; }
+}
+.ss-story {
+  position: relative;
+}
+/* Invisible snap anchors: the page snaps to these viewports; the scroller
+   must STOP at each even on a hard flick. */
+.ss-story__anchor {
+  position: absolute;
+  inset-inline: 0;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  pointer-events: none;
+}
+/* Covers the runway from stop 3 to the end: an oversized snap area, so the
+   tilt/sweep stretch scrolls free under the page's mandatory snapping. */
+.ss-story__free {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  scroll-snap-align: start;
+  pointer-events: none;
+}
+.ss-story__pin {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  overflow: hidden;
+}
+.ss-story__heading {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  /* caps inside the ring's inner clearance */
+  max-width: min(24ch, 58vmin);
+  text-align: center;
+  font-family: var(--ss-heading);
+  font-size: var(--ss-statement);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: inherit;
+  transition: color 900ms cubic-bezier(0.37, 0, 0.63, 1);
+  will-change: opacity, transform;
+}
+.ss-story__space {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.ss-story__plane {
+  position: relative;
+  width: min(88vmin, 900px);
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+}
+/* The warm heart of the first two vignettes: a super-diffuse sunshine glow. */
+.ss-story__glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 130vmin;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side circle, rgba(255, 220, 74, 0.16), rgba(255, 220, 74, 0.05) 45%, transparent 72%);
+  pointer-events: none;
+  will-change: opacity;
+}
+/* A proper sticky with ghost text (Redacted Script draws handwriting-like scribbles). */
+.ss-story__sticky {
+  width: 92px;
+  height: 92px;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: var(--ss-elev-100);
+  font-family: 'ss-redacted', cursive;
+  font-size: 16px;
+  line-height: 1.25;
+  overflow: hidden;
+}
+.ss-story__sticky > span {
+  opacity: 0.45;
+}
+.ss-story__reaction {
+  display: block;
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18));
+}
+/* The "take me onward" arrow under whichever heading is up. */
+.ss-story__arrow {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: calc(50% + clamp(90px, 13vh, 150px));
+  transform: translateX(-50%);
+  animation: ss-bob 2400ms ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* ————— the board journey ————— */
+
+/* The scroll runway the board stays pinned through; one viewport-covering
+   snap area, so the whole journey scrolls free. */
+.ss-journey {
+  position: relative;
+  height: 4200vh;
+  scroll-snap-align: start;
+}
+.ss-journey__pin {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100dvh;
+  padding: var(--ss-inset);
+}
+.ss-board {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--ss-radius);
+  corner-shape: superellipse(1.25);
+  background-color: #f2f2f2;
+  background-image: radial-gradient(circle, #d2d2d2 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  user-select: none;
+}
+.ss-board__mute {
+  position: absolute;
+  z-index: 10;
+  inset-inline-end: 24px;
+  inset-block-start: 24px;
+}
+.ss-board__tune {
+  position: absolute;
+  z-index: 10;
+  inset-inline-start: 24px;
+  inset-block-end: 24px;
+  display: flex;
+  gap: 8px;
+}
+
+/* The journey meter on the board's right edge. */
+.ss-rail {
+  position: absolute;
+  z-index: 10;
+  inset-inline-end: 24px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+.ss-rail__labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.ss-rail__label {
+  border: 0;
+  margin: 0;
+  padding: 4px 8px;
+  background: transparent;
+  border-radius: 8px;
+  text-align: right;
+  color: var(--ss-ink-2);
+  font-family: var(--ss-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 200ms;
+}
+.ss-rail__label:hover,
+.ss-rail__label.is-active {
+  color: var(--ss-ink);
+}
+.ss-rail__label:focus-visible {
+  outline: 2px solid #3859ff;
+  outline-offset: 1px;
+}
+.ss-rail__bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 48px;
+  height: min(40vh, 320px);
+}
+.ss-rail__bar {
+  height: 2px;
+  border-radius: 999px;
+  background-color: var(--ss-black);
+  will-change: opacity;
+}
+.ss-rail__status {
+  position: absolute;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background-color: #fff;
+  box-shadow: var(--ss-elev-100);
+  color: var(--ss-ink-2);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* A reaction floating up from a cursor before it stamps onto the object. */
+@keyframes ss-float-up {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15% { opacity: 1; transform: translate(0, -12px) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), -120px) scale(1.1); }
+}
+.ss-emote {
+  display: block;
+  width: 44px;
+  height: 44px;
+  max-width: none;
+  pointer-events: none;
+  animation: ss-float-up 1600ms var(--ss-ease) forwards;
+}
+
+/* ————— board objects ————— */
+
+@keyframes ss-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  70% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+/* Standalone `scale`/`opacity`, which COMPOSE with the wrapper's translate. */
+@keyframes ss-obj-settle {
+  0% { opacity: 0; scale: 0.82; }
+  100% { opacity: 1; scale: 1; }
+}
+.ss-obj-sticky {
+  display: flex;
+  width: 128px;
+  height: 128px;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: var(--ss-elev-100);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.ss-obj-text {
+  max-width: 220px;
+  font-family: var(--ss-heading);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ss-ink);
+  text-wrap: balance;
+}
+.ss-obj-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 88px;
+  font-family: var(--ss-body);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ss-obj-shape--square {
+  border-radius: 8px;
+}
+.ss-obj-shape--circle {
+  border-radius: 999px;
+  width: 104px;
+  height: 104px;
+}
+.ss-obj-shape--diamond {
+  transform: rotate(45deg);
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
+}
+.ss-obj-shape--diamond > span {
+  transform: rotate(-45deg);
+}
+.ss-obj-media {
+  width: 200px;
+  border-radius: 20px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: var(--ss-elev-200);
+}
+.ss-obj-media__cover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 108px;
+}
+.ss-obj-media__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background-color: #fff;
+  box-shadow: var(--ss-elev-100);
+}
+/* CSS-triangle play glyph. */
+.ss-obj-media__play::after {
+  content: '';
+  margin-inline-start: 3px;
+  border-block: 7px solid transparent;
+  border-inline-start: 11px solid #3859ff;
+}
+.ss-obj-media__caption {
+  padding: 8px 12px 12px;
+}
+.ss-obj-media__caption b {
+  display: block;
+  font-size: 12px;
+  color: var(--ss-ink);
+}
+.ss-obj-media__caption span {
+  color: var(--ss-ink-2);
+}
+.ss-obj-sticker {
+  display: block;
+  width: 92px;
+  height: 92px;
+  max-width: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
+}
+/* Votes collect as a pill on the object's top-left corner. */
+.ss-obj-vote {
+  position: absolute;
+  inset-block-start: -10px;
+  inset-inline-start: -10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: #4978c0;
+  color: #fff;
+  font-family: var(--ss-body);
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: var(--ss-elev-100);
+  animation: ss-pop 320ms var(--ss-ease) both;
+}
+/* Reaction stickers stamp onto a corner, overlapping. */
+.ss-obj-stamps {
+  position: absolute;
+  inset-inline-end: -16px;
+  inset-block-end: -16px;
+  display: flex;
+  flex-direction: row-reverse;
+}
+.ss-obj-stamp {
+  width: 38px;
+  height: 38px;
+  max-width: none;
+  margin-inline-start: -12px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18));
+  animation: ss-pop 360ms var(--ss-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-banner__display,
+  .ss-banner__lede,
+  .ss-story__arrow,
+  .ss-obj-stamp {
+    animation: none;
+  }
+}

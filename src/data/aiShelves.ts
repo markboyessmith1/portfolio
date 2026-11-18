@@ -172,3 +172,144 @@ export const AI_SHELVES: ShelfData[] = [
     ],
   },
 ]
+
+/** Under the combined vision + labs section: the vision bets, then the labs experiments
+    that tested them, as one shelf. */
+export const VISION_LABS_SHELF: ShelfData = {
+  id: 'ai-vision-labs',
+  title: 'The vision and the experiments',
+  cards: [...VISION_SHELF.cards, ...AI_SHELVES[2].cards],
+}
+
+/** Under "Agents that work where you work": the agent surfaces, in story order.
+    PLACEHOLDERS: blank media until each clip is cut, then swap its media for clip(...). */
+const agent = (n: number, title: string, body: string) => slot('ai-agents', 'Agents', n, title, body)
+/** A 16:9 placeholder card: a labelled block until the vignette or video exists
+    (the brief is notes/ai-shelf-vignettes.md). Swap `media` for `clip(...)` when it lands. */
+const slot = (group: string, eyebrow: string, n: number, title: string, body: string): ShelfCardData => ({
+  id: `${group}-${n}`,
+  eyebrow,
+  title,
+  body,
+  media: { kind: 'placeholder', label: title },
+  ratio: 16 / 9,
+})
+
+export const AGENTS_SHELF: ShelfData = {
+  id: 'ai-agents',
+  title: 'Agents that work where you work',
+  cards: [
+    { ...agent(0, 'Inline chat', 'Ask right where you are on the canvas, and the answer lands in place.'), media: clip('ai-start-faster.mp4', 'Inline chat'), ratio: 1600 / 1280 },
+    {
+      // the animated multiplayer chat scene (c26 MultiplayerChatScene → public/media/ai/multiplayer-chat.html,
+      // built by scripts/prototype-scenes/build.ts); the recording it's based on was clip('multiplayer-chat.mp4', 'Multiplayer chat')
+      ...agent(1, 'Multiplayer chat', 'One conversation for the whole room: people and agents in the same thread.'),
+      media: { kind: 'embed', src: '/media/ai/multiplayer-chat.html', label: 'Ben thinks out loud in cursor chat, you call Sidekick by name, and its cursor comes over, marks the biggest risk on the board and answers in the same thread' },
+      ratio: 1440 / 900,
+    },
+    {
+      // the board chat building up in the real sidebar (c26 AgentSidebarScene → public/media/ai/agent-sidebar.html,
+      // built by scripts/prototype-scenes/build.ts)
+      ...agent(2, 'Sidebar', 'A persistent home for longer work with an agent, beside the board.'),
+      media: { kind: 'embed', src: '/media/ai/agent-sidebar.html', label: 'The board chat sidebar opens and the team’s conversation builds up in it: teammates post, one through Claude, and Sidekick answers in threads' },
+    },
+    {
+      // the board's activity column, live (c26 AgentTaskCardsScene → public/media/ai/agent-task-cards.html,
+      // built by scripts/prototype-scenes/build.ts); loops while in view
+      ...agent(3, 'Agent task cards', 'Hand off a task and track it on a card: what the agent is doing, and what it did.'),
+      media: { kind: 'embed', src: '/media/ai/agent-task-cards.html', label: 'Task cards from Claude Code, ChatGPT, a Flow and Sidekick pop up and stack in the board’s activity column; a click opens Sidekick’s card to its plan, the steps tick off, and it completes and leaves' },
+    },
+    {
+      // Claude builds a Kanban, Sidekick rearranges it (c26 AgentKanbanScene → public/media/ai/agent-kanban.html,
+      // built by scripts/prototype-scenes/build.ts)
+      ...agent(4, 'Agents building on the canvas', 'Sidekick, Claude and others building on the board, cursors and all.'),
+      media: { kind: 'embed', src: '/media/ai/agent-kanban.html', label: 'Claude’s cursor builds a Kanban board and adds two cards to To do and one to In progress; then Sidekick’s cursor comes over and drags the cards on into In progress and Done' },
+    },
+    { ...agent(5, 'Wave to summon an agent', 'A wave of the cursor, and an agent comes over to help.'), media: clip('wave-to-summon.mp4', 'Wave to summon an agent'), ratio: 2716 / 2160 },
+  ],
+}
+
+/** Under "Generative experiences": generation in story order.
+    PLACEHOLDERS: blank media until each clip is cut, then swap its media for clip(...). */
+const gen = (n: number, title: string, body: string) => slot('ai-generative', 'Generative', n, title, body)
+export const GENERATIVE_SHELF: ShelfData = {
+  id: 'ai-generative',
+  title: 'Generative experiences',
+  cards: [
+    {
+      // first: the live "A meeting. A project. A rocket launch." scene from the C26 Fall
+      // prototype, on black (public/media/ai/create.html, built by scripts/prototype-scenes/build.ts)
+      ...gen(5, 'MCP', 'Ask from a terminal and Miro sets itself up through MCP: the spaces, the boards and the people, with the research already under way.'),
+      media: { kind: 'embed', src: '/media/ai/create.html', label: 'A terminal asks for Miro to be set up for a space-mining company, and Miro builds its spaces, boards and people beside it, then dives into a board' },
+      ratio: 1.7353, // the prototype's extra-wide card (1180 × 680)
+    },
+    {
+      // the live recipes scene from the C26 Fall prototype ("Your team’s best moves, saved as
+      // recipes"): public/media/ai/recipes.html, built by scripts/prototype-scenes/build.ts
+      ...gen(0, 'Skills', 'Pick a skill and the agent knows how to do the job, from a retro to a roadmap.'),
+      media: { kind: 'embed', src: '/media/ai/recipes.html', label: 'The team’s skills float up past the prompt box, each one a slash away: explore, align, decide, prototype, test' },
+      ratio: 1.2059, // the prototype's wide card (820 × 680)
+    },
+    { ...gen(1, 'Questions', 'Before it builds, the agent asks what it needs to know to get it right.'), media: clip('ai-just-tell-me.mp4', 'Questions'), ratio: 1600 / 1280 },
+    {
+      // live scene from the C26 Fall prototype (NextBestActionScene, the real orb card):
+      // public/media/ai/next-best-action.html, built by scripts/prototype-scenes/build.ts
+      ...gen(2, 'Next best actions', 'Suggestions for what to do next, offered right where the work is.'),
+      media: { kind: 'embed', src: '/media/ai/next-best-action.html', label: 'A freshly built retro board waits with empty stickies; a glowing orb lands on its corner and, as your cursor reaches it, opens into an offer to fill the retro from Slack. You accept, and Sidekick fills each column with the week’s highlights from the team’s standup channel' },
+      ratio: 1.2059, // the prototype's wide card (820 × 680)
+    },
+    {
+      // live scene from the C26 Fall prototype (BoardCreationScene, the real prompt bar):
+      // public/media/ai/board-creation.html, built by scripts/prototype-scenes/build.ts
+      ...gen(3, 'Full board creation', 'Describe what you need and the whole board builds, editable from the first frame.'),
+      media: { kind: 'embed', src: '/media/ai/board-creation.html', label: 'A prompt asking for a Q3 mobile launch plan is typed into the board’s prompt bar; Sidekick builds the board section by section, goals, timeline, risks and owners, and while it is still working you click one of its goals and change 50k installs to 80k' },
+      ratio: 1.2059, // the prototype's wide card (820 × 680)
+    },
+    // the widget creator clip (copy from the C26 Fall prototype's "Create anything" card)
+    { ...gen(6, 'Extending Miro', 'Describe what you need and make it: a sticker for your team, a custom widget for your workflow, or an entire interactive playground, built with AI right on the board.'), media: clip('widget-creator.mp4', 'Extending Miro'), ratio: 1920 / 1080 },
+  ],
+}
+
+/** Under "Real-time agentic collaboration". PLACEHOLDERS until the clips are cut. */
+const live = (n: number, title: string, body: string) => slot('ai-realtime', 'Real-time', n, title, body)
+export const REALTIME_SHELF: ShelfData = {
+  id: 'ai-realtime',
+  title: 'Real-time agentic collaboration',
+  cards: [
+    { ...live(0, 'Voice mode', 'Talk to the board, and the agent builds as you speak.'), media: clip('voice-mode.mp4', 'Voice mode'), ratio: 1920 / 1080 },
+    {
+      // the live meeting board from the C26 Fall prototype ("Talk it through. Decide on the board."):
+      // public/media/ai/rda-matrix.html, built by scripts/prototype-scenes/build.ts rda-matrix
+      ...live(1, 'Real-time transcription', 'The meeting transcribes as it happens, and the board keeps up with the conversation.'),
+      media: { kind: 'embed', src: '/media/ai/rda-matrix.html', label: "A huddle transcript fills as Priya and Marcus talk; an impact and effort matrix lands on the board beside it, and Sidekick's cursor peels each option they mention off the transcript as a sticky and carries it into its quadrant, ending on the quick win" },
+      ratio: 1.2059, // the prototype's wide card (820 × 680)
+    },
+    { ...live(2, 'Decision models', 'A fast model reading the room in real time, so the canvas responds to what people mean.'), media: clip('jev2hands.mp4', 'Decision models', 'jev2hands.vtt'), ratio: SCREEN_HANDS },
+    {
+      id: 'ai-realtime-decisions-2',
+      eyebrow: 'Real-time',
+      title: 'Decision models continued',
+      body: 'This model can look at pictures. “Group by colour” puts a board of sweaters and tees into columns, and “group by if I should wear it to the beach” works too, with no one writing the groups first. Twelve pictures take about a second and a half.',
+      media: clip('picture-sorting-clef.mp4', 'the picture sorting clip'),
+      ratio: SCREEN,
+    },
+    {
+      // the live huddle scene from the C26 Fall prototype ("One tap and you’re talking"):
+      // public/media/ai/huddle.html, built by scripts/prototype-scenes/build.ts
+      ...live(5, 'Huddles', 'One tap on the headset and you’re talking, right on the board. Camera and mic are there when you want them, and everyone sees who’s in.'),
+      media: { kind: 'embed', src: '/media/ai/huddle.html', label: 'Ana taps the headset and a huddle opens on the board: people join as cursors with their video, and Claude listens in' },
+      ratio: 1.2059, // the prototype's wide card (820 × 680)
+    },
+    // last: out to the soundscape, its own page (ported from the C26 Fall prototype)
+    {
+      id: 'ai-realtime-soundscape',
+      eyebrow: 'Real-time',
+      title: 'Soundscape',
+      body: 'Soft, living sound tells you when someone joins, reacts, or an agent finishes. Quiet, interactive sound that makes the canvas feel alive — waiting music that moves with the board while agents work, soft cues when someone joins, reacts or finishes, and collaboration themes your team can pick for the room.',
+      // the soundscape's own 3D scene: a ring of stickies and reactions turning round its title
+      media: { kind: 'video', src: '/media/simplify/soundscape-ring.mp4', label: 'the soundscape’s turning ring of stickies and reactions' },
+      ratio: 16 / 9,
+      to: '/soundscape', // the whole card opens the soundscape
+    },
+  ],
+}

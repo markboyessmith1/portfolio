@@ -227,9 +227,11 @@ type Props = {
   inset?: number
   band?: number
   strength?: number
+  /** is the card on screen? Off screen it skips its per-frame render (after a first one) */
+  visible?: { current: boolean }
 }
 
-export function GlassEdge({ children, blur, spin, back, opacity, tilt, pose, shadowStrength = 1, accent = false, radius = 60, inset = 0, band = 80, strength = 28 }: Props) {
+export function GlassEdge({ children, visible, blur, spin, back, opacity, tilt, pose, shadowStrength = 1, accent = false, radius = 60, inset = 0, band = 80, strength = 28 }: Props) {
   const view = useThree((s) => s.size)
   // the View bleeds past the card (see .gl-view); the card itself is this size
   const size = { width: view.width / BLEED, height: view.height / BLEED }
@@ -346,9 +348,13 @@ export function GlassEdge({ children, blur, spin, back, opacity, tilt, pose, sha
 
   // Priority 0 runs before drei's View render (priority >= 1), so the texture
   // is fresh when the card quad is drawn.
+  const primed = useRef(false)
   useFrame((state, dt) => {
     const cam = innerCamera.current
     if (!cam) return
+    // off screen: nothing to draw (but render once first, so shaders compile at load)
+    if (visible && !visible.current && primed.current) return
+    primed.current = true
     if ((cam as THREE.PerspectiveCamera).isPerspectiveCamera) {
       const pc = cam as THREE.PerspectiveCamera
       const aspect = size.width / size.height

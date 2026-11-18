@@ -31,7 +31,7 @@ const NAME_IDLE = 12
 const NAME_SMALL = 10
 const MSG_PX = 14
 const MSG_LINE = 19
-const FONT = "'Inter', system-ui, sans-serif"
+const FONT = "'ABC Areal', 'Inter', system-ui, sans-serif"
 const REDUCED = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // one canvas to measure text widths in the pill's own font
@@ -61,6 +61,13 @@ export default function ChatCursor({ name, hue, say, charMs = 42 }: { name: stri
   const [typed, setTyped] = useState(0)
   const [talking, setTalking] = useState(false)
   const morphing = useRef(false)
+  // the pill is sized from canvas measurements, which don't wait for the web font: re-measure once ABC Areal is in
+  const [, setFontsIn] = useState(false)
+  useEffect(() => {
+    let live = true
+    document.fonts?.load(`500 ${MSG_PX}px 'ABC Areal'`).then(() => live && setFontsIn(true), () => {})
+    return () => { live = false }
+  }, [])
 
   useEffect(() => {
     if (!say) {

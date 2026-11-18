@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from 'react'
 
 /* A paged shelf (ported from the c26 prototype's PagedShelf): the headline
@@ -10,8 +11,14 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 
 export type ShelfMedia =
   | { kind: 'video'; src: string; label: string; captions?: string }
+  /** a still (a frame of an interactive scene, say): shown for the default run */
+  | { kind: 'image'; src: string; alt: string }
+  /** a live scene: a self-contained page (public/) in an iframe, e.g. a prototype animation */
+  | { kind: 'embed'; src: string; label: string }
   /** nothing: the card's own paper shows through (a type-only link card) */
   | { kind: 'blank' }
+  /** a blocked-out frame until the clip exists: a tinted panel naming what goes there */
+  | { kind: 'placeholder'; label: string }
 
 export type ShelfCardData = {
   id: string
@@ -23,6 +30,8 @@ export type ShelfCardData = {
   ratio?: number
   /** the whole card links out (new tab): the title goes big, `label` sits at the foot */
   link?: { href: string; label: string }
+  /** the whole card opens a page on this site, styled like any other card */
+  to?: string
 }
 
 export type ShelfData = {
@@ -35,7 +44,15 @@ export type ShelfData = {
 
 /** The row owns the clock: the active card plays from the top while
  *  `playing`, and tells the row how long it runs. */
-type Slide = { active: boolean; playing: boolean; report: (ms: number) => void }
+type Slide = {
+  active: boolean
+  playing: boolean
+  /** paused by the viewer, or still (reduced motion): no clip on the row may play */
+  held: boolean
+  /** the page has landed: the active card has finished sliding in */
+  live: boolean
+  report: (ms: number) => void
+}
 const SlideContext = createContext<Slide | null>(null)
 
 /** A card that doesn't say how long it runs (no clip) gets this long. */
@@ -110,19 +127,18 @@ function usePagedRow(shelf: ShelfData) {
   const clock = useRef({ turn: -1, elapsed: 0 })
   useEffect(() => {
     if (clock.current.turn !== turn) clock.current = { turn, elapsed: 0 }
+    // no autoplay: a row never turns its own page (swipe, drag, the dots or a peeking
+    // card do); the active card's clip loops in place instead
     if (!playing || !live) return
     const started = performance.now()
-    const advance = () => (held.current.on ? (held.current.due = true) : goTo(active + 1))
-    const t = window.setTimeout(advance, Math.max(0, runMs - clock.current.elapsed))
-    return () => {
-      window.clearTimeout(t)
-      clock.current.elapsed += performance.now() - started
-    }
+    return () => { clock.current.elapsed += performance.now() - started }
   }, [playing, live, turn, active, runMs, goTo])
 
   const slide = (i: number): Slide => ({
     active: i === active && (rowInView || still),
     playing: playing && live && i === active,
+    held: userPaused || still,
+    live,
     report: reporters[i]!,
   })
   return { shelf, count, rowRef, still, inView, active, turn, playing, userPaused, setUserPaused, held, runMs, goTo, slide, stageEl, setStageEl }
@@ -131,9 +147,9 @@ type Row = ReturnType<typeof usePagedRow>
 
 // ── Swipe and drag ───────────────────────────────────────────────────────
 /* Trackpad swipes, shift+wheel and click-drag (touch too) page the row. The
-   cards follow the fingers 1:1, then settle on the nearest page, or the next
-   one if the gesture went far enough or was a flick. One gesture is one page
-   at most: the rest of the trackpad's momentum is swallowed. Past an end it
+   cards follow the fingers 1:1 across the whole row, then settle on the card
+   the gesture reached (a short one still moves one), and a flick carries on a
+   card or more with its speed. The trackpad's momentum tail is then swallowed. Past an end it
    gives with resistance and springs back. Vertical wheel gestures are never
    touched, so the page scrolls as ever. */
 const SWIPE = {
@@ -197,7 +213,8 @@ function useSwipe(row: Row, { strip, bounded, step }: { strip?: RefObject<HTMLEl
       offset = base = shown = 0
       r.held.current.on = true
       const w = st?.() || el.clientWidth || 1
-      span = { w, lo: b && r.active === r.count - 1 ? 0 : -w, hi: b && r.active === 0 ? 0 : w }
+      // free across the whole row (several cards in one gesture); rubber only past its ends
+      span = { w, lo: b ? -(r.count - 1 - r.active) * w : -Infinity, hi: b ? r.active * w : Infinity }
       const s = stripEl()
       if (!s) return
       window.clearTimeout(settleTimer.current)
@@ -231,9 +248,18 @@ function useSwipe(row: Row, { strip, bounded, step }: { strip?: RefObject<HTMLEl
       const { row: r, bounded: b } = latest.current
       const { w } = span
       const x = base + offset
+      // as many cards as the gesture covered (a short one still counts as one), plus what a
+      // flick's speed carries on for
       const flick = Math.abs(v) >= SWIPE.FLICK_V ? Math.sign(v) : 0
-      let dir = Math.abs(x) >= SWIPE.PAGE_FRAC * w ? -Math.sign(x) : flick && (x === 0 || Math.sign(x) === flick) ? -flick : 0
-      if (b && ((dir < 0 && r.active === 0) || (dir > 0 && r.active === r.count - 1))) dir = 0
+      const travelled = Math.abs(x) / w
+      let n = travelled >= SWIPE.PAGE_FRAC ? Math.max(1, Math.round(travelled)) : 0
+      let sign = n ? -Math.sign(x) : 0
+      if (flick && (x === 0 || Math.sign(x) === flick)) {
+        sign = -flick
+        n = Math.max(n, 1) + Math.floor((Math.abs(v) - SWIPE.FLICK_V) * 4)
+      }
+      let dir = sign * n
+      if (b) dir = Math.max(-r.active, Math.min(r.count - 1 - r.active, dir))
       r.held.current.on = false
       const due = r.held.current.due
       r.held.current.due = false
@@ -438,8 +464,19 @@ function ShelfVideo({ src, label, captions }: { src: string; label: string; capt
   const [cue, setCue] = useState('')
   const slide = useContext(SlideContext)
   const report = slide?.report
-  const active = !!slide?.active
-  const playing = !!slide?.playing
+  const held = slide ? slide.held : false
+
+  // any clip on screen loops, the peeking neighbours too, not just the centred card
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const video = ref.current
+    if (!video) return
+    const io = new IntersectionObserver(([e]) => setVisible(e!.isIntersecting), { threshold: 0.25 })
+    io.observe(video)
+    return () => io.disconnect()
+  }, [])
+  // no waiting: it plays the moment it's on screen, sliding in or not
+  const playing = visible && !held
 
   useEffect(() => {
     const video = ref.current
@@ -450,23 +487,14 @@ function ShelfVideo({ src, label, captions }: { src: string; label: string; capt
     return () => video.removeEventListener('loadedmetadata', send)
   }, [report])
 
-  const wasActive = useRef(false)
   useEffect(() => {
     const video = ref.current
     if (!video) return
-    if (!active) {
-      wasActive.current = false
-      video.pause()
-      return
-    }
-    if (!wasActive.current) {
-      wasActive.current = true
+    if (playing) {
       if (video.readyState === 0) video.load()
-      video.currentTime = 0
-    }
-    if (playing) void video.play().catch(() => {})
-    else video.pause()
-  }, [active, playing])
+      void video.play().catch(() => {})
+    } else video.pause()
+  }, [playing])
 
   useEffect(() => {
     const track = trackRef.current?.track
@@ -479,7 +507,7 @@ function ShelfVideo({ src, label, captions }: { src: string; label: string; capt
 
   return (
     <>
-      <video ref={ref} src={src} muted playsInline preload="metadata" aria-label={label}>
+      <video ref={ref} src={src} muted loop playsInline preload="metadata" aria-label={label}>
         {captions && <track ref={trackRef} kind="captions" src={captions} srcLang="en" label="English" default />}
       </video>
       {cue && <p className="shelf-card__cue">{cue}</p>}
@@ -515,6 +543,21 @@ function CardFace({ card }: { card: ShelfCardData }) {
           <ShelfVideo src={card.media.src} label={card.media.label} captions={card.media.captions} />
         </div>
       )}
+      {card.media.kind === 'placeholder' && (
+        <div className="shelf-card__media shelf-card__placeholder" role="img" aria-label={`Placeholder: ${card.media.label}`}>
+          <span>{card.media.label}</span>
+        </div>
+      )}
+      {card.media.kind === 'image' && (
+        <div className="shelf-card__media">
+          <img src={card.media.src} alt={card.media.alt} loading="lazy" decoding="async" />
+        </div>
+      )}
+      {card.media.kind === 'embed' && (
+        <div className="shelf-card__media">
+          <iframe src={card.media.src} title={card.media.label} loading="lazy" />
+        </div>
+      )}
       {!card.link && <Highlight eyebrow={card.eyebrow} title={card.title} id={`${card.id}-title`} />}
       {card.link && (
         <>
@@ -529,8 +572,12 @@ function CardFace({ card }: { card: ShelfCardData }) {
       )}
     </article>
   )
+  if (card.to && !card.link) return <Link className="shelf-card__link" to={card.to}>{body}</Link>
   return card.link ? (
-    <a className="shelf-card__link" href={card.link.href} target="_blank" rel="noopener noreferrer">{body}</a>
+    // a page on this site opens in place; anywhere else, in a new tab
+    card.link.href.startsWith('/')
+      ? <Link className="shelf-card__link" to={card.link.href}>{body}</Link>
+      : <a className="shelf-card__link" href={card.link.href} target="_blank" rel="noopener noreferrer">{body}</a>
   ) : body
 }
 
@@ -541,8 +588,9 @@ function Fill({ row }: { row: Row }) {
   return (
     <i
       key={row.turn}
+      // no autoplay, so nothing to count down to: the active dot is simply filled
       style={
-        row.still
+        true
           ? { transform: 'none' }
           : { animationName: 'shelf-fill', animationDuration: `${row.runMs}ms`, animationTimingFunction: 'linear', animationFillMode: 'forwards', animationPlayState: row.playing ? 'running' : 'paused' }
       }
@@ -569,15 +617,6 @@ function Pager({ row }: { row: Row }) {
           </button>
         ))}
       </div>
-      {!row.still && (
-        <button type="button" className="shelf-pager__play" aria-label={row.userPaused ? `Play ${row.shelf.title}` : `Pause ${row.shelf.title}`} onClick={() => row.setUserPaused((p) => !p)}>
-          {row.userPaused ? (
-            <svg viewBox="0 0 16 16" aria-hidden><path d="M4.5 2.8v10.4L13 8z" fill="currentColor" /></svg>
-          ) : (
-            <svg viewBox="0 0 16 16" aria-hidden><path d="M4 3h3v10H4zM9 3h3v10H9z" fill="currentColor" /></svg>
-          )}
-        </button>
-      )}
     </div>
   )
 }
@@ -625,7 +664,24 @@ function useStageStrip(row: Row) {
 }
 
 /** `bare`: no headline (it's read, not shown) and no panel of its own, for a shelf set inside a case section */
+/** The highlighter's goo (`.shelf-hl__ink { filter: url(#shelf-goo) }`): blur the
+    yellow, then cut its alpha hard, which rounds every label box. Installed once on
+    <body> by whichever shelf mounts first, so shelves mounted outside <Shelves>
+    (the carousel's bare reels) still get it. */
+function useShelfGoo() {
+  useEffect(() => {
+    if (document.getElementById('shelf-goo')) return
+    const ns = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(ns, 'svg')
+    svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true')
+    svg.style.position = 'absolute'
+    svg.innerHTML = '<filter id="shelf-goo"><feGaussianBlur in="SourceGraphic" stdDeviation="5" /><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" /></filter>'
+    document.body.appendChild(svg)
+  }, [])
+}
+
 export function PagedShelf({ shelf, bare = false }: { shelf: ShelfData; bare?: boolean }) {
+  useShelfGoo()
   const row = usePagedRow(shelf)
   const strip = useStageStrip(row)
   useSwipe(row, { strip: strip.ref, bounded: true, step: () => strip.activeW })
@@ -669,17 +725,29 @@ export function PagedShelf({ shelf, bare = false }: { shelf: ShelfData; bare?: b
   )
 }
 
+/** The same cards, stacked down the column instead of paged: each at full width in
+ *  its own shape, every clip looping while it's on screen. */
+export function ShelfStack({ shelf }: { shelf: ShelfData }) {
+  useShelfGoo()
+  return (
+    <section className="shelf-stack" aria-label={shelf.title}>
+      {shelf.cards.map((card) => (
+        <figure className="shelf-stack__item" key={card.id}>
+          <div className="shelf-stack__card" style={{ aspectRatio: String(card.ratio ?? 16 / 10) }}>
+            <CardFace card={card} />
+          </div>
+          {/* the caption beneath, title and description run together, no highlighter */}
+          <figcaption className="shelf-stack__caption"><b>{card.title}</b> {card.body}</figcaption>
+        </figure>
+      ))}
+    </section>
+  )
+}
+
 /** The case study's closing run of shelves. */
 export default function Shelves({ shelves }: { shelves: ShelfData[] }) {
   return (
     <div className="shelves">
-      {/* the highlighter's goo: blur the yellow, then cut its alpha hard */}
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
-        <filter id="shelf-goo">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
-          <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" />
-        </filter>
-      </svg>
       {shelves.map((s) => <PagedShelf key={s.id} shelf={s} />)}
     </div>
   )

@@ -1,5 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useAccess } from '../lib/access'
+import { AccessDialog } from './RequestAccess'
 import { site, type CaseSection, type PanelLayout, type SceneKey, type WorkItem } from '../data/site'
 import { GLSlot } from '../webgl/GLSlot'
 import type { SpinState } from '../webgl/GlassEdge'
@@ -7,10 +9,23 @@ import { PortraitScene, scenes } from '../webgl/scenes'
 import Vignette from './miro/Vignettes'
 import CardStickers from './miro/CardStickers'
 import CaseBoard from './CaseBoard'
+import Timeline from './Timeline'
 import StatementReveal from './StatementReveal'
+import Storyboard from './Storyboard'
+import DarkField from './DarkField'
+import Figures from './Figures'
+import CaseLoader from './CaseLoader'
+import FilmTile from './FilmTile'
+import PrinciplesRow from './PrinciplesRow'
+import LaunchCelebration from './LaunchCelebration'
+import LensGlass from './LensGlass'
 import VideoEmbed from './VideoEmbed'
 import MiroLogo from './MiroLogo'
-import { PagedShelf } from './shelf/PagedShelf'
+import Wordmark, { hasWordmark } from './Wordmark'
+import { PagedShelf, ShelfStack } from './shelf/PagedShelf'
+
+/** TEMP: the reels (case-study shelves) are hidden while their placement is decided */
+const SHOW_REELS = false
 
 /**
  * One persistent component for the homepage AND every case study, so moving
@@ -250,12 +265,116 @@ function useTrackMotion(
   }, [track, blurs, marker, setActive])
 }
 
+/** Case mode: a chapter on a dark ground (.theme-dark). Its panel spans the window, so it's
+ *  told where the window's edges are relative to it (--edge-l / --edge-r, read on resize only:
+ *  the panel itself scrolls natively). The fixed header and footer flip to dark while they sit
+ *  over it (a class toggle on <html>, from a cheap check on scroll). */
+function useDarkRuns(enabled: boolean, left: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const runs = enabled ? [...(left.current?.querySelectorAll<HTMLElement>('.case-left__run.theme-dark') ?? [])] : []
+    if (!runs.length) return
+    const place = () => runs.forEach((r) => {
+      const b = r.getBoundingClientRect()
+      r.style.setProperty('--edge-l', `${Math.round(b.left)}px`)
+      r.style.setProperty('--edge-r', `${Math.round(window.innerWidth - b.right)}px`)
+    })
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(document.documentElement)
+    const settle = window.setTimeout(place, 1600) // after the copy column's slide-in
+    // are the fixed header (the window's top strip) and footer (its bottom strip) over
+    // the panel? (it reaches 200px past the chapter's copy at each end, = .theme-dark::before)
+    const over = (y: number) => runs.some((r) => { const b = r.getBoundingClientRect(); return b.top - 200 < y && b.bottom + 200 > y })
+    const check = () => {
+      const root = document.documentElement.classList
+      root.toggle('is-head-dark', over(44))
+      root.toggle('is-foot-dark', over(window.innerHeight - 32))
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => {
+      ro.disconnect()
+      window.clearTimeout(settle)
+      window.removeEventListener('scroll', check)
+      document.documentElement.classList.remove('is-foot-dark', 'is-head-dark')
+    }
+  }, [enabled, left])
+}
+
+/** a card out to a page of its own (the soundscape): a little scene of it, then the copy */
+function LinkCard({ card }: { card: NonNullable<CaseSection['linkCard']> }) {
+  return (
+    <Link className="link-card" to={card.href}>
+      <span className="link-card__visual" aria-hidden>
+        <span className="lc-ripple" /><span className="lc-ripple" /><span className="lc-ripple" />
+        <span className="lc-stickies">
+          <span className="lc-sticky lc-sticky--a">Kick-off in 5</span>
+          <span className="lc-sticky lc-sticky--b">Agent’s done!</span>
+          <span className="lc-sticky lc-sticky--c">Ana’s here</span>
+        </span>
+        <span className="lc-cursor lc-cursor--ana"><svg viewBox="0 0 12 12"><path d="M12 4.2V5.4C8.4 5.4 5.4 8.4 5.4 12H4.2L0 .7V.6L.6 0h.1L12 4.2z" /></svg><b>Ana joined</b></span>
+        <span className="lc-cursor lc-cursor--agent"><svg viewBox="0 0 12 12"><path d="M12 4.2V5.4C8.4 5.4 5.4 8.4 5.4 12H4.2L0 .7V.6L.6 0h.1L12 4.2z" /></svg><b>Sidekick · done</b></span>
+        <span className="lc-react">🎉</span>
+        <span className="lc-note lc-note--1">♪</span><span className="lc-note lc-note--2">♫</span><span className="lc-note lc-note--3">♪</span>
+      </span>
+      <span className="link-card__copy">
+        <span className="link-card__eyebrow">{card.eyebrow}</span>
+        <span className="link-card__title">{card.title}</span>
+        <span className="link-card__body">{card.body}</span>
+        <span className="link-card__cta">{card.label} <span aria-hidden>→</span></span>
+      </span>
+    </Link>
+  )
+}
+
+/** the number of a section's first figure: figures are numbered through the whole case */
+const figureStart = (sections: CaseSection[], i: number) =>
+  sections.slice(0, i).reduce((n, s) => n + (s.figures?.length ?? 0), 0) + 1
+
+/** Case mode: the copy fades in from a blur as it comes into view, block by block (each
+    heading, paragraph, list, table, band row…), once. Blocks arriving together follow one
+    another by a beat. A time-based transition set off on entry (not scrubbed by the scroll),
+    and opacity/filter only, so nothing moves and the layout's measurements hold. Things with
+    their own entrance keep it: the header, metrics, the timeline, the keynote's glass card
+    (a filter on it would blind its glass while it played). Styles: .blur-in */
+const BLUR_IN = [
+  '.case-left__chapter', '.case-left__chapter-lead',
+  '.case-left__section:not(.is-band):not(.case-finale) > :not(.waypoint):not(.case-uses):not(dialog)',
+  '.case-uses > *',
+  '.band__cols > *', '.band__visual', '.band > .film', '.band__shelf', '.principles-row__item',
+  '.case-finale__title',
+].join(', ')
+function useBlurIn(enabled: boolean, left: React.RefObject<HTMLDivElement | null>, key?: string) {
+  useEffect(() => {
+    const root = left.current
+    if (!enabled || !root || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const els = [...root.querySelectorAll<HTMLElement>(BLUR_IN)].filter((el) => !el.closest('.timeline, .case-metrics'))
+    els.forEach((el) => el.classList.add('blur-in'))
+    const io = new IntersectionObserver((entries) => {
+      let k = 0
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return
+        const el = e.target as HTMLElement
+        el.style.transitionDelay = `${Math.min(k++, 5) * 70}ms`
+        el.classList.add('is-in')
+        io.unobserve(el)
+      })
+    }, { rootMargin: '0px 0px -6% 0px' })
+    els.forEach((el) => io.observe(el))
+    return () => { io.disconnect(); els.forEach((el) => { el.classList.remove('blur-in', 'is-in'); el.style.transitionDelay = '' }) }
+  }, [enabled, left, key])
+}
+
 /** Case mode: slide the pinned panel stack to match the section in view. */
 function useCasePanels(
   enabled: boolean,
   left: React.RefObject<HTMLDivElement | null>,
   track: React.RefObject<HTMLDivElement | null>,
+  /** told the panel in view whenever it changes (-1: none, e.g. below desktop) */
+  onStep?: (k: number) => void,
 ) {
+  const stepRef = useRef(onStep)
+  stepRef.current = onStep
   useEffect(() => {
     const el = track.current
     if (!el) return
@@ -276,7 +395,7 @@ function useCasePanels(
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick)
       const dots = left.current?.querySelectorAll<HTMLElement>('[data-panel] .waypoint')
-      if (!dots?.length || !isDesktop()) { el.style.transform = ''; clear(); return }
+      if (!dots?.length || !isDesktop()) { el.style.transform = ''; clear(); if (current !== -1) { current = -1; stepRef.current?.(-1) }; return }
       const vh = window.innerHeight
       const line = vh * 0.2
       const items = [...el.children] as HTMLElement[]
@@ -298,7 +417,10 @@ function useCasePanels(
           // travel 1:1 with the copy over the panel's own distance, arriving as
           // the copy reaches the card's top (the statement settles centred)
           const dist = Math.max(1, (rest[i] ?? 0) - (rest[i - 1] ?? 0))
-          const arrive = sec?.dataset.smooth === 'statement' ? vh * 0.5 : pinTop
+          const centred = (e?: HTMLElement | null) => e?.dataset.smooth === 'statement' || e?.dataset.smooth === 'timeline'
+          const arrive = centred(sec) ? vh * 0.5 : pinTop
+          // the visual holds still until the next one is incoming: travel is driven by the
+          // incoming section's waypoint (out of a statement too, rather than its own)
           const t = Math.max(0, Math.min(1, (arrive + dist - y) / dist))
           if (t > 0 && t < 1) linear = true
           target += t
@@ -321,6 +443,7 @@ function useCasePanels(
       } else if (!linear && k !== current) outgoing = -1
       // once it has faded, let go: held out of place it stretches the page's scroll height
       if (linear || now - outgoingAt > 500) outgoing = -1
+      if (k !== current) stepRef.current?.(k)
       current = k
       items.forEach((it, i) => {
         it.style.opacity = i === k || (linear && i === k + 1) ? '1' : '0'
@@ -345,6 +468,142 @@ const backFor = (w: WorkItem) => {
 }
 
 /** consecutive sections sharing a `group` become one run (a chapter with sub-chapters) */
+/** a metric's value: the new number sits in a quiet box (in a "before → after"
+    change, just the after; a single figure is all new). Once `run` is set, the new
+    number counts up: from the before figure in a change, from zero otherwise. */
+function MetricValue({ value, run, delay }: { value: string; run: boolean; delay: number }) {
+  const [before, after] = value.split(' → ')
+  if (after === undefined) return <span className="case-metrics__new case-metrics__new--solo"><Count text={value} from={0} run={run} delay={delay} /></span>
+  return <>{before}<span className="case-metrics__arrow" aria-hidden>→</span><span className="sr-only"> to </span><span className="case-metrics__new"><Count text={after} from={parseFloat(before.replace(/[^\d.-]/g, '')) || 0} run={run} delay={delay} /></span></>
+}
+
+/** a figure that counts up to its value ("+35%", "37%"): the first number in the text
+    eases from `from` to its final value, keeping its prefix, suffix and decimals.
+    Screen readers get the final text; the moving copy is hidden from them. */
+function Count({ text, from, run, delay, duration = 1500 }: { text: string; from: number; run: boolean; delay: number; duration?: number }) {
+  const out = useRef<HTMLSpanElement>(null)
+  const m = text.match(/-?\d+(?:\.(\d+))?/)
+  const to = m ? parseFloat(m[0]) : 0
+  const dp = m?.[1]?.length ?? 0
+  const fmt = (n: number) => (m ? text.slice(0, m.index) + n.toFixed(dp) + text.slice(m.index! + m[0].length) : text)
+  useEffect(() => {
+    const el = out.current
+    if (!el || !m) return
+    if (!run || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = run ? text : fmt(from); return }
+    let raf = 0
+    const t0 = performance.now() + delay
+    const tick = (now: number) => {
+      const t = Math.min(1, Math.max(0, (now - t0) / duration))
+      // ease-out expo: quick off the mark, a long soft settle onto the final figure
+      const e = t === 1 ? 1 : 1 - Math.pow(2, -10 * t)
+      el.textContent = fmt(from + (to - from) * e)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run, text, from, delay, duration])
+  if (!m) return <>{text}</>
+  return <><span className="sr-only">{text}</span><span ref={out} aria-hidden>{fmt(from)}</span></>
+}
+
+/** true once the element has come properly into view (then stays true) */
+function useSeen<T extends Element>(ref: React.RefObject<T | null>, threshold = 0.35) {
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || seen) return
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } }, { threshold })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [ref, seen, threshold])
+  return seen
+}
+
+/** the roll-up metrics: arrives once it's in view — the card, then each figure in turn,
+    its number counting up as it lands (and the feature's line drawing across) */
+function CaseMetrics({ metrics }: { metrics: NonNullable<WorkItem['metrics']> }) {
+  const ref = useRef<HTMLDListElement>(null)
+  const seen = useSeen(ref)
+  return (
+    <dl className={`case-metrics${seen ? ' is-in' : ''}`} ref={ref}>
+      {metrics.map((m, i) => (
+        <div className={`case-metrics__item${m.trend ? ' is-feature' : ''}`} key={m.label} style={{ '--i': i } as React.CSSProperties}>
+          <dt className="case-metrics__label">{m.label}</dt>
+          <dd className="case-metrics__value"><MetricValue value={m.value} run={seen} delay={250 + i * 140} /></dd>
+          {m.trend && <dd className="case-metrics__chart"><Trend points={m.trend} end={m.trendEnd} /></dd>}
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/** a metric's rough line: the values stretched to fill the box, with a soft
+    fill beneath and a faint drop under the latest value (an illustration, not a chart) */
+function Trend({ points, end }: { points: number[]; end?: string }) {
+  const lo = Math.min(...points), hi = Math.max(...points)
+  const xy = points.map((v, i) => [(i / (points.length - 1)) * 100, 36 - ((v - lo) / (hi - lo || 1)) * 32] as const)
+  // a smooth curve through the points (Catmull-Rom, as cubic Béziers)
+  const f = (n: number) => n.toFixed(2)
+  const line = xy.reduce((d, [x, y], i) => {
+    if (i === 0) return `M${f(x)},${f(y)}`
+    const [x0, y0] = xy[i - 2] ?? xy[i - 1]
+    const [x1, y1] = xy[i - 1]
+    const [x3, y3] = xy[i + 1] ?? [x, y]
+    return `${d} C${f(x1 + (x - x0) / 6)},${f(y1 + (y - y0) / 6)} ${f(x - (x3 - x1) / 6)},${f(y - (y3 - y1) / 6)} ${f(x)},${f(y)}`
+  }, '')
+  const [ex, ey] = xy[xy.length - 1]
+  // the line runs from yellow to purple, left to right (user space: across the whole box)
+  const hue = (id: string) => (
+    <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0">
+      <stop offset="0" style={{ stopColor: 'var(--miro-yellow-500)' }} />
+      <stop offset="1" style={{ stopColor: 'var(--miro-lilac-600)' }} />
+    </linearGradient>
+  )
+  return (
+    <div className="trend" aria-hidden>
+    <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+      <defs>
+        {hue('trend-hue')}
+        {/* the light under the line, in the line's colours: fades away downward, and
+            out at both ends (no hard edge under the latest value) */}
+        <linearGradient id="trend-down" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity=".3" />
+          <stop offset=".75" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="trend-ends" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset=".35" stopColor="#fff" stopOpacity="1" />
+          <stop offset=".75" stopColor="#fff" stopOpacity="1" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <mask id="trend-mask-down" maskContentUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="100" height="40" fill="url(#trend-down)" />
+        </mask>
+        <mask id="trend-mask-ends" maskContentUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="100" height="40" fill="url(#trend-ends)" />
+        </mask>
+      </defs>
+      <g className="trend__fill" mask="url(#trend-mask-ends)">
+        <path d={`${line} L100,40 L0,40 Z`} fill="url(#trend-hue)" mask="url(#trend-mask-down)" />
+      </g>
+      <path d={line} fill="none" stroke="url(#trend-hue)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+    {/* a faint drop from the latest value to the foot, and its label (HTML, so neither
+        stretches with the box) */}
+    <span className="trend__drop" style={{ left: `${ex}%`, top: `${(ey / 40) * 100}%` }} />
+    {end && <span className="trend__end" style={{ left: `${ex}%` }}>{end}</span>}
+    </div>
+  )
+}
+
+/** a section's heading: an h3 under a major chapter's h2, else an h2 of its own */
+function ChapterHeading({ s }: { s: CaseSection; all?: CaseSection[] }) {
+  // a sub-point (s.sub) drops a level again: h4, set smaller
+  const H = s.sub ? 'h4' : s.group ? 'h3' : 'h2'
+  return <H className={`case-left__h2${s.sub ? ' case-left__h2--sub' : ''}`}>{s.heading}</H>
+}
+
 function runsOf(sections: CaseSection[]) {
   const runs: { group?: string; items: { s: CaseSection; i: number }[] }[] = []
   sections.forEach((s, i) => {
@@ -357,11 +616,11 @@ function runsOf(sections: CaseSection[]) {
 
 type Panel = { key: string; scene: SceneKey; item?: WorkItem; layout?: PanelLayout; more?: SceneKey[]; section?: CaseSection }
 /** layouts that span both columns: the copy column gives way */
-const spans = (l?: PanelLayout) => l === 'full' || l === 'columns' || l === 'statement' || l === 'split'
+const spans = (l?: PanelLayout) => l === 'full' || l === 'columns' || l === 'statement' || l === 'split' || l === 'timeline'
 
 export default function Carousel() {
   const { slug } = useParams()
-  const caseItem = slug ? site.work.find((w) => w.href === `/work/${slug}`) : undefined
+  const caseItem: WorkItem | undefined = slug ? site.work.find((w) => w.href === `/work/${slug}`) : undefined
   const mode: 'home' | 'case' = caseItem ? 'case' : 'home'
 
   const track = useRef<HTMLDivElement>(null)
@@ -409,7 +668,25 @@ export default function Carousel() {
   usePagedScroll(track, mode === 'home')
 
   useTrackMotion(track, blurs, marker, setActive)
-  useCasePanels(mode === 'case', left, track)
+  // the opening story canvas: which chapter the board shows for the panel in view
+  const [step, setStep] = useState(0)
+  const chapters = caseItem?.sections.map((s) => s.storyboard ?? null) ?? []
+  // each run of consecutive storied sections is one Storyboard; a section that opens a
+  // themed chapter (the dark flip) starts a new one, so no board spans the flip
+  const boards = chapters.reduce<{ first: number; last: number }[]>((acc, c, i) => {
+    if (!c) return acc
+    const prev = acc[acc.length - 1]
+    if (prev && prev.last === i - 1 && !caseItem!.sections[i].theme) prev.last = i
+    else acc.push({ first: i, last: i })
+    return acc
+  }, [])
+  useCasePanels(mode === 'case', left, track, setStep)
+  useDarkRuns(mode === 'case', left)
+  // the case page is held back until its loader has gone, then fades in (and its
+  // copy's blur-in starts only then, so the first screen's blocks arrive in turn)
+  const [loaded, setLoaded] = useState<string | null>(null)
+  const ready = mode === 'case' && loaded === caseItem?.href
+  useBlurIn(ready, left, caseItem?.href)
 
   // reset scroll before paint on mode change, so the clicked card (now panel 0,
   // pinned at the same spot) never jumps
@@ -443,6 +720,24 @@ export default function Carousel() {
     timer.current = window.setTimeout(() => setTransition(false), 2500)
   }
 
+  // locked: selecting a card asks for an email first (one approval opens every case study);
+  // once they're in, the card flips and opens exactly as if they'd been signed in all along
+  const access = useAccess()
+  const navigate = useNavigate()
+  const [gate, setGate] = useState<WorkItem | null>(null)
+  const select = (e: ReactMouseEvent, item: WorkItem) => {
+    if (mode === 'case') { e.preventDefault(); return }
+    if (!access?.granted) { e.preventDefault(); setGate(item); return }
+    open(item)
+  }
+  const enter = () => {
+    const item = gate
+    setGate(null)
+    if (!item) return
+    open(item)
+    navigate(item.href)
+  }
+
   const goTo = (i: number) => {
     (track.current?.children[i] as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -451,7 +746,7 @@ export default function Carousel() {
   const shown = caseItem ?? returning ?? undefined
 
   return (
-    <section className={`carousel carousel--${mode}${transition ? ' is-transitioning' : ''}`}>
+    <section className={`carousel carousel--${mode}${transition ? ' is-transitioning' : ''}${mode === 'case' && !ready ? ' is-case-loading' : ''}`}>
       {/* always-present sticky rail: holds the stepper, defines the pinned spot */}
       <div className="carousel__rail" aria-hidden={false}>
         <div className="carousel__rail-pin">
@@ -507,38 +802,147 @@ export default function Carousel() {
             {shown!.brand === 'miro' ? <MiroLogo height={26} className="case-left__brand" /> : <p className="eyebrow">Case study</p>}
             <h1 className="case-left__title">{shown!.headline ?? shown!.title}</h1>
             {!shown!.headline && <p className="lede muted">{shown!.description}</p>}
-            {shown!.intro && <p className="case-left__intro">{shown!.intro}</p>}
-            {shown!.video && <VideoEmbed video={shown!.video} />}
+            {shown!.intro?.split('\n\n').map((para, i) => <p key={i} className="case-left__intro">{para}</p>)}
+            {shown!.metrics && <CaseMetrics metrics={shown!.metrics} />}
           </header>
           {runsOf(shown!.sections).map((run) => {
             const one = (s: CaseSection, i: number, row?: number) => (
               <section
-                className={`case-left__section${spans(s.layout) ? ' is-full' : ''}${run.group ? ' is-sub' : ''}`}
+                className={`case-left__section${spans(s.layout) ? ' is-full' : ''}${s.layout === 'band' ? ' is-band' : ''}${s.titleSize === 'xl' ? ' is-xl' : ''}${s.layout === 'finale' ? ' case-finale' : ''}${run.group ? ' is-sub' : ''}`}
                 data-panel={i}
-                data-smooth={s.layout === 'statement' || s.layout === 'split' ? s.layout : undefined}
+                // a band travels too: the pinned card above it scrolls away just ahead of it,
+                // like content, rather than sitting over it until a crossfade
+                data-smooth={s.layout === 'statement' || s.layout === 'split' || s.layout === 'timeline' || s.layout === 'band' ? s.layout : undefined}
                 key={s.heading}
                 style={row ? { gridRow: row } : undefined}
               >
                 {/* waypoint (invisible): where the right-hand panel advances / retreats */}
                 <span className="waypoint" aria-hidden />
                 {/* full-width sections carry their copy on the panel itself; untitled ones are spacers */}
-                {!spans(s.layout) && s.heading && (
+                {/* the finale: a very large title, centred on the screen, with the keynote over its foot */}
+                {s.layout === 'finale' && (
+                  <div className="case-finale__inner">
+                    <h2 className="case-finale__title">{s.heading}</h2>
+                    {shown!.video && (
+                      <div className="case-finale__video">
+                        {/* notes of praise, tucked behind the card and poking out from its edges */}
+                        <LaunchCelebration />
+                        {/* the card's glass: real lens refraction and aberration round its rim */}
+                        <LensGlass id="finale-glass" target=".video-embed" radius={24} bezel={10} />
+                        <VideoEmbed video={shown!.video} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {s.linkCard && <LinkCard card={s.linkCard} />}
+                {/* a band: the section's own copy across both columns, in the page's flow */}
+                {s.layout === 'band' && (
+                  <div className="band">
+                    {(s.heading || s.body.length > 0) && <div className="band__cols">
+                      {/* a band outside any chapter is a chapter of its own: its title at chapter size */}
+                      {s.group ? <ChapterHeading s={s} all={shown!.sections} /> : <h2 className="band__title">{s.heading}</h2>}
+                      {s.body.map((b) => <p className="lede" key={b}>{b}</p>)}
+                    </div>}
+                    {s.film
+                      ? <FilmTile {...s.film} />
+                      : s.placeholder && <div className="band__visual" role="img" aria-label="Visual to come"><span>16:9 visual</span></div>}
+                    {s.rows?.map((r, ri) => r.aside ? (
+                      // copy on the left, its shelf beside it on the right
+                      <div className={`band__row band__row--aside${r.stack ? ' band__row--stack' : ''}`} key={r.title ?? `row-${ri}`}>
+                        <div className="band__aside-copy">
+                          {r.title && <h3 className="band__row-title">{r.title}</h3>}
+                          {(Array.isArray(r.body) ? r.body : r.body ? [r.body] : []).map((b) => <p className="lede" key={b}>{b}</p>)}
+                        </div>
+                        {r.shelf && (r.stack
+                          ? <div className="band__aside-media"><ShelfStack shelf={r.shelf} /></div>
+                          : <div className="band__shelf-reel band__aside-media"><PagedShelf shelf={r.shelf} bare /></div>)}
+                      </div>
+                    ) : (
+                      // no title or copy: the row is just its visual, tucked up under the one above
+                      <div className={`band__row${r.title || r.body || r.linkCard ? '' : ' band__row--tight'}`} key={r.title ?? `row-${ri}`}>
+                        {(r.title || r.body || r.linkCard) && <div className="band__cols">
+                          {r.title && <h3 className="band__row-title">{r.title}</h3>}
+                          {r.body && <p className="lede band__row-body">{Array.isArray(r.body) ? r.body.join(' ') : r.body}</p>}
+                          {r.linkCard && <div className="band__row-card"><LinkCard card={r.linkCard} /></div>}
+                        </div>}
+                        {/* three principles side by side; else the row's shelf of examples, or a
+                            blocked-out space until it's made */}
+                        {r.principles
+                          ? <PrinciplesRow items={r.principles} />
+                          : r.shelf
+                            ? <div className="band__shelf-reel"><PagedShelf shelf={r.shelf} bare /></div>
+                            : <div className="band__shelf" role="img" aria-label="Examples to come"><span>Shelf of examples</span></div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!spans(s.layout) && s.layout !== 'band' && s.layout !== 'finale' && s.heading && (
                   <>
                     {/* a chapter's title sits in the margin; a sub-chapter's leads its copy */}
-                    <h2 className="case-left__h2">{s.heading}</h2>
-                    {s.body.map((b) => <p className="lede" key={b}>{b}</p>)}
+                    <ChapterHeading s={s} all={shown!.sections} />
+                    {(s.list ? s.body.slice(0, 1) : s.body).map((b) => <p className="lede" key={b}>{b}</p>)}
+                    {s.list && (
+                      <>
+                        {(() => {
+                          // the last `listApart` items sit on a card of their own, joined by a plus
+                          const cut = s.list.length - (s.listApart ?? 0)
+                          const item = (it: { title: string; text: string }, n: number) => (
+                            <li className="case-list__item" key={it.title}>
+                              <span className="case-list__num" aria-hidden>{String(n + 1).padStart(2, '0')}</span>
+                              <span className="case-list__body"><b className="case-list__title">{it.title}</b> {it.text}</span>
+                            </li>
+                          )
+                          return (
+                            <>
+                              <ol className="case-list">{s.list.slice(0, cut).map((it, n) => item(it, n))}</ol>
+                              {cut < s.list.length && (
+                                <>
+                                  <span className="case-list__plus" aria-hidden>+</span>
+                                  <ol className="case-list case-list--apart" start={cut + 1}>{s.list.slice(cut).map((it, n) => item(it, cut + n))}</ol>
+                                </>
+                              )}
+                            </>
+                          )
+                        })()}
+                        {s.body.slice(1).map((b) => <p className="lede" key={b}>{b}</p>)}
+                      </>
+                    )}
+                    {s.bullets && (
+                      <ul className="case-bullets lede">
+                        {s.bullets.map((b) => typeof b === 'string'
+                          ? <li key={b}>{b}</li>
+                          : <li key={b.title}><b>{b.title}</b>: {b.text}</li>)}
+                      </ul>
+                    )}
+                    {s.table && (
+                      <table className="case-table">
+                        <thead><tr>{s.table.head.map((h) => <th key={h} scope="col">{h}</th>)}</tr></thead>
+                        <tbody>{s.table.rows.map((r) => <tr key={r[0]}>{r.map((c, j) => j === 0 ? <th key={j} scope="row">{c}</th> : <td key={j}>{c}</td>)}</tr>)}</tbody>
+                      </table>
+                    )}
+                    {s.after?.map((b) => <p className="lede" key={b}>{b}</p>)}
+                    {s.figures && <Figures items={s.figures} start={figureStart(shown!.sections, i)} />}
+                    {s.useCases && (
+                      <div className="case-uses">
+                        <p className="lede"><b>{s.useCases.label}</b></p>
+                        <p className="lede">{s.useCases.intro}</p>
+                        <ul className="case-bullets lede">
+                          {s.useCases.items.map((it) => <li key={it.title}><b>{it.title}</b>: {it.text}</li>)}
+                        </ul>
+                      </div>
+                    )}
                   </>
                 )}
               </section>
             )
             if (!run.group) return run.items.map(({ s, i }) => one(s, i))
-            // a chapter with sub-chapters: its title rides in the margin for the whole run
+            // a major chapter: its name is a larger heading in the copy, above its sections
             return (
-              <div className="case-left__run" key={run.group}>
-                <div className="case-left__run-label" style={{ gridRow: `1 / span ${run.items.length}` }}>
-                  <p className="case-left__chapter">{run.group}</p>
-                </div>
-                {run.items.map(({ s, i }, k) => one(s, i, k + 1))}
+              <div className={`case-left__run${run.items[0].s.theme === 'dark' ? ' theme-dark' : ''}`} key={run.group}>
+                {run.items[0].s.theme === 'dark' && <DarkField />}
+                <h2 className="case-left__chapter">{run.group}</h2>
+                {run.items[0].s.chapterLead && <p className="lede case-left__chapter-lead">{run.items[0].s.chapterLead}</p>}
+                {run.items.map(({ s, i }, k) => one(s, i, k + (run.items[0].s.chapterLead ? 3 : 2)))}
               </div>
             )
           })}
@@ -546,15 +950,43 @@ export default function Carousel() {
         </div>
       )}
 
-      <div className="carousel__track-wrap">
+      {/* preloads the case's pictures and fonts, and warms the 3D cards, before it's seen */}
+      {mode === 'case' && caseItem && (
+        <CaseLoader
+          id={caseItem.href}
+          onDone={() => setLoaded(caseItem.href)}
+          urls={[
+            ...caseItem.sections.flatMap((s) => s.figures?.map((f) => f.src) ?? []),
+            ...caseItem.sections.flatMap((s) => (s.film?.poster ? [s.film.poster] : [])),
+            ...(caseItem.video ? [`https://i.ytimg.com/vi/${caseItem.video.id}/maxresdefault.jpg`] : []),
+          ]}
+        />
+      )}
+      <div className="carousel__track-wrap" data-gl-fade>
+        {/* Storyboards: one pinned board per run of storied panels (desktop); the panels' own boards hide beneath */}
+        {mode === 'case' && step >= 0 && boards.map((b) => (
+          <Storyboard
+            key={b.first}
+            first={b.first}
+            last={b.last}
+            chapter={step >= b.first && step <= b.last ? chapters[step] : null}
+            lead={chapters[b.first]!}
+            mission={caseItem!.sections.find((s) => s.storyboard === 'mission')?.mission}
+          />
+        ))}
         <div className="carousel__track" ref={track}>
           {panels.map((p, i) => (
-            <div className="carousel__item" data-gl-fade key={p.key}>
+            <div className={`carousel__item${mode === 'case' && chapters[i] ? ' is-storied' : ''}`} data-gl-fade key={p.key}>
               {p.item ? (
-                <Link className="carousel__link" to={p.item.href} onClick={(e) => { if (mode === 'case') { e.preventDefault(); return } open(p.item!) }} tabIndex={mode === 'case' ? -1 : 0}>
+                <Link className="carousel__link" to={p.item.href} onClick={(e) => select(e, p.item!)} tabIndex={mode === 'case' ? -1 : 0}>
                   <GLSlot variant="wide" scene={scenes[p.scene]} flat={FLAT_SCENES.has(p.scene)} blur={blurs.current[i]} spin={spinFor(p.key)} back={backFor(p.item)} tilt className={toneClass(p.scene)}>
                     <div className="stack stack--tight">
-                      <h2 className="title">{p.item.title}</h2>
+                      {/* the business's logo stands in for the title (text title until a logo exists) */}
+                      <h2 className="title">
+                        {hasWordmark(p.item.logo)
+                          ? <Wordmark name={p.item.logo!} label={p.item.title} className="title__logo" />
+                          : p.item.title}
+                      </h2>
                       <p className="lede">{p.item.description}</p>
                     </div>
                   </GLSlot>
@@ -570,19 +1002,32 @@ export default function Carousel() {
                     {p.item.stickers && <CardStickers delay={1100} />}
                   </>
                 )
+              ) : p.layout === 'band' || p.layout === 'finale' ? (
+                // a band carries its content in the copy column (page flow): no card here
+                <div className="panel" />
               ) : p.layout === 'split' && p.section ? (
                 // the copy across both columns, then the section's shelf full width
+                // (centred across the screen instead, all its paragraphs together, when it has a
+                // single paragraph or a placeholder visual beneath)
                 <div className="panel panel--split">
-                  <div className="panel__stage split">
+                  <div className={`panel__stage split${p.section.body.length === 1 || p.section.placeholder ? ' split--centred' : ''}`}>
                     <div className="split__copy">
-                      <h2 className="case-left__h2">{p.section.heading}</h2>
-                      {p.section.body[0] && <p className="lede">{p.section.body[0]}</p>}
+                      <ChapterHeading s={p.section} all={caseItem?.sections ?? shown!.sections} />
+                      {(p.section.placeholder ? p.section.body : p.section.body.slice(0, 1)).map((b) => <p className="lede" key={b}>{b}</p>)}
                     </div>
-                    <div className="split__copy split__copy--right">
-                      {p.section.body.slice(1).map((b) => <p className="lede" key={b}>{b}</p>)}
-                    </div>
-                    {p.section.shelf && <div className="split__shelf"><PagedShelf shelf={p.section.shelf} bare /></div>}
+                    {p.section.body.length > 1 && !p.section.placeholder && (
+                      <div className="split__copy split__copy--right">
+                        {p.section.body.slice(1).map((b) => <p className="lede" key={b}>{b}</p>)}
+                      </div>
+                    )}
+                    {SHOW_REELS && p.section.shelf && <div className="split__shelf"><PagedShelf shelf={p.section.shelf} bare /></div>}
+                    {p.section.placeholder && <div className="split__placeholder" role="img" aria-label="Visual to come"><span>16:9 visual</span></div>}
                   </div>
+                </div>
+              ) : p.layout === 'timeline' && p.section?.timeline ? (
+                // full width, like the statement: the timeline builds in as it's reached
+                <div className="panel panel--statement">
+                  <div className="panel__stage"><Timeline data={p.section.timeline} /></div>
                 </div>
               ) : p.layout === 'statement' && p.section?.statement ? (
                 // one sentence centred across both columns, no card behind it
@@ -610,9 +1055,11 @@ export default function Carousel() {
                     .map((k, j) => (
                       <GLSlot key={j} variant="fill" scene={scenes[k]} blur={blurs.current[i]} className={toneClass(k)}>
                         {p.section?.vignettes?.[j] && <Vignette k={p.section.vignettes[j]} />}
+                        {/* a statement on an ordinary card: the sentence written live on the card's board */}
+                        {j === 0 && p.section?.statement && <div className="panel__board"><StatementReveal script={p.section.statement} /></div>}
                         {p.layout === 'full' && j === 0 && p.section ? (
                           <div className="panel__copy">
-                            <h2 className="case-left__h2">{p.section.heading}</h2>
+                            <ChapterHeading s={p.section} all={caseItem?.sections ?? shown!.sections} />
                             {p.section.body.map((b) => <p className="lede" key={b}>{b}</p>)}
                           </div>
                         ) : null}
@@ -624,6 +1071,14 @@ export default function Carousel() {
           ))}
         </div>
       </div>
+      <AccessDialog
+        open={!!gate}
+        onClose={() => setGate(null)}
+        onGranted={enter}
+        slug={gate?.href.replace('/work/', '')}
+        title={gate?.title ?? ''}
+        lede="Enter your email to open this case study."
+      />
     </section>
   )
 }

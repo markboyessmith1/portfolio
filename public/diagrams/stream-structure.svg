@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1212 858" width="1212" height="858" role="img" aria-label="AI stream structure: five formal teams and two virtual teams" font-family="'ABC Areal','Inter',system-ui,sans-serif">
+<title>AI stream structure: five formal teams and two virtual teams</title>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#8A8781"/></marker>
+<marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#8A8781"/></marker>
+</defs>
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="12" cy="12" r="1.2" fill="#D9D9D9"/></pattern>
+<rect width="1212" height="858" rx="40" fill="#FFFFFF"/><rect width="1212" height="858" rx="40" fill="url(#dots)"/>
+<text x="56" y="68" font-size="12" font-weight="500" fill="#8A8781" text-anchor="start"><tspan x="56" dy="0.0">Teams</tspan></text>
+<text x="416" y="68" font-size="12" font-weight="500" fill="#8A8781" text-anchor="start"><tspan x="416" dy="0.0">Scope and key product increments</tspan></text>
+<text x="56" y="95" font-size="12" font-weight="600" fill="#3859ff" text-anchor="start"><tspan x="56" dy="0.0">5 formal teams</tspan></text>
+<rect x="56" y="106" width="340" height="84" rx="12" fill="#f2f4fc" stroke="#3859ff"/>
+<text x="70" y="130" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Surface</tspan></text>
+<text x="70" y="148" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Build the experiences that make AI feel like a</tspan><tspan x="70" dy="14.3">first-class citizen of the canvas.</tspan></text>
+<rect x="416" y="106" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="152.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">All conversational UI</tspan></text>
+<rect x="604" y="106" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="144.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">Sidekicks &amp; Custom</tspan><tspan x="692.0" dy="15.0">Sidekicks</tspan></text>
+<rect x="792" y="106" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="880.0" y="152.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="880.0" dy="0.0">Flows</tspan></text>
+<rect x="980" y="106" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="1068.0" y="144.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="1068.0" dy="0.0">Cursors, presence &amp;</tspan><tspan x="1068.0" dy="15.0">progress</tspan></text>
+<rect x="56" y="202" width="340" height="84" rx="12" fill="#f2f4fc" stroke="#3859ff"/>
+<text x="70" y="226" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Behaviour</tspan></text>
+<text x="70" y="244" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Shape how agents actually behave, and make it easy</tspan><tspan x="70" dy="14.3">for users and businesses to customise that</tspan><tspan x="70" dy="14.3">behaviour.</tspan></text>
+<rect x="416" y="202" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="240.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">Governance layer for</tspan><tspan x="504.0" dy="15.0">agentic behaviour</tspan></text>
+<rect x="604" y="202" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="240.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">Skills, Custom Skills,</tspan><tspan x="692.0" dy="15.0">3p Skills</tspan></text>
+<rect x="792" y="202" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="880.0" y="240.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="880.0" dy="0.0">Prompt recommendations &amp;</tspan><tspan x="880.0" dy="15.0">next best action</tspan></text>
+<rect x="56" y="298" width="340" height="84" rx="12" fill="#f2f4fc" stroke="#3859ff"/>
+<text x="70" y="322" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Context</tspan></text>
+<text x="70" y="340" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Give AI an understanding of the board and the work,</tspan><tspan x="70" dy="14.3">and a memory of its own.</tspan></text>
+<rect x="416" y="298" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="336.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">Board and work</tspan><tspan x="504.0" dy="15.0">understanding</tspan></text>
+<rect x="604" y="298" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="336.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">Working memory &amp; context</tspan><tspan x="692.0" dy="15.0">window</tspan></text>
+<rect x="792" y="298" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="880.0" y="344.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="880.0" dy="0.0">Durable memory</tspan></text>
+<rect x="56" y="394" width="340" height="84" rx="12" fill="#f2f4fc" stroke="#3859ff"/>
+<text x="70" y="418" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Harness</tspan></text>
+<text x="70" y="436" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Flexible, well-managed foundations every other</tspan><tspan x="70" dy="14.3">domain can build on.</tspan></text>
+<rect x="416" y="394" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="440.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">Agent runtimes</tspan></text>
+<rect x="604" y="394" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="432.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">Tool, skill &amp; agent</tspan><tspan x="692.0" dy="15.0">registries</tspan></text>
+<rect x="56" y="490" width="340" height="84" rx="12" fill="#f2f4fc" stroke="#3859ff"/>
+<text x="70" y="514" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">AI Trust</tspan></text>
+<text x="70" y="532" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Make admins comfortable turning AI on for their</tspan><tspan x="70" dy="14.3">whole org: safe, transparent and compliant.</tspan></text>
+<rect x="416" y="490" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="528.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">AI infrastructure</tspan><tspan x="504.0" dy="15.0">control</tspan></text>
+<rect x="604" y="490" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="528.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">AI visibility &amp;</tspan><tspan x="692.0" dy="15.0">monitoring</tspan></text>
+<rect x="792" y="490" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="880.0" y="528.7" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="880.0" dy="0.0">Contextual AI data</tspan><tspan x="880.0" dy="15.0">protection</tspan></text>
+<rect x="980" y="490" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="1068.0" y="536.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="1068.0" dy="0.0">AI gateway</tspan></text>
+<text x="56" y="611" font-size="12" font-weight="600" fill="#746019" text-anchor="start"><tspan x="56" dy="0.0">2 virtual teams</tspan></text>
+<rect x="56" y="622" width="340" height="84" rx="12" fill="#fff9e3" stroke="#746019"/>
+<text x="70" y="646" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Board Gen</tspan></text>
+<text x="70" y="664" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">Make the canvas a first-class read/write surface</tspan><tspan x="70" dy="14.3">for AI: lossless, fast and native.</tspan></text>
+<rect x="416" y="622" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="668.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">Canvas DSL</tspan></text>
+<rect x="604" y="622" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="692.0" y="668.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="692.0" dy="0.0">Lossless read / write</tspan></text>
+<rect x="56" y="718" width="340" height="84" rx="12" fill="#fff9e3" stroke="#746019"/>
+<text x="70" y="742" font-size="15" font-weight="600" fill="#191918" text-anchor="start"><tspan x="70" dy="0.0">Evals Infra</tspan></text>
+<text x="70" y="760" font-size="11" font-weight="400" fill="#8A8781" text-anchor="start"><tspan x="70" dy="0.0">A shared, trustworthy way for every AI domain to</tspan><tspan x="70" dy="14.3">know its AI is working.</tspan></text>
+<rect x="416" y="718" width="176" height="84" rx="12" fill="#ffffff" stroke="#DEDCD8"/>
+<text x="504.0" y="764.2" font-size="12" font-weight="500" fill="#191918" text-anchor="middle"><tspan x="504.0" dy="0.0">Evals platform</tspan></text>
+</svg>
