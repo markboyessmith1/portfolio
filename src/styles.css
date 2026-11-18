@@ -3730,3 +3730,17 @@ html:has(.review) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
 /* Focus rings for keyboard only: a mouse click or a programmatic focus (dialogs, route changes)
    never draws the browser's default outline, while Tab still shows each component's :focus-visible ring. */
 :focus:not(:focus-visible) { outline: none; }
+
+/* ---- /scan: the home page with the face-scan hero (components/ScanHero) */
+/* sits under the floating nav: pulled up over main's 100px header room, full-bleed out of the container */
+.scan-hero { position: relative; height: 100svh; margin: -100px calc(50% - 50vw) 0; width: 100vw; background: #000; color: #e6ddd4; overflow: hidden; }
+.scan-hero__frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+@media (pointer: coarse) { .scan-hero__frame { pointer-events: none; } }
+.scan-hero__copy { position: absolute; left: var(--gutter, 20px); right: 180px; bottom: 96px; /* clear of the fixed footer */ pointer-events: none; font-family: 'ABC Areal', var(--font); }
+.scan-hero__name { margin: 0; font-size: clamp(36px, 6vw, 84px); line-height: 1; font-weight: 500; letter-spacing: -0.04em; color: #f2ede7; }
+.scan-hero__role { margin: 12px 0 0; font-size: clamp(15px, 1.4vw, 19px); letter-spacing: -0.02em; color: #8f857b; }
+.scan-hero__cue { position: absolute; right: var(--gutter, 20px); bottom: 96px; border: 1px solid #3a332b; border-radius: 999px; background: rgba(0,0,0,.4); color: #e6ddd4; font: inherit; font-size: 14px; letter-spacing: -0.01em; padding: 10px 16px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.scan-hero__cue:hover { border-color: #8f857b; }
+.scan-hero__cue:focus-visible { outline: 2px solid #8fb4ff; outline-offset: 3px; }
+#scan-next { position: absolute; bottom: 100px; }
+@media (max-width: 640px) { .scan-hero__copy { right: var(--gutter, 16px); bottom: 150px; } .scan-hero__cue { left: var(--gutter, 16px); right: auto; } }
