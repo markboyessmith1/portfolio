@@ -254,7 +254,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { title: 'Meeting customers where they are', text: 'Some didn’t want AI at all. How far to lean in, down to the toolbar.' },
         { title: 'Time to launch', text: 'Go-to-market needed a date to sell towards.' },
         { title: 'Quality', text: 'BoardGen: from designing backwards to working forwards from the model, and holding July to October.' },
-        { title: 'What didn’t ship', text: 'Ideas that shone in demos, and what I’d do differently.' },
+        { title: 'What I’d do differently', text: 'Work forwards from day one. Evals from day one.' },
       ],
     },
     {
@@ -413,18 +413,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'Challenges',
-      layout: 'grid',
-      eyebrow: 'Shone in demos',
-      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
-      media: [
-        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
-        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
-        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
-      ],
-      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
-    },
-    {
-      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'What I’d do differently',
       title: 'Work forwards from day one. Evals from day one.',
@@ -434,6 +422,18 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       criteria: ['Communication'],
       todo: ['Check these are the two you believe'],
+    },
+    {
+      chapter: 'Cutting room floor',
+      layout: 'grid',
+      eyebrow: 'Shone in demos',
+      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
+      media: [
+        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
+        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
+        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
+      ],
+      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
     },
     {
       chapter: 'How AI changed the work',
