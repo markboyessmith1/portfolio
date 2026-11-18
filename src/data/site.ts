@@ -15,6 +15,8 @@ export type WorkItem = {
   description: string
   href: string
   external?: boolean
+  /** keep the case study in the code but off the site (carousel, nav and its /work page) */
+  hidden?: boolean
   /** which 3D scene to render in the card's media slot */
   scene: SceneKey
   /** case study title (replaces title + description on the case page) */
@@ -169,7 +171,7 @@ export const site = {
     src: 'https://hosting-media.riverside.com/media/clips/6a28a5b88067da6fa8ef2fee/designing-ai-composer-2026-6-10__1-45-59.mp3?response-content-disposition=inline&response-content-type=audio/mpeg',
   },
   /** Portfolio case studies. Descriptions are placeholders: replace with the real story. */
-  work: [
+  work: ([
     {
       label: 'Miro AI',
       title: 'Miro AI',
@@ -502,11 +504,12 @@ export const site = {
       title: 'Glitterball.dev',
       description: 'Case study coming soon',
       href: '/work/glitter',
+      hidden: true, // off the site for now (18 Nov 2026); delete this line to bring it back
       logo: 'glitterball',
       scene: 'blob',
       sections: placeholderSections('blob', ['knot', 'video', 'stack']),
     },
-  ] satisfies WorkItem[],
+  ] satisfies WorkItem[]).filter((w) => !w.hidden),
   thoughts: [
     {
       slug: 'design-leadership-is-editing',
