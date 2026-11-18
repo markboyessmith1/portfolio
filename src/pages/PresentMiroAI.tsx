@@ -12,6 +12,7 @@ import './present.css'
 
 const slides = DECK.slides
 const clamp = (n: number) => Math.max(0, Math.min(slides.length - 1, n))
+const chapters = [...new Set(slides.map((s) => s.chapter))]
 const fromHash = () => clamp((parseInt(location.hash.slice(1), 10) || 1) - 1)
 
 export default function PresentMiroAI() {
@@ -70,7 +71,6 @@ function Deck() {
   }, [next, prev, go])
 
   const slide = slides[index]
-  const chapters = [...new Set(slides.map((s) => s.chapter))]
 
   return (
     <div
@@ -89,7 +89,7 @@ function Deck() {
     >
       <div className="deck__track" style={{ transform: `translate3d(${-index * 100}vw, 0, 0)` }}>
         {slides.map((s, i) => (
-          <section key={i} className={`slide slide--${s.layout}`} aria-hidden={i !== index} aria-label={`Slide ${i + 1}: ${s.title}`}>
+          <section key={i} className={`slide slide--${s.layout} ch-${chapters.indexOf(s.chapter)}`} aria-hidden={i !== index} aria-label={`Slide ${i + 1}: ${s.title}`}>
             {Math.abs(i - index) <= 1 && <SlideBody slide={s} active={i === index} />}
           </section>
         ))}

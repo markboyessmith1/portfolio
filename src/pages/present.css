@@ -219,3 +219,6 @@
 .slide--statement .slide__list li { white-space: pre-line; line-height: 1.7; padding-left: 0; }
 .slide--statement .slide__list li::before { display: none; }
 .slide--statement .slide__list strong { display: block; margin-bottom: 8px; color: var(--d-accent); }
+
+/* a tint per chapter */
+.deck .ch-1 { background: #111725; } .deck .ch-2 { background: #1d1512; } .deck .ch-3 { background: #0f1b17; } .deck .ch-4 { background: #19131f; } .deck .ch-5 { background: #1a1a12; }
