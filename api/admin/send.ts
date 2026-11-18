@@ -7,7 +7,7 @@ import { isAdmin, isEmail, json, normEmail, sendEmail, textHtml } from '../_lib/
 export async function POST(req: Request) {
   if (!isAdmin(req)) return json({ error: 'unauthorised' }, { status: 401 })
   let b: Record<string, unknown>
-  try { b = await req.json() } catch { return json({ error: 'bad-request' }, { status: 400 }) }
+  try { b = (await req.json()) as Record<string, unknown> } catch { return json({ error: 'bad-request' }, { status: 400 }) }
 
   const email = normEmail(b.email)
   const subject = String(b.subject ?? '').trim().slice(0, 200)

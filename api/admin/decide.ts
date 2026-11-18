@@ -7,7 +7,7 @@ import { addToAudience, config, isAdmin, isEmail, json, normEmail, removeFromAud
 export async function POST(req: Request) {
   if (!isAdmin(req)) return json({ error: 'unauthorised' }, { status: 401 })
   let body: Record<string, unknown>
-  try { body = await req.json() } catch { return json({ error: 'bad-request' }, { status: 400 }) }
+  try { body = (await req.json()) as Record<string, unknown> } catch { return json({ error: 'bad-request' }, { status: 400 }) }
   const email = normEmail(body.email)
   if (!isEmail(email) || (body.action !== 'approve' && body.action !== 'revoke')) return json({ error: 'bad-request' }, { status: 400 })
 

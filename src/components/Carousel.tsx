@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAccess } from '../lib/access'
-import { AccessDialog } from './RequestAccess'
 import { site, type CaseSection, type PanelLayout, type SceneKey, type WorkItem } from '../data/site'
 import { GLSlot } from '../webgl/GLSlot'
 import type { SpinState } from '../webgl/GlassEdge'
@@ -720,22 +719,14 @@ export default function Carousel() {
     timer.current = window.setTimeout(() => setTransition(false), 2500)
   }
 
-  // locked: selecting a card asks for an email first (one approval opens every case study);
-  // once they're in, the card flips and opens exactly as if they'd been signed in all along
+  // locked: selecting a card goes to that case study's own page, which shows the email gate
+  // (Home renders RequestAccess there) until they're approved; one approval opens every case study
   const access = useAccess()
   const navigate = useNavigate()
-  const [gate, setGate] = useState<WorkItem | null>(null)
   const select = (e: ReactMouseEvent, item: WorkItem) => {
     if (mode === 'case') { e.preventDefault(); return }
-    if (!access?.granted) { e.preventDefault(); setGate(item); return }
+    if (!access?.granted) { e.preventDefault(); navigate(item.href); return }
     open(item)
-  }
-  const enter = () => {
-    const item = gate
-    setGate(null)
-    if (!item) return
-    open(item)
-    navigate(item.href)
   }
 
   const goTo = (i: number) => {
@@ -1071,14 +1062,6 @@ export default function Carousel() {
           ))}
         </div>
       </div>
-      <AccessDialog
-        open={!!gate}
-        onClose={() => setGate(null)}
-        onGranted={enter}
-        slug={gate?.href.replace('/work/', '')}
-        title={gate?.title ?? ''}
-        lede="Enter your email to open this case study."
-      />
     </section>
   )
 }

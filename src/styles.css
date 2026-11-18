@@ -3726,3 +3726,7 @@ html:has(.review) { --bg: var(--neutral-0); --bg-edge: var(--neutral-0); }
   .review__card-head { flex-wrap: wrap; }
   .review__card-who h2 { font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
 }
+
+/* Focus rings for keyboard only: a mouse click or a programmatic focus (dialogs, route changes)
+   never draws the browser's default outline, while Tab still shows each component's :focus-visible ring. */
+:focus:not(:focus-visible) { outline: none; }

@@ -10,7 +10,7 @@ import {
 
 export async function POST(req: Request) {
   let body: Record<string, unknown>
-  try { body = await req.json() } catch { return json({ error: 'bad-request' }, { status: 400 }) }
+  try { body = (await req.json()) as Record<string, unknown> } catch { return json({ error: 'bad-request' }, { status: 400 }) }
 
   // honeypot: people never see this field, bots fill it. Pretend it worked.
   if (body.website) return json({ status: 'reviewing' })
