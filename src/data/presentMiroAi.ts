@@ -122,7 +122,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'No clear direction',
       layout: 'full',
-      eyebrow: 'Creating the clarity',
+      eyebrow: 'We started with a vision',
       title: 'A vision you could hand someone as a link, and use like a real product.',
       body: ['It had to carry the conversations of about 2,000 people, so it couldn’t be something only the design team could move around. A very small team built it, then took it to customers and broke it down with the teams.'],
       media: [{ kind: 'video', src: '/media/vision-sizzle-rko26.mp4', poster: '/media/vision-sizzle-rko26.jpg' }],
