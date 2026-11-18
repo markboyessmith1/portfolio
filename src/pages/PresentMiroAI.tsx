@@ -198,6 +198,7 @@ function SlideBody({ slide: s, active }: { slide: DeckSlide; active: boolean }) 
             <div key={m.label} className="metric"><b>{m.value}</b><span>{m.label}</span></div>
           ))}
         </div>
+        {s.reflections && <ol className="reflections">{s.reflections.map((r, i) => <li key={i}>{r}</li>)}</ol>}
       </div>
     )
   }

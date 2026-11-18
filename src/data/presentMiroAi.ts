@@ -35,6 +35,7 @@ export type DeckSlide = {
   /** Milestones, left to right. `major` ones get the big marker; `held` reads as a plan we moved. */
   timeline?: { when: string; what: string; detail?: string; major?: boolean; held?: boolean }[]
   logos?: string[]
+  reflections?: string[]
   criteria?: Criterion[]
   todo?: string[]
   notes?: string
@@ -420,20 +421,12 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { value: '73%', label: 'CSAT on the new engine' },
       ],
       todo: ['Confirm the 73% CSAT figure'],
-    },
-    {
-      chapter: 'Outcomes',
-      layout: 'full',
-      eyebrow: 'Launch',
-      title: 'Canvas ’26.',
-      media: [{ kind: 'image', src: '/media/stills/canvas-26-keynote.jpg', alt: 'Mark on stage at the Canvas 26 keynote', caption: 'Keynote: youtu.be/qM-KxCr4I5I?t=1537' }],
-    },
-    {
-      chapter: 'Outcomes',
-      layout: 'statement',
-      eyebrow: 'Reflection',
-      title: 'The product advanced when we treated AI as a collaborator, and designed its capabilities, interactions, measurement and trust as one system.',
-      notes: 'Then hand over: "That\'s the project. What would you like to dig into?" Leave 10 minutes for questions, including the reporting line.',
+      reflections: [
+        'We dramatically changed Miro’s product offering and technical capability in a little over eight months.',
+        'MCP and better BoardGen quality were the needle movers for CSAT and retention.',
+        'Immersive interaction is a quieter win. An infinite canvas does open up novel paradigms and more immersive ways to collaborate, but demand hasn’t reached the mainstream yet.',
+      ],
+      notes: 'Close: the product advanced when we treated AI as a collaborator, and designed its capabilities, interactions, measurement and trust as one system. Then hand over: "That\'s the project. What would you like to dig into?" Leave 10 minutes for questions, including the reporting line.',
     },
     {
       chapter: 'Appendix',
@@ -548,6 +541,13 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       criteria: ['Communication'],
       todo: ['Check these are the two you believe'],
+    },
+    {
+      chapter: 'Appendix',
+      layout: 'full',
+      eyebrow: 'Launch',
+      title: 'Canvas ’26.',
+      media: [{ kind: 'image', src: '/media/stills/canvas-26-keynote.jpg', alt: 'Mark on stage at the Canvas 26 keynote', caption: 'Keynote: youtu.be/qM-KxCr4I5I?t=1537' }],
     },
   ],
 }
