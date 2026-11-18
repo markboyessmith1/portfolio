@@ -45,7 +45,6 @@ const SIMPLIFY = '/media/simplify'
 export const DECK: { title: string; slides: DeckSlide[] } = {
   title: 'Journey to the Intelligent Canvas',
   slides: [
-    // ---- Intro --------------------------------------------------------
     {
       chapter: 'Intro',
       layout: 'title',
@@ -87,7 +86,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       ],
       notes: 'Dates: Canvas ’26 press release, San Francisco, 19 May 2026 (miro.com/newsroom). Bending Spoons agreement announced 10 Sep 2026, $1.355bn enterprise value (Goodwin). The rest from my own timeline. The trio: me, Damir (product partner) and Henrik (engineering leader), about 100 people across seven teams. Say "I" for the calls, "we" for the build.',
     },
-    // ---- Prompt 2: no clear direction ---------------------------------
     {
       chapter: 'No clear direction',
       layout: 'statement',
@@ -160,10 +158,8 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['First principles', 'Technical AI'],
       media: [{ kind: 'image', src: '/diagrams/ai-stack.svg', alt: 'Miro’s AI stack: Sidekicks and Flows in Miro, third-party agents via MCP, all on shared context, behaviour, trust and tools layers.', caption: 'Productecture' }],
     },
-
-    // ---- Prompt 3: the call and the pushback --------------------------
     {
-      chapter: 'The pushback',
+      chapter: 'Challenges',
       layout: 'statement',
       eyebrow: 'Meeting customers where they are',
       title: 'Some of our customers didn’t want AI at all.',
@@ -171,7 +167,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'This was the biggest challenge of the project, and it came up week on week. Our beliefs were split between reinforcing the enterprise base and betting the farm on being the next agentic leader, knowing the enterprise base wouldn\'t sustain us forever.',
     },
     {
-      chapter: 'The pushback',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'A broad spectrum',
       title: 'You can ship faster than competitors, and still outrun your customers.',
@@ -184,7 +180,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['Partnership', 'First principles'],
     },
     {
-      chapter: 'The pushback',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'Down to the toolbar',
       title: 'Is the AI chat open or closed by default?',
@@ -199,7 +195,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['Craft', 'Partnership'],
     },
     {
-      chapter: 'The pushback',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'Time to launch',
       title: 'Go-to-market needed a date to sell towards.',
@@ -212,10 +208,8 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       body: ['Near the date we had all the pieces, but not the maturity or infrastructure to get repeatable, quality results. This was on another scale from anything Miro had tried.'],
       notes: 'The pressure was fair: GTM needed to close significant deals and enthuse their sales teams. It all fell to me, Damir and Henrik. Then go straight into the quality story.',
     },
-
-    // ---- Prompt 1: quality --------------------------------------------
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'statement',
       eyebrow: 'BoardGen',
       title: 'The best models in the world don’t matter if the output is worse than what a person would make. People just won’t use it.',
@@ -223,7 +217,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'That was our problem all along. A big technology problem with creating great content on the board, solved through engineering, and a design problem in how we approached it.',
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'Where we started',
       title: 'We designed backwards from the end state. The models didn’t care.',
@@ -238,7 +232,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       criteria: ['Craft', 'Technical AI'],
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'The flip',
       title: 'Work forwards from what the model can do.',
@@ -251,7 +245,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       todo: ['The core principles, as written', 'One before/after where a principle changed the output'],
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'The engineering fix',
       title: 'Let the model write formats it reasons well in. Then make them editable.',
@@ -261,7 +255,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'Be ready to go one level deeper on why not call canvas tools directly. Confirm the reasoning with engineering\'s version before saying it.',
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'Evals',
       title: 'An evals team that could turn around improvements fast.',
@@ -276,7 +270,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'Expect the hardest pushing here. Fin rates model-layer depth and evals above everything else.',
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'grid',
       eyebrow: 'Same prompt, two engines',
       title: 'BoardGen V1 vs V2.',
@@ -288,7 +282,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       todo: ['Side-by-side boards on the same prompt; zoom into one detail'],
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'statement',
       eyebrow: 'The call',
       title: 'We planned to launch in July. We launched in October. You only get one chance to burn a customer.',
@@ -296,7 +290,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'If we take this one shot and miss because the quality isn\'t good enough, they don\'t come back. So we kept it under wraps longer, improved the models, completely changed our infrastructure, and rolled out in October.',
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'split',
       eyebrow: 'Handling the pushback',
       title: 'More transparency, not a privacy screen.',
@@ -312,14 +306,36 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       notes: 'A very tense period, and a very rewarding one.',
     },
     {
-      chapter: 'Quality',
+      chapter: 'Challenges',
       layout: 'full',
       eyebrow: 'IC 1.0 → IC 2.0',
       title: 'From one-shot format agents to agents that plan, see and iterate.',
       media: [{ kind: 'image', src: '/diagrams/ic-comparison.svg', alt: 'Twelve capabilities compared between IC 1.0 (non-agentic) and IC 2.0 (agentic).' }],
     },
-
-    // ---- Prompt 4: AI changed how we built ----------------------------
+    {
+      chapter: 'Challenges',
+      layout: 'grid',
+      eyebrow: 'Shone in demos',
+      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
+      media: [
+        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
+        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
+        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
+      ],
+      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
+    },
+    {
+      chapter: 'Challenges',
+      layout: 'split',
+      eyebrow: 'What I’d do differently',
+      title: 'Work forwards from day one. Evals from day one.',
+      bullets: [
+        { title: 'Start from the model’s limits', text: 'we lost time designing generation backwards from a brand opinion.' },
+        { title: 'Evals for board quality from the start', text: 'we found the quality gap close to a fixed date.' },
+      ],
+      criteria: ['Communication'],
+      todo: ['Check these are the two you believe'],
+    },
     {
       chapter: 'How AI changed the work',
       layout: 'split',
@@ -403,34 +419,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       body: ['Switch to the later prototype.'],
       todo: ['Which prototype, and its link open in a tab', 'What changed since prototype 1, and why'],
     },
-
-    // ---- What didn't ship ---------------------------------------------
-    {
-      chapter: 'What didn’t ship',
-      layout: 'grid',
-      eyebrow: 'Shone in demos',
-      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
-      media: [
-        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
-        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
-        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
-      ],
-      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
-    },
-    {
-      chapter: 'What didn’t ship',
-      layout: 'split',
-      eyebrow: 'What I’d do differently',
-      title: 'Work forwards from day one. Evals from day one.',
-      bullets: [
-        { title: 'Start from the model’s limits', text: 'we lost time designing generation backwards from a brand opinion.' },
-        { title: 'Evals for board quality from the start', text: 'we found the quality gap close to a fixed date.' },
-      ],
-      criteria: ['Communication'],
-      todo: ['Check these are the two you believe'],
-    },
-
-    // ---- Outcomes -----------------------------------------------------
     {
       chapter: 'Outcomes',
       layout: 'metrics',
