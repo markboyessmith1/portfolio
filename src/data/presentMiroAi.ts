@@ -131,17 +131,8 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'live',
-      eyebrow: 'Live',
-      title: 'Prototype 1: where we started.',
-      body: ['Switch to the early prototype.'],
-      todo: ['Which prototype, and its link open in a tab', 'The one thing to point at, and what we later threw away from it'],
-      notes: 'Keep it to 3–4 minutes. Show the rough edges: they asked for explorations and dead ends.',
-    },
-    {
-      chapter: 'No clear direction',
       layout: 'grid',
-      eyebrow: 'Principles',
+      eyebrow: 'Then we distilled three principles from it',
       title: 'Humanity. Forward momentum. Radical simplicity.',
       media: [
         { kind: 'video', src: '/media/principles/humanity.mp4', poster: '/media/principles/humanity.jpg', caption: 'Humanity' },
@@ -149,6 +140,15 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { kind: 'video', src: '/media/principles/simplicity.mp4', poster: '/media/principles/simplicity.jpg', caption: 'Radical simplicity' },
       ],
       criteria: ['Craft'],
+    },
+    {
+      chapter: 'No clear direction',
+      layout: 'live',
+      eyebrow: 'Live',
+      title: 'Prototype 1: where we started.',
+      body: ['Switch to the early prototype.'],
+      todo: ['Which prototype, and its link open in a tab', 'The one thing to point at, and what we later threw away from it'],
+      notes: 'Keep it to 3–4 minutes. Show the rough edges: they asked for explorations and dead ends.',
     },
     {
       chapter: 'No clear direction',
