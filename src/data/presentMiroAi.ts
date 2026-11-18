@@ -424,33 +424,19 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       todo: ['Check these are the two you believe'],
     },
     {
-      chapter: 'Cutting room floor',
-      layout: 'grid',
-      eyebrow: 'Shone in demos',
-      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
-      media: [
-        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
-        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
-        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
+      chapter: 'How AI changed the work',
+      layout: 'statement',
+      eyebrow: 'How AI changed the work',
+      title: 'Two shifts.',
+      bullets: [
+        { title: '01', text: 'We explored more divergent concepts.' },
+        { title: '02', text: 'We collapsed the relationship distance between design and engineering.' },
       ],
-      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
     },
     {
       chapter: 'How AI changed the work',
       layout: 'split',
-      eyebrow: 'A completely AI-forward team',
-      title: 'We didn’t open Figma once.',
-      body: [
-        'Everything was in code. Since June, designers have merged more than 700 pull requests into production, behind pipelines and gates engineering built for them.',
-        'The bigger change was using AI to explore new technology at very high fidelity, before it was ready.',
-      ],
-      media: [{ kind: 'todo', caption: 'The designer PR graph, or one real merged PR' }],
-      criteria: ['First principles', 'Agency'],
-    },
-    {
-      chapter: 'How AI changed the work',
-      layout: 'split',
-      eyebrow: 'Autopilot',
+      eyebrow: '01 · Autopilot',
       title: 'Why touch the board at all, if it’s up on everyone’s screen?',
       body: ['Ambient intelligence that listens to the conversation, grabs the notes and puts the right material in front of the team at the right time, while staying multiplayer if you want to step in.'],
       bullets: [
@@ -465,7 +451,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'How AI changed the work',
       layout: 'grid',
-      eyebrow: 'Decision models',
+      eyebrow: '01 · Decision models',
       title: 'AI that doesn’t write. It picks, in a few hundred milliseconds.',
       media: [
         { kind: 'video', src: `${AI}/picture-sorting-clef.mp4`, caption: 'Twelve pictures sorted in about 1.5 seconds' },
@@ -478,7 +464,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'How AI changed the work',
       layout: 'grid',
-      eyebrow: 'The gloves off',
+      eyebrow: '01 · The gloves off',
       title: 'Early thinking, at a quality you can hand someone and watch them play.',
       media: [
         { kind: 'video', src: `${AI}/jev2hands.mp4`, caption: 'Moving the canvas with your hands, through the webcam' },
@@ -491,7 +477,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'How AI changed the work',
       layout: 'grid',
-      eyebrow: 'Making agents legible',
+      eyebrow: '01 · Making agents legible',
       title: 'You can’t trust an agent you can’t see working.',
       media: [
         { kind: 'video', src: `${AI}/ai-see-ya-work.mp4`, caption: 'Agent cursors move where agents really read and write' },
@@ -501,8 +487,32 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'How AI changed the work',
+      layout: 'grid',
+      eyebrow: '01 · Cutting room floor',
+      title: 'Real-time voice and multiplayer AI didn’t make it to production.',
+      media: [
+        { kind: 'video', src: `${AI}/voice-mode.mp4`, caption: 'Voice mode' },
+        { kind: 'video', src: `${AI}/multiagent.mp4`, caption: 'Multiple AI bots, board as backend' },
+        { kind: 'video', src: `${AI}/wave-to-summon.mp4`, caption: 'Wave to summon' },
+      ],
+      notes: 'The technology and the market weren\'t there yet. Have a strong opinion on which of these comes back first.',
+    },
+    {
+      chapter: 'How AI changed the work',
+      layout: 'split',
+      eyebrow: '02 · A completely AI-forward team',
+      title: 'We didn’t open Figma once.',
+      body: [
+        'Everything was in code. Since June, designers have merged more than 700 pull requests into production, behind pipelines and gates engineering built for them.',
+        'The bigger change was using AI to explore new technology at very high fidelity, before it was ready.',
+      ],
+      media: [{ kind: 'todo', caption: 'The designer PR graph, or one real merged PR' }],
+      criteria: ['First principles', 'Agency'],
+    },
+    {
+      chapter: 'How AI changed the work',
       layout: 'live',
-      eyebrow: 'Live',
+      eyebrow: '02 · Live',
       title: 'The spec sheets: cursor chat.',
       body: ['Switch to the spec. This is how a prototype became something engineering could build.'],
       media: [{ kind: 'video', src: `${AI}/multiplayer-chat.mp4`, caption: 'Cursor chat' }],
