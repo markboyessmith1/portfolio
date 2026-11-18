@@ -311,7 +311,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'Challenges',
       layout: 'split',
-      eyebrow: 'Down to the toolbar',
+      eyebrow: '01 · Down to the toolbar',
       title: 'Is the AI chat open or closed by default?',
       body: ['We went chat-first because it felt familiar, rather than gestural or voice-led, which felt more immersive. But the second we added chat, we created friction for people who didn’t want AI there.'],
       bullets: [
@@ -319,8 +319,12 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { text: 'Onboarding and the default experience' },
         { text: 'Credits for AI, when everyone else paid per seat' },
       ],
-      media: [{ kind: 'video', src: `${SIMPLIFY}/toolbars-mono.mp4`, poster: `${SIMPLIFY}/toolbars-mono.jpg`, caption: 'Toolbar explorations' }],
-      todo: ['What we decided on the default, and why'],
+      media: [
+        { kind: 'video', src: `${SIMPLIFY}/toolbars-mono.mp4`, poster: `${SIMPLIFY}/toolbars-mono.jpg`, caption: 'Toolbar explorations' },
+        { kind: 'todo', caption: 'Chat-first: the familiar default we shipped' },
+        { kind: 'todo', caption: 'Gestural / voice concept we held back' },
+        { kind: 'todo', caption: 'Feed-forward research: a session or quote' },
+      ],
       criteria: ['Craft', 'Partnership'],
     },
     {
