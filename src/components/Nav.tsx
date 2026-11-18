@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { site } from '../data/site'
+import { site, PORTFOLIO_ON, ABOUT_PATH } from '../data/site'
 import Podcast from './Podcast'
 import ChapterBar from './ChapterBar'
 
 export default function Nav() {
   const { pathname } = useLocation()
-  const caseItem = site.work.find((w) => w.href === pathname)
+  const caseItem = PORTFOLIO_ON ? site.work.find((w) => w.href === pathname) : undefined
+  const onAbout = pathname === ABOUT_PATH
   const mode = caseItem ? 'crumb' : 'main'
 
   // Animate between the main menu and the breadcrumb: the pill resizes
@@ -67,8 +68,8 @@ export default function Nav() {
         ) : (
           <>
             {/* the access-request form (/portfolio) counts as the portfolio too */}
-            <NavLink to="/" end className={({ isActive }) => (isActive || pathname === '/portfolio' ? 'active' : undefined)}>Portfolio</NavLink>
-            <NavLink to="/about">About</NavLink>
+            {PORTFOLIO_ON && <NavLink to="/" end className={({ isActive }) => (isActive || pathname === '/portfolio' ? 'active' : undefined)}>Portfolio</NavLink>}
+            <NavLink to={ABOUT_PATH} end>About</NavLink>
           </>
         )}
         </div>
@@ -78,10 +79,10 @@ export default function Nav() {
       </div>
       {/* top right: the podcast, outside case studies */}
       {/* not on the case studies, nor on the CV (/about), which has its own podcast list */}
-      {!caseItem && pathname !== '/about' && <Podcast />}
+      {!caseItem && !onAbout && <Podcast />}
       {/* on the CV, the corner holds the PDF download instead: the stripped-back print version
           (pages/ResumePrint, printed to public/), styled to pair with the selector */}
-      {pathname === '/about' && (
+      {onAbout && (
         <a className="nav__download" href="/mark-boyes-smith-resume.pdf" download>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden><path d="M8 2.5v8m0 0L4.75 7.25M8 10.5l3.25-3.25M3 13.5h10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           Download PDF

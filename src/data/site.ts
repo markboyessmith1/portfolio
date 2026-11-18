@@ -140,6 +140,13 @@ function placeholderSections(own: SceneKey, rest: SceneKey[]): CaseSection[] {
 export type Acquired = { by: string; what?: string; price?: string }
 export const acquiredLabel = (a: Acquired) => `${a.what ? `${a.what} acquired` : 'Acquired'} by`
 
+/** The portfolio (the work carousel at /, its case studies at /work/:slug and the access request
+    at /portfolio) is hidden for now: About is the home page and those routes go home. Flip this
+    back on to restore it (About returns to /about). */
+export const PORTFOLIO_ON = false
+/** where the About page (the CV) lives */
+export const ABOUT_PATH = PORTFOLIO_ON ? '/about' : '/'
+
 export const site = {
   name: 'Mark Boyes-Smith',
   logo: { short: 'MBS', long: 'Mark Boyes-Smith' },
