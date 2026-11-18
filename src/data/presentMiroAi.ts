@@ -23,7 +23,7 @@ export type Criterion = 'Craft' | 'Technical AI' | 'Agency' | 'First principles'
 
 export type DeckSlide = {
   chapter: string
-  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline' | 'stack'
+  layout: 'title' | 'statement' | 'split' | 'full' | 'grid' | 'metrics' | 'live' | 'timeline' | 'stack' | 'mosaic'
   eyebrow?: string
   title: string
   body?: string[]
@@ -371,57 +371,42 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       title: 'Two shifts.',
       bullets: [
         { title: '01', text: 'We explored more divergent concepts.' },
-        { title: '02', text: 'We collapsed the relationship distance between design and engineering.' },
+        { title: '02', text: 'We moved into production code, and changed how we work with engineers.' },
       ],
     },
     {
       chapter: 'How AI changed the work',
-      layout: 'grid',
-      eyebrow: '01 · Decision models',
-      title: 'AI that doesn’t write. It picks, in a few hundred milliseconds.',
+      layout: 'mosaic',
+      eyebrow: '01',
+      title: 'We explored more divergent concepts.',
       media: [
         { kind: 'video', src: `${AI}/picture-sorting-clef.mp4`, caption: 'Twelve pictures sorted in about 1.5 seconds' },
         { kind: 'video', src: `${AI}/point-and-jev.mp4`, caption: 'Say “here” and “this”, and the board knows' },
         { kind: 'video', src: `${AI}/builds-while-typing.mp4`, caption: 'The board builds while you type' },
-      ],
-      criteria: ['Technical AI'],
-      notes: 'My own experiments: 21 videos from the first sorting test onwards. Explain internal names (JEV, Clef) as "a fast decision model". Be honest: most of this didn\'t reach production.',
-    },
-    {
-      chapter: 'How AI changed the work',
-      layout: 'grid',
-      eyebrow: '01 · The gloves off',
-      title: 'Early thinking, at a quality you can hand someone and watch them play.',
-      media: [
         { kind: 'video', src: `${AI}/jev2hands.mp4`, caption: 'Moving the canvas with your hands, through the webcam' },
         { kind: 'video', src: `${SIMPLIFY}/soundscape-ring.mp4`, caption: '360° soundscape: hear the collaboration around you' },
         { kind: 'video', src: `${AI}/ai-cursor-identity.mp4`, caption: 'Generated stickers that become your cursor' },
       ],
-      criteria: ['Craft', 'Agency'],
-      notes: 'Also eye tracking and more generative UI. Sticker packs became the most adopted feature in Miro for a while, because the prompt engineering was spot on.',
+      criteria: ['Craft', 'Technical AI'],
+      notes: 'Scroll the mosaic. Decision models: a fast model that picks rather than writes. Explain internal names (JEV, Clef) as "a fast decision model". Be honest: most of this didn\'t reach production. Sticker packs became the most adopted feature in Miro for a while.',
     },
     {
       chapter: 'How AI changed the work',
-      layout: 'split',
-      eyebrow: '02 · A completely AI-forward team',
-      title: 'We didn’t open Figma once.',
-      body: [
-        'Everything was in code. Since June, designers have merged more than 700 pull requests into production, behind pipelines and gates engineering built for them.',
-        'The bigger change was using AI to explore new technology at very high fidelity, before it was ready.',
+      layout: 'mosaic',
+      eyebrow: '02',
+      title: 'We moved into production code, and changed how we work with engineers.',
+      metrics: [
+        { value: '700+', label: 'pull requests merged into production by designers' },
+        { value: '1,000', label: 'prototypes on Vibe Labs' },
       ],
-      media: [{ kind: 'todo', caption: 'The designer PR graph, or one real merged PR' }],
-      criteria: ['First principles', 'Agency'],
-    },
-    {
-      chapter: 'How AI changed the work',
-      layout: 'live',
-      eyebrow: '02 · Live',
-      title: 'The spec sheets: cursor chat.',
-      body: ['Switch to the spec. This is how a prototype became something engineering could build.'],
-      media: [{ kind: 'video', src: `${AI}/multiplayer-chat.mp4`, caption: 'Cursor chat' }],
-      todo: ['Cursor chat spec open in a tab'],
-      criteria: ['Partnership', 'Craft'],
-      notes: 'Spec sheets sat beside the vision prototype. We stopped having reviews where designers and engineers saw the build together for the first time.',
+      media: [
+        { kind: 'video', src: `${AI}/multiplayer-chat.mp4`, caption: 'Spec sheet: cursor chat' },
+        { kind: 'todo', caption: 'Spec sheet page' },
+        { kind: 'todo', caption: 'Designer PR graph' },
+        { kind: 'todo', caption: 'Vibe Labs gallery' },
+      ],
+      criteria: ['Partnership', 'Technical AI'],
+      notes: 'No Figma: everything was in code, behind pipelines and gates engineering built for us. Spec sheets sat beside the vision prototype, so we stopped having reviews where designers and engineers saw the build together for the first time.',
     },
     {
       chapter: 'Outcomes',

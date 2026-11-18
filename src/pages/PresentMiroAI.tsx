@@ -177,6 +177,18 @@ function SlideBody({ slide: s, active }: { slide: DeckSlide; active: boolean }) 
     )
   }
 
+  if (s.layout === 'mosaic') {
+    return (
+      <div className="slide__inner">
+        {text}
+        <div className="mosaic">
+          {s.metrics?.map((m) => <div key={m.label} className="metric"><b>{m.value}</b><span>{m.label}</span></div>)}
+          {s.media?.map((m, i) => <Media key={i} media={m} active={active} />)}
+        </div>
+      </div>
+    )
+  }
+
   if (s.layout === 'metrics') {
     return (
       <div className="slide__inner">
