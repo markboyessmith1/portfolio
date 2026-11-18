@@ -151,6 +151,17 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     {
       chapter: 'No clear direction',
       layout: 'statement',
+      eyebrow: 'Our convictions',
+      title: 'Two bets everything else rested on.',
+      bullets: [
+        { title: '01', text: 'Your work must be accessible to all agents.' },
+        { title: '02', text: 'Steering will be the most important human activity.' },
+      ],
+      criteria: ['First principles'],
+    },
+    {
+      chapter: 'No clear direction',
+      layout: 'statement',
       eyebrow: 'Operationalising our vision',
       title: 'Five key investments, across technology and experience.',
       bullets: [
@@ -505,6 +516,20 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       eyebrow: 'Reflection',
       title: 'The product advanced when we treated AI as a collaborator, and designed its capabilities, interactions, measurement and trust as one system.',
       notes: 'Then hand over: "That\'s the project. What would you like to dig into?" Leave 10 minutes for questions, including the reporting line.',
+    },
+    {
+      chapter: 'Appendix',
+      layout: 'full',
+      eyebrow: 'Appendix',
+      title: 'How we think about success.',
+      media: [{ kind: 'image', src: '/media/appendix/success.png', alt: 'Three goals and their measures: relevance for third-party agents measured by MCP growth and retention; stickiness of the core AI experience measured by share of WAU and stickiness; high-quality editable artifacts measured by content survival and share rates.' }],
+    },
+    {
+      chapter: 'Appendix',
+      layout: 'full',
+      eyebrow: 'Appendix',
+      title: 'Key investment areas over time.',
+      media: [{ kind: 'image', src: '/media/appendix/investment-areas.png', alt: 'H1 get the product right, Q3 experience and gen quality and retention (we are here), Q4 activation and adoption friction, next year value capture and next horizon.' }],
     },
   ],
 }
