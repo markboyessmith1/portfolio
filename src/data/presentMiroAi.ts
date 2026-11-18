@@ -95,13 +95,6 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
     },
     {
       chapter: 'No clear direction',
-      layout: 'statement',
-      eyebrow: 'The clay pot',
-      title: 'Get your hands on the clay and you own the pot. Hand someone a finished, glazed pot and all they can do is break it.',
-      notes: 'Agent output was hard to adopt and the process behind it hard to trace. This is why editable, collaborative artifacts became a goal, not a nice-to-have.',
-    },
-    {
-      chapter: 'No clear direction',
       layout: 'split',
       eyebrow: 'No blueprint',
       title: 'Nobody was thinking about interaction paradigms beyond chat.',
