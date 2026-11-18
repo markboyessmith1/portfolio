@@ -581,7 +581,7 @@ export const site = {
       ] },
       { company: 'Miro', when: '2023 – 2024', title: 'Director, Head of Design', details: [
         'Led design for the integration of InVision Freehand into Miro, bringing AI capabilities and structured formats into the experience.',
-        'Led a 20-person design organisation across nine teams spanning integrations, search, content management, solutions and use cases.',
+        'Led a significant 20+ design organisation across 9 teams spanning structured data, AI, search, content management, integrations and solutions.',
         'Launched Miro’s first Intelligent Canvas at Miro Canvas 2024.',
       ] },
       { company: 'InVision', when: '2022 – 2023', title: 'VP, Head of Design · Director, Product Design', acquired: { by: 'Miro', what: 'Freehand' }, details: [
@@ -589,7 +589,7 @@ export const site = {
         'Led the design organisation across product design, insights and brand, and co-led the wider product and technology organisation.',
         'Scaled four product design teams across the canvas and navigation experience, scale and enterprise readiness.',
         'Established Freehand’s brand experience and led major product marketing for the Intelligent Canvas launch, spanning live webinars, videos and articles.',
-        'Served as executive sponsor for high-touch customer engagements.',
+        'Executive sponsor for high-touch customer engagements.',
       ] },
       { company: 'Anaplan', when: '2018 – 2022', title: 'Head of Design Systems · Lead Product Designer', details: [
         'Co-led the design of an award-winning platform experience for real-time dashboards, reporting and monitoring.',

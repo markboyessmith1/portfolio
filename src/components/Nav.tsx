@@ -55,7 +55,8 @@ export default function Nav() {
       {/* Glass pill menu, top left. Inside a case study it shrinks to a
           single back chevron. */}
       <div className="nav__start">
-      <nav className="menu glass" ref={menu} aria-label="Main">
+      {/* with the portfolio hidden there's only one page, so no menu at all */}
+      {PORTFOLIO_ON && <nav className="menu glass" ref={menu} aria-label="Main">
         <div className="menu__set" key={mode} ref={set}>
         {!caseItem && <span className="menu__pill" ref={pill} aria-hidden />}
         {/* in a case study the menu is just a back chevron to the portfolio */}
@@ -73,7 +74,7 @@ export default function Nav() {
           </>
         )}
         </div>
-      </nav>
+      </nav>}
       {/* in a case study the chapter selector sits right against the back chevron */}
       {caseItem && <ChapterBar key={caseItem.href} item={caseItem} />}
       </div>
