@@ -179,7 +179,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       chapter: 'Operationalisation',
       layout: 'split',
       eyebrow: 'Teams built around the investments',
-      title: 'Five formal teams, two virtual ones.',
+      title: '7 teams, 120 strong.',
       body: ['Surface, Behaviour, Context, Harness and AI Trust, plus virtual teams for Board Gen and Evals Infra cutting across them.'],
       media: [{ kind: 'image', src: '/diagrams/stream-structure.svg', alt: 'The AI stream’s seven domains: Surface, Behaviour, Context, Harness, AI Trust, and virtual teams Board Gen and Evals Infra.', caption: 'Team structure' }],
       criteria: ['Partnership', 'Agency'],
@@ -196,7 +196,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { title: 'A lean design team', text: 'Usually five designers, each owning an investment.' },
       ],
       media: [{ kind: 'todo', caption: 'Operating rhythm diagram: forums, cadence, who met when' }],
-      todo: ['Cadence: weekly / fortnightly rituals and who was in them', 'Leadership trio and how decisions were made', 'How the ~100 people were grouped and reported'],
+      todo: ['Cadence: weekly / fortnightly rituals and who was in them', 'Leadership trio and how decisions were made', 'How the 120 people were grouped and reported'],
       criteria: ['Partnership', 'Communication'],
     },
     {
