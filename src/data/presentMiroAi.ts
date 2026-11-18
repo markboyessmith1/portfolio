@@ -343,7 +343,7 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
       layout: 'split',
       eyebrow: '02 · The pushback',
       title: 'We weren’t prepared to ship it. Fixing it would take time.',
-      body: ['Focused scrutiny of our BoardGen investments: what we wanted to achieve against what our technology could do. So we stood up a tiger team on both the technical and the experience approach.'],
+      body: ['We stood up a BoardGen tiger team on both the technical and the experience approach.'],
       bullets: [
         { title: 'Weekly with the C-suite', text: 'full transparency on progress against structured goals.' },
         { title: 'A small vision piece', text: 'showing what we expected board generation to do.' },
@@ -351,10 +351,14 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { title: 'Flexible expectations', text: 'not traditional software. We couldn’t work back deterministically from a known output; we had to evolve a model towards it.' },
         { title: 'Working forwards', text: 'from what the model could do, with an evals team turning improvements round fast.' },
       ],
-      call: 'Shielding the team would have ended with us chopping the edges off the product to fit the date.',
-      media: [{ kind: 'todo', caption: 'The weekly goals update we shared (redacted)' }],
+      media: [
+        { kind: 'todo', caption: 'BoardGen before and after, same prompt' },
+        { kind: 'todo', caption: 'BoardGen maturity curve' },
+        { kind: 'todo', caption: 'The BoardGen vision piece' },
+        { kind: 'todo', caption: 'Evals screenshot' },
+      ],
       criteria: ['Partnership', 'Communication'],
-      notes: 'A very tense period, and a very rewarding one.',
+      notes: 'My call: Shielding the team would have ended with us chopping the edges off the product to fit the date. A very tense period, and a very rewarding one.',
     },
     {
       chapter: 'How AI changed the work',

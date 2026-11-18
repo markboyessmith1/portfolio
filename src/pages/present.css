@@ -230,3 +230,8 @@
 .stack__video span { font-size: 11px; letter-spacing: 0.1em; } .stack__video p { margin: 6px 0 0; }
 .stack__logo { position: absolute; transform: translate(-50%, -50%); padding: 10px 18px; border: 1px solid var(--d-line); border-radius: 999px; font-size: clamp(14px, 1.3vw, 20px); font-weight: 500; white-space: nowrap; }
 @media (max-width: 820px) { .stack__video { width: 100%; } .stack__logo { font-size: 12px; padding: 6px 10px; } }
+
+/* a 2x2 mosaic of artifacts */
+.slide__media--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.slide__media--4 { max-height: 72vh; }
+.slide__media--4 .media--todo { min-height: 0; }
