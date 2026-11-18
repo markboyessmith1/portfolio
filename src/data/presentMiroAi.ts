@@ -82,21 +82,8 @@ export const DECK: { title: string; slides: DeckSlide[] } = {
         { when: '10 Sep', what: 'Bending Spoons agreement', detail: '$1.355bn, announced' },
         { when: 'Oct', what: 'Intelligent Canvas 2.0', detail: 'Full rollout to Miro’s users', major: true },
       ],
-      notes: 'Dates: Canvas ’26 press release, San Francisco, 19 May 2026 (miro.com/newsroom). Bending Spoons agreement announced 10 Sep 2026, $1.355bn enterprise value (Goodwin). The rest from my own timeline.',
+      notes: 'Dates: Canvas ’26 press release, San Francisco, 19 May 2026 (miro.com/newsroom). Bending Spoons agreement announced 10 Sep 2026, $1.355bn enterprise value (Goodwin). The rest from my own timeline. The trio: me, Damir (product partner) and Henrik (engineering leader), about 100 people across seven teams. Say "I" for the calls, "we" for the build.',
     },
-    {
-      chapter: 'Intro',
-      layout: 'split',
-      eyebrow: 'Context',
-      title: 'Seven teams, about 100 people, six months.',
-      body: [
-        'In 2026 we set out to make Miro a collaboration platform for the agentic era. In October we launched Intelligent Canvas 2.0 to Miro’s 100 million users.',
-        'I led the product experience, as one of three leads with my product and engineering partners.',
-      ],
-      media: [{ kind: 'image', src: '/diagrams/stream-structure.svg', alt: 'The AI stream: five formal teams (Surface, Behaviour, Context, Harness, AI Trust) and two virtual teams (Board Gen, Evals Infra).', caption: 'The AI stream' }],
-      notes: 'The trio: me, Damir (product partner) and Henrik (engineering leader), with about 100 people beneath us. Say "I" for the calls, "we" for the build. Don\'t open with the $1.4bn exit or the numbers.',
-    },
-
     // ---- Prompt 2: no clear direction ---------------------------------
     {
       chapter: 'No clear direction',
